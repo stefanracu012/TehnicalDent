@@ -39,7 +39,9 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
 
   const allServices = await getServices();
   const relatedServices = allServices
-    .filter((sv) => sv.slug !== service.slug && sv.category === service.category)
+    .filter(
+      (sv) => sv.slug !== service.slug && sv.category === service.category,
+    )
     .slice(0, 3)
     .map((sv) => localizeService(sv, locale));
 

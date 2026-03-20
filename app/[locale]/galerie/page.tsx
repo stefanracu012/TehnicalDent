@@ -24,6 +24,8 @@ export default async function GalleryPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const images = (await getGalleryImages()).map((img) => localizeGalleryImage(img, locale));
+  const images = (await getGalleryImages()).map((img) =>
+    localizeGalleryImage(img, locale),
+  );
   return <GalleryClient images={images} />;
 }

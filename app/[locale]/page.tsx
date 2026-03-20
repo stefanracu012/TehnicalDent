@@ -19,7 +19,9 @@ export default async function HomePage({
   setRequestLocale(locale);
 
   const services = (await getServices()).map((s) => localizeService(s, locale));
-  const testimonials = (await getTestimonials()).map((t) => localizeTestimonial(t, locale));
+  const testimonials = (await getTestimonials()).map((t) =>
+    localizeTestimonial(t, locale),
+  );
   const t = await getTranslations("Home");
 
   return (

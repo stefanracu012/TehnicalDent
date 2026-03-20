@@ -17,10 +17,22 @@ async function translateChunk(
   const data: any = await res.json();
   if (!data?.[0]) return text;
 
-  return data[0]
+  let translated = data[0]
     .filter((s: unknown[]) => s?.[0])
     .map((s: unknown[]) => s[0])
     .join("");
+
+  // Google Translate sometimes returns ALL-CAPS for short words.
+  // If the original was not all-caps but the result is, fix casing.
+  if (
+    translated === translated.toUpperCase() &&
+    text !== text.toUpperCase() &&
+    translated.length < 50
+  ) {
+    translated = translated.charAt(0).toUpperCase() + translated.slice(1).toLowerCase();
+  }
+
+  return translated;
 }
 
 async function translateText(
