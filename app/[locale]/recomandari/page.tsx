@@ -1,0 +1,32 @@
+import PageHero from "@/components/PageHero";
+import RecomandariClient from "./RecomandariClient";
+import { blogPosts } from "@/lib/blog-data";
+import { getTranslations, setRequestLocale } from "next-intl/server";
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  const t = await getTranslations("Blog");
+  return { title: t("metaTitle"), description: t("metaDescription") };
+}
+
+export default async function RecomandariPage({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+  setRequestLocale(locale);
+  const t = await getTranslations("Blog");
+
+  return (
+    <>
+      <PageHero title={t("heroTitle")} description={t("heroDescription")} />
+      <RecomandariClient posts={blogPosts} />
+    </>
+  );
+}
