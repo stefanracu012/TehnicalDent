@@ -15,7 +15,7 @@ export default function LanguageTabs({
   onChange: (locale: string) => void;
 }) {
   return (
-    <div className="flex gap-1 p-1 bg-muted rounded-lg mb-6">
+    <div className="flex gap-1 p-1 bg-muted rounded-lg">
       {LOCALE_LABELS.map((l) => (
         <button
           key={l.code}

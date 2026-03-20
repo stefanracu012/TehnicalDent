@@ -6,6 +6,7 @@ import Button from "@/components/Button";
 import { secureFetch } from "@/lib/csrf-client";
 import ImageUpload from "@/components/admin/ImageUpload";
 import LanguageTabs from "@/components/admin/LanguageTabs";
+import AutoTranslateButton from "@/components/admin/AutoTranslateButton";
 
 type Translations = Record<string, Record<string, string | string[]>>;
 
@@ -243,12 +244,19 @@ export default function EditServicePage({
           <p className="mt-2 text-muted-foreground">Modifică informațiile pentru „{formData.title}"</p>
         </div>
 
-        <LanguageTabs active={activeLocale} onChange={setActiveLocale} />
-        {activeLocale !== "ro" && (
-          <p className="text-xs text-muted-foreground mb-6 -mt-4">
-            ✏️ Editați traducerea. Câmpurile goale vor folosi textul în română.
-          </p>
-        )}
+        <div className="mb-6 space-y-3">
+          <LanguageTabs active={activeLocale} onChange={setActiveLocale} />
+          <AutoTranslateButton
+            formData={formData as unknown as Record<string, unknown>}
+            translatableFields={["title", "shortDesc", "description", "overview", "process", "recovery", "benefits", "category"]}
+            onTranslationsReady={setTranslations}
+          />
+          {activeLocale !== "ro" && (
+            <p className="text-xs text-muted-foreground">
+              ✏️ Editați traducerea. Câmpurile goale vor folosi textul în română.
+            </p>
+          )}
+        </div>
 
         <form onSubmit={handleSubmit} className="bg-white border border-border p-8">
           <div className="space-y-8">

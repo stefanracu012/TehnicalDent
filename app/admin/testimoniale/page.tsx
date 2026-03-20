@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { secureFetch } from "@/lib/csrf-client";
 import LanguageTabs from "@/components/admin/LanguageTabs";
+import AutoTranslateButton from "@/components/admin/AutoTranslateButton";
 
 type Translations = Record<string, Record<string, string>>;
 
@@ -170,12 +171,19 @@ export default function AdminTestimonialsPage() {
                 {editing ? "Editează testimonial" : "Adaugă testimonial nou"}
               </h2>
 
-              <LanguageTabs active={activeLocale} onChange={setActiveLocale} />
-              {activeLocale !== "ro" && (
-                <p className="text-xs text-muted-foreground mb-4 -mt-4">
-                  ✏️ Editați traducerea. Câmpurile goale vor folosi textul în română.
-                </p>
-              )}
+              <div className="mb-4 space-y-3">
+                <LanguageTabs active={activeLocale} onChange={setActiveLocale} />
+                <AutoTranslateButton
+                  formData={formData as unknown as Record<string, unknown>}
+                  translatableFields={["content", "service"]}
+                  onTranslationsReady={setTranslations}
+                />
+                {activeLocale !== "ro" && (
+                  <p className="text-xs text-muted-foreground">
+                    ✏️ Editați traducerea. Câmpurile goale vor folosi textul în română.
+                  </p>
+                )}
+              </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
