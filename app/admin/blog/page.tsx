@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { secureFetch } from "@/lib/csrf-client";
 
 interface BlogPost {
   id: string;
@@ -30,7 +31,7 @@ export default function AdminBlogPage() {
 
   const fetchPosts = async () => {
     try {
-      const res = await fetch("/api/admin/blog");
+      const res = await secureFetch("/api/admin/blog");
       const data = await res.json();
       setPosts(data);
     } catch (error) {
@@ -43,7 +44,7 @@ export default function AdminBlogPage() {
   const deletePost = async (id: string) => {
     if (!confirm("Sigur doriți să ștergeți acest articol?")) return;
     try {
-      await fetch(`/api/admin/blog/${id}`, { method: "DELETE" });
+      await secureFetch(`/api/admin/blog/${id}`, { method: "DELETE" });
       fetchPosts();
     } catch {
       alert("Eroare la ștergere");
@@ -52,7 +53,7 @@ export default function AdminBlogPage() {
 
   const togglePublish = async (post: BlogPost) => {
     try {
-      await fetch(`/api/admin/blog/${post.id}`, {
+      await secureFetch(`/api/admin/blog/${post.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isPublished: !post.isPublished }),

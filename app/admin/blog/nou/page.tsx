@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ImageUpload from "@/components/admin/ImageUpload";
+import { secureFetch } from "@/lib/csrf-client";
 
 function generateSlug(title: string): string {
   return title
@@ -56,7 +57,7 @@ export default function NewBlogPostPage() {
     setSaving(true);
 
     try {
-      const res = await fetch("/api/admin/blog", {
+      const res = await secureFetch("/api/admin/blog", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

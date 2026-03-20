@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import ImageUpload from "@/components/admin/ImageUpload";
+import { secureFetch } from "@/lib/csrf-client";
 
 interface TeamMember {
   id: string;
@@ -36,7 +37,7 @@ export default function AdminTeamPage() {
 
   const fetchMembers = async () => {
     try {
-      const res = await fetch("/api/admin/team");
+      const res = await secureFetch("/api/admin/team");
       const data = await res.json();
       setMembers(data);
     } catch (error) {
@@ -75,7 +76,7 @@ export default function AdminTeamPage() {
         : "/api/admin/team";
       const method = editing ? "PATCH" : "POST";
 
-      const res = await fetch(url, {
+      const res = await secureFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -98,7 +99,7 @@ export default function AdminTeamPage() {
   const deleteMember = async (id: string) => {
     if (!confirm("Sigur doriți să ștergeți acest membru?")) return;
     try {
-      await fetch(`/api/admin/team/${id}`, { method: "DELETE" });
+      await secureFetch(`/api/admin/team/${id}`, { method: "DELETE" });
       fetchMembers();
     } catch {
       alert("Eroare la ștergere");
@@ -107,7 +108,7 @@ export default function AdminTeamPage() {
 
   const toggleActive = async (member: TeamMember) => {
     try {
-      await fetch(`/api/admin/team/${member.id}`, {
+      await secureFetch(`/api/admin/team/${member.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: !member.isActive }),

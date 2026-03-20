@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createContactSubmission } from "@/lib/data";
+import { sanitizeObject, validateNoInjection } from "@/lib/security";
 
 async function sendTelegramNotification(data: {
   name: string;
@@ -54,7 +55,16 @@ async function sendTelegramNotification(data: {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    const rawBody = await request.json();
+
+    // Security: validate & sanitize input
+    if (!validateNoInjection(rawBody)) {
+      return NextResponse.json(
+        { error: "Input invalid detectat." },
+        { status: 400 }
+      );
+    }
+    const body = sanitizeObject(rawBody);
 
     // Validate required fields
     if (!body.name || !body.phone || !body.message) {

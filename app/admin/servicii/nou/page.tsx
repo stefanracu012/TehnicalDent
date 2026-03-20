@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
+import { secureFetch } from "@/lib/csrf-client";
 import ImageUpload from "@/components/admin/ImageUpload";
 
 export default function NewServicePage() {
@@ -76,7 +77,7 @@ export default function NewServicePage() {
     setLoading(true);
 
     try {
-      const response = await fetch("/api/admin/services", {
+      const response = await secureFetch("/api/admin/services", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

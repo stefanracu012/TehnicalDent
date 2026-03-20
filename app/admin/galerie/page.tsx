@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import ImageUpload from "@/components/admin/ImageUpload";
+import { secureFetch } from "@/lib/csrf-client";
 
 interface GalleryImage {
   id: string;
@@ -37,7 +38,7 @@ export default function AdminGalleryPage() {
 
   const fetchImages = async () => {
     try {
-      const res = await fetch("/api/admin/gallery");
+      const res = await secureFetch("/api/admin/gallery");
       const data = await res.json();
       setImages(data);
     } catch (error) {
@@ -79,7 +80,7 @@ export default function AdminGalleryPage() {
         : "/api/admin/gallery";
       const method = editing ? "PATCH" : "POST";
 
-      const res = await fetch(url, {
+      const res = await secureFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -102,7 +103,7 @@ export default function AdminGalleryPage() {
   const deleteImage = async (id: string) => {
     if (!confirm("Sigur doriți să ștergeți această imagine?")) return;
     try {
-      await fetch(`/api/admin/gallery/${id}`, { method: "DELETE" });
+      await secureFetch(`/api/admin/gallery/${id}`, { method: "DELETE" });
       fetchImages();
     } catch {
       alert("Eroare la ștergere");
@@ -111,7 +112,7 @@ export default function AdminGalleryPage() {
 
   const toggleActive = async (img: GalleryImage) => {
     try {
-      await fetch(`/api/admin/gallery/${img.id}`, {
+      await secureFetch(`/api/admin/gallery/${img.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: !img.isActive }),

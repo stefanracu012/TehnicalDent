@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import ImageUpload from "@/components/admin/ImageUpload";
+import { secureFetch } from "@/lib/csrf-client";
 
 const categories = [
   { name: "Igienă Orală", slug: "igiena-orala" },
@@ -51,7 +52,7 @@ export default function EditBlogPostPage({
   useEffect(() => {
     const fetchPost = async () => {
       try {
-        const res = await fetch(`/api/admin/blog/${id}`);
+        const res = await secureFetch(`/api/admin/blog/${id}`);
         if (!res.ok) {
           alert("Articolul nu a fost găsit");
           router.push("/admin/blog");
@@ -88,7 +89,7 @@ export default function EditBlogPostPage({
     setSaving(true);
 
     try {
-      const res = await fetch(`/api/admin/blog/${id}`, {
+      const res = await secureFetch(`/api/admin/blog/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

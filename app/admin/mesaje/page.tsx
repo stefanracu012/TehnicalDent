@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { secureFetch } from "@/lib/csrf-client";
 
 interface ContactMessage {
   id: string;
@@ -25,7 +26,7 @@ export default function AdminMessagesPage() {
 
   const fetchMessages = async () => {
     try {
-      const response = await fetch("/api/admin/messages");
+      const response = await secureFetch("/api/admin/messages");
       const data = await response.json();
       setMessages(data);
     } catch (error) {
@@ -37,7 +38,7 @@ export default function AdminMessagesPage() {
 
   const markAsRead = async (id: string) => {
     try {
-      await fetch(`/api/admin/messages/${id}`, {
+      await secureFetch(`/api/admin/messages/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isRead: true }),
@@ -52,7 +53,7 @@ export default function AdminMessagesPage() {
     if (!confirm("Sigur doriți să ștergeți acest mesaj?")) return;
 
     try {
-      await fetch(`/api/admin/messages/${id}`, { method: "DELETE" });
+      await secureFetch(`/api/admin/messages/${id}`, { method: "DELETE" });
       setSelectedMessage(null);
       fetchMessages();
     } catch (error) {

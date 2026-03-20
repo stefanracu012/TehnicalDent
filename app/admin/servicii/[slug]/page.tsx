@@ -3,6 +3,7 @@
 import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
+import { secureFetch } from "@/lib/csrf-client";
 import ImageUpload from "@/components/admin/ImageUpload";
 
 interface ServiceForm {
@@ -52,7 +53,7 @@ export default function EditServicePage({
 
   const fetchService = async () => {
     try {
-      const res = await fetch("/api/admin/services");
+      const res = await secureFetch("/api/admin/services");
       const services = await res.json();
       const service = services.find(
         (s: { slug: string }) => s.slug === slug,
@@ -128,7 +129,7 @@ export default function EditServicePage({
     setSaving(true);
 
     try {
-      const response = await fetch(`/api/admin/services/${serviceId}`, {
+      const response = await secureFetch(`/api/admin/services/${serviceId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

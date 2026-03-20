@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Button from "@/components/Button";
+import { secureFetch } from "@/lib/csrf-client";
 
 interface Service {
   id: string;
@@ -24,7 +25,7 @@ export default function AdminServicesPage() {
 
   const fetchServices = async () => {
     try {
-      const response = await fetch("/api/admin/services");
+      const response = await secureFetch("/api/admin/services");
       const data = await response.json();
       setServices(data);
     } catch (error) {
@@ -36,7 +37,7 @@ export default function AdminServicesPage() {
 
   const toggleActive = async (id: string, isActive: boolean) => {
     try {
-      await fetch(`/api/admin/services/${id}`, {
+      await secureFetch(`/api/admin/services/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: !isActive }),
@@ -51,7 +52,7 @@ export default function AdminServicesPage() {
     if (!confirm("Sigur doriți să ștergeți acest serviciu?")) return;
 
     try {
-      await fetch(`/api/admin/services/${id}`, { method: "DELETE" });
+      await secureFetch(`/api/admin/services/${id}`, { method: "DELETE" });
       fetchServices();
     } catch (error) {
       console.error("Error deleting service:", error);

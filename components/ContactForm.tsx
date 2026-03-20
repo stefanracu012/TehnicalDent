@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import Button from "./Button";
+import { secureFetch } from "@/lib/csrf-client";
 
 interface ContactFormProps {
   className?: string;
@@ -32,7 +33,7 @@ export default function ContactForm({
     setErrorMessage("");
 
     try {
-      const response = await fetch("/api/contact", {
+      const response = await secureFetch("/api/contact", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

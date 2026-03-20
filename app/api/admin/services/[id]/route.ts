@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { sanitizeObject, validateNoInjection } from "@/lib/security";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -34,7 +35,16 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   const { id } = await params;
   
   try {
-    const body = await request.json();
+    const rawBody = await request.json();
+
+    // Security: validate & sanitize input
+    if (!validateNoInjection(rawBody)) {
+      return NextResponse.json(
+        { error: "Input invalid detectat." },
+        { status: 400 }
+      );
+    }
+    const body = sanitizeObject(rawBody, ["description", "overview", "process", "recovery"]);
 
     const service = await prisma.service.update({
       where: { id },

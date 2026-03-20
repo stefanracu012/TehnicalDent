@@ -1,13 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { secureFetch, clearCsrfToken } from "@/lib/csrf-client";
 
 export default function LogoutButton() {
   const router = useRouter();
 
   const handleLogout = async () => {
     try {
-      await fetch("/api/auth/logout", { method: "POST" });
+      await secureFetch("/api/auth/logout", { method: "POST" });
+      clearCsrfToken();
       router.push("/admin/login");
       router.refresh();
     } catch {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { secureFetch } from "@/lib/csrf-client";
 
 interface Testimonial {
   id: string;
@@ -32,7 +33,7 @@ export default function AdminTestimonialsPage() {
 
   const fetchTestimonials = async () => {
     try {
-      const res = await fetch("/api/admin/testimonials");
+      const res = await secureFetch("/api/admin/testimonials");
       const data = await res.json();
       setTestimonials(data);
     } catch (error) {
@@ -69,7 +70,7 @@ export default function AdminTestimonialsPage() {
         : "/api/admin/testimonials";
       const method = editing ? "PATCH" : "POST";
 
-      const res = await fetch(url, {
+      const res = await secureFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -95,7 +96,7 @@ export default function AdminTestimonialsPage() {
   const deleteTestimonial = async (id: string) => {
     if (!confirm("Sigur doriți să ștergeți acest testimonial?")) return;
     try {
-      await fetch(`/api/admin/testimonials/${id}`, { method: "DELETE" });
+      await secureFetch(`/api/admin/testimonials/${id}`, { method: "DELETE" });
       fetchTestimonials();
     } catch {
       alert("Eroare la ștergere");
@@ -104,7 +105,7 @@ export default function AdminTestimonialsPage() {
 
   const toggleActive = async (t: Testimonial) => {
     try {
-      await fetch(`/api/admin/testimonials/${t.id}`, {
+      await secureFetch(`/api/admin/testimonials/${t.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: !t.isActive }),

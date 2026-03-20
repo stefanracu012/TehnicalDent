@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { secureFetch } from "@/lib/csrf-client";
 
 interface ImageUploadProps {
   value: string;
@@ -28,7 +29,7 @@ export default function ImageUpload({
       formData.append("file", file);
       formData.append("folder", folder);
 
-      const res = await fetch("/api/admin/upload", {
+      const res = await secureFetch("/api/admin/upload", {
         method: "POST",
         body: formData,
       });
