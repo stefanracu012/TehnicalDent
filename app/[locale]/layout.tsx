@@ -13,6 +13,7 @@ import {
 } from "next-intl/server";
 import { routing } from "@/i18n/routing";
 import { notFound } from "next/navigation";
+import { getAlternates, getOgLocale } from "@/lib/seo";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -50,17 +51,13 @@ export async function generateMetadata({
       icon: "/tehnicaldent_logo.png",
       apple: "/tehnicaldent_logo.png",
     },
+    metadataBase: new URL("https://tehnicaldent.com"),
+    alternates: getAlternates("", locale),
     openGraph: {
       type: "website",
-      locale:
-        locale === "ro"
-          ? "ro_RO"
-          : locale === "ru"
-            ? "ru_RU"
-            : locale === "it"
-              ? "it_IT"
-              : "en_US",
+      locale: getOgLocale(locale),
       siteName: "TechnicalDent",
+      url: `https://tehnicaldent.com/${locale}`,
     },
   };
 }

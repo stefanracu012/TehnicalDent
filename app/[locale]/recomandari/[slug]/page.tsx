@@ -8,6 +8,7 @@ import {
   getPublishedBlogPosts,
   getAllPublishedSlugs,
 } from "@/lib/blog-data";
+import { getAlternates } from "@/lib/seo";
 
 interface Props {
   params: Promise<{ slug: string; locale: string }>;
@@ -26,8 +27,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!post) return { title: t("articolNegasit") };
 
   return {
-    title: `${post.title} | TehnicalDent`,
+    title: post.title,
     description: post.excerpt,
+    alternates: getAlternates(`/recomandari/${slug}`, locale),
+    openGraph: {
+      title: post.title,
+      description: post.excerpt,
+      type: "article",
+      ...(post.image ? { images: [{ url: post.image }] } : {}),
+    },
   };
 }
 

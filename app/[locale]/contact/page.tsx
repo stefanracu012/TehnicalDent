@@ -2,6 +2,7 @@ import { Metadata } from "next";
 import ContactForm from "@/components/ContactForm";
 import { Link } from "@/i18n/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getAlternates } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -14,6 +15,7 @@ export async function generateMetadata({
   return {
     title: t("metaTitle"),
     description: t("metaDescription"),
+    alternates: getAlternates("/contact", locale),
   };
 }
 

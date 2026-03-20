@@ -4,6 +4,7 @@ import Button from "@/components/Button";
 import { getServiceBySlug, getServices } from "@/lib/data";
 import { localizeService } from "@/lib/localize";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getAlternates } from "@/lib/seo";
 
 interface ServicePageProps {
   params: Promise<{ slug: string; locale: string }>;
@@ -17,8 +18,15 @@ export async function generateMetadata({ params }: ServicePageProps) {
   if (!service) return { title: t("serviciuNegasit") };
   const localized = localizeService(service, locale);
   return {
-    title: localized.title,
-    description: localized.shortDesc,
+    title: localized.title as string,
+    description: localized.shortDesc as string,
+    alternates: getAlternates(`/servicii/${slug}`, locale),
+    openGraph: {
+      title: `${localized.title} | TechnicalDent`,
+      description: localized.shortDesc as string,
+      type: "article",
+      images: service.images?.[0] ? [{ url: service.images[0] as string }] : [],
+    },
   };
 }
 

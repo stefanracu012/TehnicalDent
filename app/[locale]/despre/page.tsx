@@ -3,6 +3,7 @@ import { getTranslations, setRequestLocale } from "next-intl/server";
 import Button from "@/components/Button";
 import { getTeamMembers } from "@/lib/data";
 import { localizeTeamMember } from "@/lib/localize";
+import { getAlternates } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -14,6 +15,7 @@ export async function generateMetadata({
   return {
     title: t("metaTitle"),
     description: t("metaDescription"),
+    alternates: getAlternates("/despre", locale),
   };
 }
 

@@ -2,6 +2,7 @@
 import { getGalleryImages } from "@/lib/data";
 import { localizeGalleryImage } from "@/lib/localize";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getAlternates } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -12,8 +13,9 @@ export async function generateMetadata({
   setRequestLocale(locale);
   const t = await getTranslations("Gallery");
   return {
-    title: t("heroTitle") + " — TechnicalDent",
+    title: t("heroTitle"),
     description: t("heroDescription"),
+    alternates: getAlternates("/galerie", locale),
   };
 }
 
