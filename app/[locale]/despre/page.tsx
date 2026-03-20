@@ -2,6 +2,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import Button from "@/components/Button";
 import { getTeamMembers } from "@/lib/data";
+import { localizeTeamMember } from "@/lib/localize";
 
 export async function generateMetadata({
   params,
@@ -25,7 +26,7 @@ export default async function AboutPage({
   setRequestLocale(locale);
   const t = await getTranslations("About");
   const tNav = await getTranslations("Nav");
-  const teamMembers = await getTeamMembers();
+  const teamMembers = (await getTeamMembers()).map((m) => localizeTeamMember(m, locale));
 
   const values = [
     {

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { sanitizeObject, validateNoInjection } from "@/lib/security";
 
@@ -59,6 +60,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       where: { id },
       data: body,
     });
+    revalidatePath("/", "layout");
     return NextResponse.json(post);
   } catch (error) {
     console.error("Error updating blog post:", error);
@@ -74,6 +76,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
 
   try {
     await prisma.blogPost.delete({ where: { id } });
+    revalidatePath("/", "layout");
     return NextResponse.json({ message: "Deleted successfully" });
   } catch (error) {
     console.error("Error deleting blog post:", error);

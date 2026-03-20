@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { sanitizeObject, validateNoInjection } from "@/lib/security";
 
@@ -45,9 +46,11 @@ export async function POST(request: Request) {
         image: body.image || "",
         order: body.order || 0,
         isActive: body.isActive ?? true,
+        translations: body.translations || null,
       },
     });
 
+    revalidatePath("/", "layout");
     return NextResponse.json(member, { status: 201 });
   } catch (error) {
     console.error("Error creating team member:", error);

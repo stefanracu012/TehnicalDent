@@ -15,14 +15,12 @@ interface Service {
 export default function ServicesGrid({ services }: { services: Service[] }) {
   const router = useRouter();
   const t = useTranslations("Services");
-  const tS = useTranslations("ServiceData");
 
-  // Build unique categories from translated data (keyed by original category value for filtering)
+  // Build unique categories from services data (category is already localized)
   const categoryMap = new Map<string, string>();
   services.forEach((s) => {
-    const translated = tS(`${s.slug}.category`);
     if (!categoryMap.has(s.category)) {
-      categoryMap.set(s.category, translated);
+      categoryMap.set(s.category, s.category);
     }
   });
 
@@ -106,7 +104,7 @@ export default function ServicesGrid({ services }: { services: Service[] }) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={`/images/services/${service.slug}.jpg`}
-              alt={tS(`${service.slug}.title`)}
+              alt={service.title}
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110 will-change-transform"
             />
 
@@ -117,23 +115,23 @@ export default function ServicesGrid({ services }: { services: Service[] }) {
             {/* Content */}
             <div className="absolute inset-x-0 bottom-0 p-5 z-10">
               <span className="block text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 mb-1.5">
-                {tS(`${service.slug}.category`)}
+                {service.category}
               </span>
               <h3 className="font-serif text-lg font-medium text-white leading-snug">
-                {tS(`${service.slug}.title`)}
+                {service.title}
               </h3>
 
               {/* Revealed on hover */}
               <div className="overflow-hidden max-h-0 group-hover:max-h-[160px] transition-all duration-500 ease-out">
                 <p className="text-white/70 text-xs leading-relaxed mt-2 line-clamp-2">
-                  {tS(`${service.slug}.shortDesc`)}
+                  {service.shortDesc}
                 </p>
                 <div className="flex gap-2 mt-3">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       router.push(
-                        `/contact?serviciu=${encodeURIComponent(tS(`${service.slug}.title`))}#formular`,
+                        `/contact?serviciu=${encodeURIComponent(service.title)}#formular`,
                       );
                     }}
                     className="inline-flex items-center bg-accent text-white text-xs font-semibold px-3.5 py-1.5 rounded-full hover:bg-accent/90 transition-colors"

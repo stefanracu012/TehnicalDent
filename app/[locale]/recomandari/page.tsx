@@ -22,7 +22,7 @@ export default async function RecomandariPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("Blog");
-  const posts = await getPublishedBlogPosts();
+  const posts = await getPublishedBlogPosts(locale);
 
   return (
     <>

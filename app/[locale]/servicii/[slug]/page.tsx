@@ -2,6 +2,7 @@ import { Link } from "@/i18n/navigation";
 import { notFound } from "next/navigation";
 import Button from "@/components/Button";
 import { getServiceBySlug, getServices } from "@/lib/data";
+import { localizeService } from "@/lib/localize";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 interface ServicePageProps {
@@ -12,12 +13,12 @@ export async function generateMetadata({ params }: ServicePageProps) {
   const { slug, locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("ServiceDetail");
-  const tS = await getTranslations("ServiceData");
   const service = await getServiceBySlug(slug);
   if (!service) return { title: t("serviciuNegasit") };
+  const localized = localizeService(service, locale);
   return {
-    title: tS(`${slug}.title`),
-    description: tS(`${slug}.shortDesc`),
+    title: localized.title,
+    description: localized.shortDesc,
   };
 }
 
@@ -31,25 +32,27 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
   setRequestLocale(locale);
   const t = await getTranslations("ServiceDetail");
   const tNav = await getTranslations("Nav");
-  const tS = await getTranslations("ServiceData");
   const service = await getServiceBySlug(slug);
   if (!service) notFound();
 
+  const s = localizeService(service, locale);
+
   const allServices = await getServices();
   const relatedServices = allServices
-    .filter((s) => s.slug !== service.slug && s.category === service.category)
-    .slice(0, 3);
+    .filter((sv) => sv.slug !== service.slug && sv.category === service.category)
+    .slice(0, 3)
+    .map((sv) => localizeService(sv, locale));
 
   const heroImage = `/images/services/${service.slug}.jpg`;
 
-  // Translated content
-  const title = tS(`${slug}.title`);
-  const shortDesc = tS(`${slug}.shortDesc`);
-  const overview = tS(`${slug}.overview`);
-  const process = tS(`${slug}.process`);
-  const recovery = tS(`${slug}.recovery`);
-  const benefits = tS(`${slug}.benefits`).split("|");
-  const category = tS(`${slug}.category`);
+  // Localized content from DB translations
+  const title = s.title as string;
+  const shortDesc = s.shortDesc as string;
+  const overview = s.overview as string;
+  const process = s.process as string;
+  const recovery = s.recovery as string;
+  const benefits = (Array.isArray(s.benefits) ? s.benefits : []) as string[];
+  const category = s.category as string;
 
   return (
     <>
@@ -313,10 +316,10 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-foreground group-hover:text-accent transition-colors truncate">
-                            {tS(`${related.slug}.title`)}
+                            {related.title}
                           </p>
                           <p className="text-xs text-muted-foreground mt-0.5">
-                            {tS(`${related.slug}.category`)}
+                            {related.category}
                           </p>
                         </div>
                         <svg

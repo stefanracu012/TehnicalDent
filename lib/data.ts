@@ -3,6 +3,9 @@
 
 import prisma from "./prisma";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type TranslationsJson = Record<string, Record<string, any>> | null;
+
 export interface Service {
   id: string;
   slug: string;
@@ -17,6 +20,7 @@ export interface Service {
   category: string;
   order: number;
   isActive: boolean;
+  translations?: TranslationsJson;
 }
 
 export interface TeamMember {
@@ -27,6 +31,7 @@ export interface TeamMember {
   image: string;
   order: number;
   isActive: boolean;
+  translations?: TranslationsJson;
 }
 
 export interface Testimonial {
@@ -35,6 +40,7 @@ export interface Testimonial {
   content: string;
   service: string | null;
   isActive: boolean;
+  translations?: TranslationsJson;
 }
 
 export interface GalleryImage {
@@ -44,6 +50,7 @@ export interface GalleryImage {
   category: string;
   order: number;
   isActive: boolean;
+  translations?: TranslationsJson;
 }
 
 export interface BlogPost {
@@ -60,6 +67,7 @@ export interface BlogPost {
   publishedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  translations?: TranslationsJson;
 }
 
 // Mock data for development

@@ -11,13 +11,6 @@ interface GalleryImage {
   category?: string;
 }
 
-const CATEGORY_KEYS = [
-  { key: "categoriiToate", value: "Toate" },
-  { key: "categoriiClinica", value: "Clinică" },
-  { key: "categoriiEchipament", value: "Echipament" },
-  { key: "categoriiRezultate", value: "Rezultate" },
-];
-
 interface Props {
   images: GalleryImage[];
 }
@@ -25,6 +18,11 @@ interface Props {
 export default function GalleryClient({ images }: Props) {
   const t = useTranslations("Gallery");
   const tNav = useTranslations("Nav");
+
+  // Build categories dynamically from images (already localized)
+  const uniqueCategories = Array.from(
+    new Set(images.map((img) => img.category).filter(Boolean)),
+  ) as string[];
 
   const STATS = [
     { value: "6", label: t("statCabinete") },
@@ -291,17 +289,27 @@ export default function GalleryClient({ images }: Props) {
 
           {/* Filter tabs */}
           <div className="flex flex-wrap gap-2">
-            {CATEGORY_KEYS.map((cat) => (
+            <button
+              onClick={() => setActiveCategory("Toate")}
+              className={`px-5 py-2 text-xs font-semibold uppercase tracking-widest transition-all duration-300 ${
+                activeCategory === "Toate"
+                  ? "bg-foreground text-white"
+                  : "bg-muted text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
+              }`}
+            >
+              {t("categoriiToate")}
+            </button>
+            {uniqueCategories.map((cat) => (
               <button
-                key={cat.value}
-                onClick={() => setActiveCategory(cat.value)}
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
                 className={`px-5 py-2 text-xs font-semibold uppercase tracking-widest transition-all duration-300 ${
-                  activeCategory === cat.value
+                  activeCategory === cat
                     ? "bg-foreground text-white"
                     : "bg-muted text-muted-foreground hover:bg-foreground/10 hover:text-foreground"
                 }`}
               >
-                {t(cat.key)}
+                {cat}
               </button>
             ))}
           </div>

@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug, locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("BlogDetail");
-  const post = await getPublishedBlogPost(slug);
+  const post = await getPublishedBlogPost(slug, locale);
   if (!post) return { title: t("articolNegasit") };
 
   return {
@@ -35,7 +35,7 @@ export default async function BlogPostPage({ params }: Props) {
   const { slug, locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("BlogDetail");
-  const post = await getPublishedBlogPost(slug);
+  const post = await getPublishedBlogPost(slug, locale);
 
   if (!post) notFound();
 
@@ -46,7 +46,7 @@ export default async function BlogPostPage({ params }: Props) {
   });
 
   // Get related posts (same category, excluding current)
-  const allPosts = await getPublishedBlogPosts();
+  const allPosts = await getPublishedBlogPosts(locale);
   const relatedPosts = allPosts
     .filter((p) => p.category === post.category && p.slug !== post.slug)
     .slice(0, 2);

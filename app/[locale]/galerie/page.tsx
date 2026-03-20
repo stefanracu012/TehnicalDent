@@ -1,5 +1,6 @@
 ﻿import GalleryClient from "./GalleryClient";
 import { getGalleryImages } from "@/lib/data";
+import { localizeGalleryImage } from "@/lib/localize";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 export async function generateMetadata({
@@ -23,6 +24,6 @@ export default async function GalleryPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const images = await getGalleryImages();
+  const images = (await getGalleryImages()).map((img) => localizeGalleryImage(img, locale));
   return <GalleryClient images={images} />;
 }

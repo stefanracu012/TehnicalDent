@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { sanitizeObject, validateNoInjection } from "@/lib/security";
 
@@ -43,9 +44,11 @@ export async function POST(request: Request) {
         content: body.content,
         service: body.service || null,
         isActive: body.isActive ?? true,
+        translations: body.translations || null,
       },
     });
 
+    revalidatePath("/", "layout");
     return NextResponse.json(testimonial, { status: 201 });
   } catch (error) {
     console.error("Error creating testimonial:", error);

@@ -2,6 +2,7 @@ import { Link } from "@/i18n/navigation";
 import Button from "@/components/Button";
 import ServicesGrid from "@/components/ServicesGrid";
 import { getServices } from "@/lib/data";
+import { localizeService } from "@/lib/localize";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 export async function generateMetadata({
@@ -27,7 +28,7 @@ export default async function ServicesPage({
   setRequestLocale(locale);
   const t = await getTranslations("Services");
   const tNav = await getTranslations("Nav");
-  const services = await getServices();
+  const services = (await getServices()).map((s) => localizeService(s, locale));
 
   return (
     <>

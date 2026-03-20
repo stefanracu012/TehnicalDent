@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { sanitizeObject, validateNoInjection } from "@/lib/security";
 
@@ -51,6 +52,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       data: body,
     });
 
+    revalidatePath("/", "layout");
     return NextResponse.json(service);
   } catch (error) {
     console.error("Error updating service:", error);
@@ -69,6 +71,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
       where: { id },
     });
 
+    revalidatePath("/", "layout");
     return NextResponse.json({ message: "Service deleted successfully" });
   } catch (error) {
     console.error("Error deleting service:", error);

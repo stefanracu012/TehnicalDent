@@ -106,6 +106,16 @@ export function sanitizeObject<T extends Record<string, unknown>>(
       (sanitized as Record<string, unknown>)[key] = value.map((item) =>
         typeof item === "string" ? sanitizeString(item) : item,
       );
+    } else if (
+      value !== null &&
+      typeof value === "object" &&
+      !Array.isArray(value)
+    ) {
+      // Recurse into nested objects (e.g. translations JSON)
+      (sanitized as Record<string, unknown>)[key] = sanitizeObject(
+        value as Record<string, unknown>,
+        markdownFields,
+      );
     }
   }
   return sanitized;

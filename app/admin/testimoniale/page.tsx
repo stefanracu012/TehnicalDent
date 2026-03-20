@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { secureFetch } from "@/lib/csrf-client";
+import LanguageTabs from "@/components/admin/LanguageTabs";
+
+type Translations = Record<string, Record<string, string>>;
 
 interface Testimonial {
   id: string;
@@ -10,6 +13,7 @@ interface Testimonial {
   service: string | null;
   isActive: boolean;
   createdAt: string;
+  translations?: Translations | null;
 }
 
 const emptyTestimonial = {
@@ -26,6 +30,8 @@ export default function AdminTestimonialsPage() {
   const [editing, setEditing] = useState<Testimonial | null>(null);
   const [formData, setFormData] = useState(emptyTestimonial);
   const [showForm, setShowForm] = useState(false);
+  const [activeLocale, setActiveLocale] = useState("ro");
+  const [translations, setTranslations] = useState<Translations>({});
 
   useEffect(() => {
     fetchTestimonials();
@@ -43,9 +49,28 @@ export default function AdminTestimonialsPage() {
     }
   };
 
+  const getField = (field: string): string => {
+    if (activeLocale === "ro")
+      return ((formData as unknown as Record<string, unknown>)[field] as string) || "";
+    return (translations[activeLocale]?.[field] as string) || "";
+  };
+
+  const setField = (field: string, value: string) => {
+    if (activeLocale === "ro") {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+    } else {
+      setTranslations((prev) => ({
+        ...prev,
+        [activeLocale]: { ...(prev[activeLocale] || {}), [field]: value },
+      }));
+    }
+  };
+
   const openNew = () => {
     setEditing(null);
     setFormData(emptyTestimonial);
+    setTranslations({});
+    setActiveLocale("ro");
     setShowForm(true);
   };
 
@@ -57,28 +82,35 @@ export default function AdminTestimonialsPage() {
       service: t.service || "",
       isActive: t.isActive,
     });
+    setTranslations((t.translations as Translations) || {});
+    setActiveLocale("ro");
     setShowForm(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-
     try {
-      const url = editing
-        ? `/api/admin/testimonials/${editing.id}`
-        : "/api/admin/testimonials";
-      const method = editing ? "PATCH" : "POST";
+      const cleanTranslations: Translations = {};
+      for (const [loc, fields] of Object.entries(translations)) {
+        const cleaned: Record<string, string> = {};
+        for (const [key, val] of Object.entries(fields)) {
+          if (typeof val === "string" && val.trim()) cleaned[key] = val;
+        }
+        if (Object.keys(cleaned).length > 0) cleanTranslations[loc] = cleaned;
+      }
 
+      const url = editing ? `/api/admin/testimonials/${editing.id}` : "/api/admin/testimonials";
+      const method = editing ? "PATCH" : "POST";
       const res = await secureFetch(url, {
         method,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
           service: formData.service || null,
+          translations: Object.keys(cleanTranslations).length > 0 ? cleanTranslations : null,
         }),
       });
-
       if (res.ok) {
         setShowForm(false);
         setEditing(null);
@@ -117,11 +149,7 @@ export default function AdminTestimonialsPage() {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("ro-RO", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    });
+    return new Date(dateString).toLocaleDateString("ro-RO", { day: "numeric", month: "short", year: "numeric" });
   };
 
   return (
@@ -129,113 +157,66 @@ export default function AdminTestimonialsPage() {
       <div className="mx-auto max-w-7xl px-6 lg:px-8 py-12">
         <div className="flex items-center justify-between mb-12">
           <div>
-            <h1 className="font-serif text-3xl font-medium text-foreground">
-              Testimoniale
-            </h1>
-            <p className="mt-2 text-muted-foreground">
-              Administrați testimonialele pacienților
-            </p>
+            <h1 className="font-serif text-3xl font-medium text-foreground">Testimoniale</h1>
+            <p className="mt-2 text-muted-foreground">Administrați testimonialele pacienților</p>
           </div>
-          <button
-            onClick={openNew}
-            className="bg-foreground text-white text-sm font-semibold px-6 py-3 hover:bg-foreground/90 transition-colors"
-          >
-            + Adaugă testimonial
-          </button>
+          <button onClick={openNew} className="bg-foreground text-white text-sm font-semibold px-6 py-3 hover:bg-foreground/90 transition-colors">+ Adaugă testimonial</button>
         </div>
 
-        {/* Form Modal */}
         {showForm && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
             <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto p-8 rounded-lg">
               <h2 className="font-serif text-2xl font-medium text-foreground mb-6">
                 {editing ? "Editează testimonial" : "Adaugă testimonial nou"}
               </h2>
+
+              <LanguageTabs active={activeLocale} onChange={setActiveLocale} />
+              {activeLocale !== "ro" && (
+                <p className="text-xs text-muted-foreground mb-4 -mt-4">
+                  ✏️ Editați traducerea. Câmpurile goale vor folosi textul în română.
+                </p>
+              )}
+
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Numele pacientului *
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData((p) => ({ ...p, name: e.target.value }))
-                    }
-                    className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none"
-                  />
+                  <label className="block text-sm font-medium text-foreground mb-2">Numele pacientului *</label>
+                  <input type="text" required={activeLocale === "ro"} value={formData.name} onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))} className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none" disabled={activeLocale !== "ro"} />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Testimonialul *
-                  </label>
-                  <textarea
-                    required
-                    rows={5}
-                    value={formData.content}
-                    onChange={(e) =>
-                      setFormData((p) => ({ ...p, content: e.target.value }))
-                    }
-                    className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none resize-none"
-                  />
+                  <label className="block text-sm font-medium text-foreground mb-2">Testimonialul *</label>
+                  <textarea required={activeLocale === "ro"} rows={5} value={getField("content")} onChange={(e) => setField("content", e.target.value)} placeholder={activeLocale !== "ro" ? formData.content : undefined} className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none resize-none" />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-foreground mb-2">
-                    Serviciul asociat (opțional)
-                  </label>
-                  <select
-                    value={formData.service}
-                    onChange={(e) =>
-                      setFormData((p) => ({ ...p, service: e.target.value }))
-                    }
-                    className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none"
-                  >
-                    <option value="">Fără serviciu asociat</option>
-                    <option value="Implantologie">Implantologie</option>
-                    <option value="Ortodonție">Ortodonție</option>
-                    <option value="Estetică dentară">Estetică dentară</option>
-                    <option value="Chirurgie orală">Chirurgie orală</option>
-                    <option value="Protetică dentară">Protetică dentară</option>
-                    <option value="Endodonție">Endodonție</option>
-                    <option value="Parodontologie">Parodontologie</option>
-                    <option value="Pedodonție">Pedodonție</option>
-                  </select>
+                  <label className="block text-sm font-medium text-foreground mb-2">Serviciul asociat (opțional)</label>
+                  {activeLocale === "ro" ? (
+                    <select value={formData.service} onChange={(e) => setFormData((p) => ({ ...p, service: e.target.value }))} className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none">
+                      <option value="">Fără serviciu asociat</option>
+                      <option value="Implantologie">Implantologie</option>
+                      <option value="Ortodonție">Ortodonție</option>
+                      <option value="Estetică dentară">Estetică dentară</option>
+                      <option value="Chirurgie orală">Chirurgie orală</option>
+                      <option value="Protetică dentară">Protetică dentară</option>
+                      <option value="Endodonție">Endodonție</option>
+                      <option value="Parodontologie">Parodontologie</option>
+                      <option value="Pedodonție">Pedodonție</option>
+                    </select>
+                  ) : (
+                    <input type="text" value={getField("service")} onChange={(e) => setField("service", e.target.value)} placeholder={formData.service || "Traducere serviciu..."} className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none" />
+                  )}
                 </div>
 
-                <div className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    id="isActive"
-                    checked={formData.isActive}
-                    onChange={(e) =>
-                      setFormData((p) => ({
-                        ...p,
-                        isActive: e.target.checked,
-                      }))
-                    }
-                    className="w-4 h-4"
-                  />
-                  <label htmlFor="isActive" className="text-sm text-foreground">
-                    Activ (vizibil pe site)
-                  </label>
-                </div>
+                {activeLocale === "ro" && (
+                  <div className="flex items-center gap-3">
+                    <input type="checkbox" id="isActive" checked={formData.isActive} onChange={(e) => setFormData((p) => ({ ...p, isActive: e.target.checked }))} className="w-4 h-4" />
+                    <label htmlFor="isActive" className="text-sm text-foreground">Activ (vizibil pe site)</label>
+                  </div>
+                )}
 
                 <div className="flex justify-end gap-4 pt-4 border-t border-border">
-                  <button
-                    type="button"
-                    onClick={() => setShowForm(false)}
-                    className="px-6 py-3 text-sm font-semibold border border-border hover:bg-muted transition-colors"
-                  >
-                    Anulează
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className="bg-foreground text-white text-sm font-semibold px-6 py-3 hover:bg-foreground/90 transition-colors disabled:opacity-50"
-                  >
+                  <button type="button" onClick={() => setShowForm(false)} className="px-6 py-3 text-sm font-semibold border border-border hover:bg-muted transition-colors">Anulează</button>
+                  <button type="submit" disabled={saving} className="bg-foreground text-white text-sm font-semibold px-6 py-3 hover:bg-foreground/90 transition-colors disabled:opacity-50">
                     {saving ? "Se salvează..." : "Salvează"}
                   </button>
                 </div>
@@ -244,68 +225,30 @@ export default function AdminTestimonialsPage() {
           </div>
         )}
 
-        {/* Testimonials List */}
         {loading ? (
-          <div className="text-center py-12 text-muted-foreground">
-            Se încarcă...
-          </div>
+          <div className="text-center py-12 text-muted-foreground">Se încarcă...</div>
         ) : testimonials.length === 0 ? (
           <div className="text-center py-12 bg-white border border-border">
-            <p className="text-muted-foreground mb-4">
-              Nu există testimoniale.
-            </p>
-            <button
-              onClick={openNew}
-              className="text-accent hover:text-accent/80 text-sm font-semibold"
-            >
-              Adaugă primul testimonial
-            </button>
+            <p className="text-muted-foreground mb-4">Nu există testimoniale.</p>
+            <button onClick={openNew} className="text-accent hover:text-accent/80 text-sm font-semibold">Adaugă primul testimonial</button>
           </div>
         ) : (
           <div className="space-y-4">
             {testimonials.map((t) => (
-              <div
-                key={t.id}
-                className={`bg-white border border-border p-6 ${!t.isActive ? "opacity-50" : ""}`}
-              >
+              <div key={t.id} className={`bg-white border border-border p-6 ${!t.isActive ? "opacity-50" : ""}`}>
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-serif text-lg font-medium text-foreground">
-                        {t.name}
-                      </h3>
-                      {t.service && (
-                        <span className="text-xs bg-accent/10 text-accent px-2 py-0.5 rounded-full">
-                          {t.service}
-                        </span>
-                      )}
-                      <span className="text-xs text-muted-foreground">
-                        {formatDate(t.createdAt)}
-                      </span>
+                      <h3 className="font-serif text-lg font-medium text-foreground">{t.name}</h3>
+                      {t.service && <span className="text-xs bg-accent/10 text-accent px-2 py-0.5 rounded-full">{t.service}</span>}
+                      <span className="text-xs text-muted-foreground">{formatDate(t.createdAt)}</span>
                     </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      &ldquo;{t.content}&rdquo;
-                    </p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">&ldquo;{t.content}&rdquo;</p>
                   </div>
                   <div className="flex gap-3 ml-6 flex-shrink-0">
-                    <button
-                      onClick={() => openEdit(t)}
-                      className="text-xs text-accent hover:text-accent/80 font-semibold"
-                    >
-                      Editează
-                    </button>
-                    <button
-                      onClick={() => toggleActive(t)}
-                      className="text-xs text-muted-foreground hover:text-foreground font-semibold"
-                    >
-                      {t.isActive ? "Dezactivează" : "Activează"}
-                    </button>
-                    <button
-                      onClick={() => deleteTestimonial(t.id)}
-                      className="text-xs text-red-600 hover:text-red-800 font-semibold"
-                    >
-                      Șterge
-                    </button>
+                    <button onClick={() => openEdit(t)} className="text-xs text-accent hover:text-accent/80 font-semibold">Editează</button>
+                    <button onClick={() => toggleActive(t)} className="text-xs text-muted-foreground hover:text-foreground font-semibold">{t.isActive ? "Dezactivează" : "Activează"}</button>
+                    <button onClick={() => deleteTestimonial(t.id)} className="text-xs text-red-600 hover:text-red-800 font-semibold">Șterge</button>
                   </div>
                 </div>
               </div>

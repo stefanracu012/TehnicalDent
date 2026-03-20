@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { sanitizeObject, validateNoInjection } from "@/lib/security";
 
@@ -60,9 +61,11 @@ export async function POST(request: Request) {
         author: body.author || "TechnicalDent",
         isPublished: body.isPublished ?? false,
         publishedAt: body.isPublished ? new Date() : null,
+        translations: body.translations || null,
       },
     });
 
+    revalidatePath("/", "layout");
     return NextResponse.json(post, { status: 201 });
   } catch (error) {
     console.error("Error creating blog post:", error);

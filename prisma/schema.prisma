@@ -11,54 +11,58 @@ datasource db {
 }
 
 model Service {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  slug        String   @unique
-  title       String
-  shortDesc   String
-  description String
-  overview    String
-  process     String
-  recovery    String
-  benefits    String[]
-  images      String[]
-  category    String
-  order       Int      @default(0)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  slug         String   @unique
+  title        String
+  shortDesc    String
+  description  String
+  overview     String
+  process      String
+  recovery     String
+  benefits     String[]
+  images       String[]
+  category     String
+  order        Int      @default(0)
+  isActive     Boolean  @default(true)
+  translations Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model TeamMember {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  name        String
-  role        String
-  description String
-  image       String
-  order       Int      @default(0)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  role         String
+  description  String
+  image        String
+  order        Int      @default(0)
+  isActive     Boolean  @default(true)
+  translations Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model Testimonial {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  name      String
-  content   String
-  service   String?
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  name         String
+  content      String
+  service      String?
+  isActive     Boolean  @default(true)
+  translations Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model GalleryImage {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  url       String
-  alt       String
-  category  String
-  order     Int      @default(0)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  url          String
+  alt          String
+  category     String
+  order        Int      @default(0)
+  isActive     Boolean  @default(true)
+  translations Json?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model ContactSubmission {
@@ -79,16 +83,17 @@ model SiteSettings {
 }
 
 model BlogPost {
-  id          String   @id @default(auto()) @map("_id") @db.ObjectId
-  slug        String   @unique
-  title       String
-  excerpt     String
-  content     String
-  coverImage  String
-  category    String
-  tags        String[]
-  author      String   @default("TechnicalDent")
-  isPublished Boolean  @default(false)
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  slug         String   @unique
+  title        String
+  excerpt      String
+  content      String
+  coverImage   String
+  category     String
+  tags         String[]
+  author       String   @default("TechnicalDent")
+  isPublished  Boolean  @default(false)
+  translations Json?
   publishedAt DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
 import { secureFetch } from "@/lib/csrf-client";
 import ImageUpload from "@/components/admin/ImageUpload";
+import LanguageTabs from "@/components/admin/LanguageTabs";
+
+type Translations = Record<string, Record<string, string | string[]>>;
 
 interface ServiceForm {
   title: string;
@@ -31,6 +34,8 @@ export default function EditServicePage({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [serviceId, setServiceId] = useState("");
+  const [activeLocale, setActiveLocale] = useState("ro");
+  const [translations, setTranslations] = useState<Translations>({});
   const [formData, setFormData] = useState<ServiceForm>({
     title: "",
     slug: "",
@@ -45,6 +50,46 @@ export default function EditServicePage({
     order: 0,
     isActive: true,
   });
+
+  const getField = (field: string): string => {
+    if (activeLocale === "ro")
+      return ((formData as unknown as Record<string, unknown>)[field] as string) || "";
+    return (translations[activeLocale]?.[field] as string) || "";
+  };
+
+  const setField = (field: string, value: string) => {
+    if (activeLocale === "ro") {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+    } else {
+      setTranslations((prev) => ({
+        ...prev,
+        [activeLocale]: { ...(prev[activeLocale] || {}), [field]: value },
+      }));
+    }
+  };
+
+  const getBenefits = (): string[] => {
+    if (activeLocale === "ro") return formData.benefits;
+    const t = translations[activeLocale]?.benefits;
+    if (Array.isArray(t) && t.length > 0) return t as string[];
+    return formData.benefits.map(() => "");
+  };
+
+  const setBenefit = (index: number, value: string) => {
+    if (activeLocale === "ro") {
+      setFormData((prev) => ({
+        ...prev,
+        benefits: prev.benefits.map((b, i) => (i === index ? value : b)),
+      }));
+    } else {
+      const current = getBenefits();
+      const updated = current.map((b, i) => (i === index ? value : b));
+      setTranslations((prev) => ({
+        ...prev,
+        [activeLocale]: { ...(prev[activeLocale] || {}), benefits: updated },
+      }));
+    }
+  };
 
   useEffect(() => {
     fetchService();
@@ -76,6 +121,9 @@ export default function EditServicePage({
         order: service.order,
         isActive: service.isActive,
       });
+      if (service.translations) {
+        setTranslations(service.translations);
+      }
     } catch (error) {
       console.error("Error:", error);
       alert("Eroare la încărcarea serviciului");
@@ -84,24 +132,7 @@ export default function EditServicePage({
     }
   };
 
-  const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >,
-  ) => {
-    const { name, value, type } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]:
-        type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
-    }));
-  };
-
-  const handleArrayChange = (
-    field: "benefits" | "images",
-    index: number,
-    value: string,
-  ) => {
+  const handleArrayChange = (field: "images", index: number, value: string) => {
     setFormData((prev) => ({
       ...prev,
       [field]: prev[field].map((item, i) => (i === index ? value : item)),
@@ -109,24 +140,68 @@ export default function EditServicePage({
   };
 
   const addArrayItem = (field: "benefits" | "images") => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: [...prev[field], ""],
-    }));
+    if (field === "benefits") {
+      setFormData((prev) => ({ ...prev, benefits: [...prev.benefits, ""] }));
+      setTranslations((prev) => {
+        const updated = { ...prev };
+        for (const loc of ["en", "ru", "it"]) {
+          if (updated[loc]?.benefits && Array.isArray(updated[loc].benefits)) {
+            updated[loc] = {
+              ...updated[loc],
+              benefits: [...(updated[loc].benefits as string[]), ""],
+            };
+          }
+        }
+        return updated;
+      });
+    } else {
+      setFormData((prev) => ({ ...prev, [field]: [...prev[field], ""] }));
+    }
   };
 
   const removeArrayItem = (field: "benefits" | "images", index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: prev[field].filter((_, i) => i !== index),
-    }));
+    if (field === "benefits") {
+      setFormData((prev) => ({
+        ...prev,
+        benefits: prev.benefits.filter((_, i) => i !== index),
+      }));
+      setTranslations((prev) => {
+        const updated = { ...prev };
+        for (const loc of ["en", "ru", "it"]) {
+          if (updated[loc]?.benefits && Array.isArray(updated[loc].benefits)) {
+            updated[loc] = {
+              ...updated[loc],
+              benefits: (updated[loc].benefits as string[]).filter((_, i) => i !== index),
+            };
+          }
+        }
+        return updated;
+      });
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [field]: prev[field].filter((_, i) => i !== index),
+      }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-
     try {
+      const cleanTranslations: Translations = {};
+      for (const [loc, fields] of Object.entries(translations)) {
+        const cleaned: Record<string, string | string[]> = {};
+        for (const [key, val] of Object.entries(fields)) {
+          if (Array.isArray(val)) {
+            if (val.some((v) => typeof v === "string" && v.trim())) cleaned[key] = val;
+          } else if (typeof val === "string" && val.trim()) {
+            cleaned[key] = val;
+          }
+        }
+        if (Object.keys(cleaned).length > 0) cleanTranslations[loc] = cleaned;
+      }
+
       const response = await secureFetch(`/api/admin/services/${serviceId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -134,9 +209,9 @@ export default function EditServicePage({
           ...formData,
           benefits: formData.benefits.filter((b) => b.trim()),
           images: formData.images.filter((i) => i.trim()),
+          translations: Object.keys(cleanTranslations).length > 0 ? cleanTranslations : null,
         }),
       });
-
       if (response.ok) {
         router.push("/admin/servicii");
       } else {
@@ -158,253 +233,127 @@ export default function EditServicePage({
     );
   }
 
+  const benefits = getBenefits();
+
   return (
     <div className="min-h-screen bg-muted pt-24">
       <div className="mx-auto max-w-4xl px-6 lg:px-8 py-12">
-        <div className="mb-12">
-          <h1 className="font-serif text-3xl font-medium text-foreground">
-            Editează serviciu
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            Modifică informațiile pentru „{formData.title}"
-          </p>
+        <div className="mb-8">
+          <h1 className="font-serif text-3xl font-medium text-foreground">Editează serviciu</h1>
+          <p className="mt-2 text-muted-foreground">Modifică informațiile pentru „{formData.title}"</p>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white border border-border p-8"
-        >
+        <LanguageTabs active={activeLocale} onChange={setActiveLocale} />
+        {activeLocale !== "ro" && (
+          <p className="text-xs text-muted-foreground mb-6 -mt-4">
+            ✏️ Editați traducerea. Câmpurile goale vor folosi textul în română.
+          </p>
+        )}
+
+        <form onSubmit={handleSubmit} className="bg-white border border-border p-8">
           <div className="space-y-8">
-            {/* Basic Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Titlu *
-                </label>
-                <input
-                  type="text"
-                  name="title"
-                  required
-                  value={formData.title}
-                  onChange={handleChange}
-                  className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none"
-                />
+                <label className="block text-sm font-medium text-foreground mb-2">Titlu *</label>
+                <input type="text" required={activeLocale === "ro"} value={getField("title")} onChange={(e) => setField("title", e.target.value)} placeholder={activeLocale !== "ro" ? formData.title : undefined} className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Slug (URL) *
-                </label>
-                <input
-                  type="text"
-                  name="slug"
-                  required
-                  value={formData.slug}
-                  onChange={handleChange}
-                  className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none bg-muted"
-                  readOnly
-                />
+                <label className="block text-sm font-medium text-foreground mb-2">Slug (URL) *</label>
+                <input type="text" value={formData.slug} className="w-full border border-border px-4 py-3 bg-muted focus:outline-none" readOnly />
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Categorie *
-                </label>
-                <select
-                  name="category"
-                  required
-                  value={formData.category}
-                  onChange={handleChange}
-                  className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none"
-                >
-                  <option value="">Selectează categoria</option>
-                  <option value="Chirurgie">Chirurgie</option>
-                  <option value="Ortodonție">Ortodonție</option>
-                  <option value="Estetică">Estetică</option>
-                  <option value="Protetică">Protetică</option>
-                  <option value="Tratamente">Tratamente</option>
-                  <option value="Specialități">Specialități</option>
-                </select>
+                <label className="block text-sm font-medium text-foreground mb-2">Categorie *</label>
+                {activeLocale === "ro" ? (
+                  <select required value={formData.category} onChange={(e) => setFormData((p) => ({ ...p, category: e.target.value }))} className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none">
+                    <option value="">Selectează categoria</option>
+                    <option value="Chirurgie">Chirurgie</option>
+                    <option value="Ortodonție">Ortodonție</option>
+                    <option value="Estetică">Estetică</option>
+                    <option value="Protetică">Protetică</option>
+                    <option value="Tratamente">Tratamente</option>
+                    <option value="Specialități">Specialități</option>
+                  </select>
+                ) : (
+                  <input type="text" value={getField("category")} onChange={(e) => setField("category", e.target.value)} placeholder={formData.category} className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none" />
+                )}
               </div>
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Ordine afișare
-                </label>
-                <input
-                  type="number"
-                  name="order"
-                  value={formData.order}
-                  onChange={handleChange}
-                  className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none"
-                />
+                <label className="block text-sm font-medium text-foreground mb-2">Ordine afișare</label>
+                <input type="number" value={formData.order} onChange={(e) => setFormData((p) => ({ ...p, order: parseInt(e.target.value) || 0 }))} className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none" disabled={activeLocale !== "ro"} />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Descriere scurtă *
-              </label>
-              <textarea
-                name="shortDesc"
-                required
-                rows={2}
-                value={formData.shortDesc}
-                onChange={handleChange}
-                className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none resize-none"
-              />
+              <label className="block text-sm font-medium text-foreground mb-2">Descriere scurtă *</label>
+              <textarea required={activeLocale === "ro"} rows={2} value={getField("shortDesc")} onChange={(e) => setField("shortDesc", e.target.value)} placeholder={activeLocale !== "ro" ? formData.shortDesc : undefined} className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none resize-none" />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Descriere completă *
-              </label>
-              <textarea
-                name="description"
-                required
-                rows={4}
-                value={formData.description}
-                onChange={handleChange}
-                className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none resize-none"
-              />
+              <label className="block text-sm font-medium text-foreground mb-2">Descriere completă *</label>
+              <textarea required={activeLocale === "ro"} rows={4} value={getField("description")} onChange={(e) => setField("description", e.target.value)} placeholder={activeLocale !== "ro" ? formData.description : undefined} className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none resize-none" />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Prezentare generală
-              </label>
-              <textarea
-                name="overview"
-                rows={4}
-                value={formData.overview}
-                onChange={handleChange}
-                className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none resize-none"
-              />
+              <label className="block text-sm font-medium text-foreground mb-2">Prezentare generală</label>
+              <textarea rows={4} value={getField("overview")} onChange={(e) => setField("overview", e.target.value)} placeholder={activeLocale !== "ro" ? formData.overview : undefined} className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none resize-none" />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Procesul de tratament
-              </label>
-              <textarea
-                name="process"
-                rows={4}
-                value={formData.process}
-                onChange={handleChange}
-                className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none resize-none"
-              />
+              <label className="block text-sm font-medium text-foreground mb-2">Procesul de tratament</label>
+              <textarea rows={4} value={getField("process")} onChange={(e) => setField("process", e.target.value)} placeholder={activeLocale !== "ro" ? formData.process : undefined} className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none resize-none" />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Recuperare și îngrijire
-              </label>
-              <textarea
-                name="recovery"
-                rows={3}
-                value={formData.recovery}
-                onChange={handleChange}
-                className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none resize-none"
-              />
+              <label className="block text-sm font-medium text-foreground mb-2">Recuperare și îngrijire</label>
+              <textarea rows={3} value={getField("recovery")} onChange={(e) => setField("recovery", e.target.value)} placeholder={activeLocale !== "ro" ? formData.recovery : undefined} className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none resize-none" />
             </div>
 
-            {/* Benefits */}
             <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Beneficii
-              </label>
-              {formData.benefits.map((benefit, index) => (
+              <label className="block text-sm font-medium text-foreground mb-2">Beneficii</label>
+              {benefits.map((benefit, index) => (
                 <div key={index} className="flex gap-2 mb-2">
-                  <input
-                    type="text"
-                    value={benefit}
-                    onChange={(e) =>
-                      handleArrayChange("benefits", index, e.target.value)
-                    }
-                    className="flex-1 border border-border px-4 py-2 focus:border-foreground focus:outline-none"
-                    placeholder="Beneficiu..."
-                  />
-                  <button
-                    type="button"
-                    onClick={() => removeArrayItem("benefits", index)}
-                    className="px-3 py-2 text-red-600 hover:bg-red-50"
-                  >
-                    ×
-                  </button>
+                  <input type="text" value={benefit} onChange={(e) => setBenefit(index, e.target.value)} className="flex-1 border border-border px-4 py-2 focus:border-foreground focus:outline-none" placeholder={activeLocale !== "ro" ? formData.benefits[index] || "Traducere beneficiu..." : "Beneficiu..."} />
+                  {activeLocale === "ro" && (
+                    <button type="button" onClick={() => removeArrayItem("benefits", index)} className="px-3 py-2 text-red-600 hover:bg-red-50">×</button>
+                  )}
                 </div>
               ))}
-              <button
-                type="button"
-                onClick={() => addArrayItem("benefits")}
-                className="text-sm text-accent hover:text-accent/80"
-              >
-                + Adaugă beneficiu
-              </button>
+              {activeLocale === "ro" && (
+                <button type="button" onClick={() => addArrayItem("benefits")} className="text-sm text-accent hover:text-accent/80">+ Adaugă beneficiu</button>
+              )}
             </div>
 
-            {/* Images with upload */}
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-4">
-                Imagini serviciu
-              </label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {formData.images.map((image, index) => (
-                  <div key={index} className="relative">
-                    <ImageUpload
-                      value={image}
-                      onChange={(url) =>
-                        handleArrayChange("images", index, url)
-                      }
-                      folder="services"
-                      label=""
-                    />
-                    {formData.images.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeArrayItem("images", index)}
-                        className="absolute top-1 right-1 z-10 w-6 h-6 bg-red-600 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-700"
-                      >
-                        ×
-                      </button>
-                    )}
-                  </div>
-                ))}
-                <button
-                  type="button"
-                  onClick={() => addArrayItem("images")}
-                  className="border-2 border-dashed border-border rounded-lg h-48 flex flex-col items-center justify-center hover:border-foreground/40 transition-colors"
-                >
-                  <span className="text-2xl text-muted-foreground/40">+</span>
-                  <span className="text-xs text-muted-foreground mt-1">
-                    Adaugă imagine
-                  </span>
-                </button>
+            {activeLocale === "ro" && (
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-4">Imagini serviciu</label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {formData.images.map((image, index) => (
+                    <div key={index} className="relative">
+                      <ImageUpload value={image} onChange={(url) => handleArrayChange("images", index, url)} folder="services" label="" />
+                      {formData.images.length > 1 && (
+                        <button type="button" onClick={() => removeArrayItem("images", index)} className="absolute top-1 right-1 z-10 w-6 h-6 bg-red-600 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-700">×</button>
+                      )}
+                    </div>
+                  ))}
+                  <button type="button" onClick={() => addArrayItem("images")} className="border-2 border-dashed border-border rounded-lg h-48 flex flex-col items-center justify-center hover:border-foreground/40 transition-colors">
+                    <span className="text-2xl text-muted-foreground/40">+</span>
+                    <span className="text-xs text-muted-foreground mt-1">Adaugă imagine</span>
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
 
-            {/* Active toggle */}
             <div className="flex items-center gap-3">
-              <input
-                type="checkbox"
-                id="isActive"
-                name="isActive"
-                checked={formData.isActive}
-                onChange={handleChange}
-                className="w-4 h-4"
-              />
-              <label htmlFor="isActive" className="text-sm text-foreground">
-                Serviciu activ (vizibil pe site)
-              </label>
+              <input type="checkbox" id="isActive" checked={formData.isActive} onChange={(e) => setFormData((p) => ({ ...p, isActive: e.target.checked }))} className="w-4 h-4" disabled={activeLocale !== "ro"} />
+              <label htmlFor="isActive" className="text-sm text-foreground">Serviciu activ (vizibil pe site)</label>
             </div>
 
-            {/* Actions */}
             <div className="flex justify-end gap-4 pt-6 border-t border-border">
-              <Button href="/admin/servicii" variant="outline">
-                Anulează
-              </Button>
-              <Button type="submit" disabled={saving}>
-                {saving ? "Se salvează..." : "Salvează modificările"}
-              </Button>
+              <Button href="/admin/servicii" variant="outline">Anulează</Button>
+              <Button type="submit" disabled={saving}>{saving ? "Se salvează..." : "Salvează modificările"}</Button>
             </div>
           </div>
         </form>

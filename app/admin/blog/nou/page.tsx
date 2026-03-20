@@ -4,6 +4,9 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import ImageUpload from "@/components/admin/ImageUpload";
 import { secureFetch } from "@/lib/csrf-client";
+import LanguageTabs from "@/components/admin/LanguageTabs";
+
+type Translations = Record<string, Record<string, string>>;
 
 function generateSlug(title: string): string {
   return title
@@ -28,6 +31,8 @@ const categories = [
 export default function NewBlogPostPage() {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
+  const [activeLocale, setActiveLocale] = useState("ro");
+  const [translations, setTranslations] = useState<Translations>({});
   const [formData, setFormData] = useState({
     title: "",
     slug: "",
@@ -51,6 +56,27 @@ export default function NewBlogPostPage() {
     }));
   };
 
+  const getField = (field: string): string => {
+    if (activeLocale === "ro")
+      return ((formData as unknown as Record<string, unknown>)[field] as string) || "";
+    return (translations[activeLocale]?.[field] as string) || "";
+  };
+
+  const setField = (field: string, value: string) => {
+    if (activeLocale === "ro") {
+      if (field === "title") {
+        handleTitleChange(value);
+        return;
+      }
+      setFormData((prev) => ({ ...prev, [field]: value }));
+    } else {
+      setTranslations((prev) => ({
+        ...prev,
+        [activeLocale]: { ...(prev[activeLocale] || {}), [field]: value },
+      }));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title || !formData.content) {
@@ -60,6 +86,15 @@ export default function NewBlogPostPage() {
     setSaving(true);
 
     try {
+      const cleanTranslations: Translations = {};
+      for (const [loc, fields] of Object.entries(translations)) {
+        const cleaned: Record<string, string> = {};
+        for (const [key, val] of Object.entries(fields)) {
+          if (typeof val === "string" && val.trim()) cleaned[key] = val;
+        }
+        if (Object.keys(cleaned).length > 0) cleanTranslations[loc] = cleaned;
+      }
+
       const res = await secureFetch("/api/admin/blog", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -71,6 +106,10 @@ export default function NewBlogPostPage() {
                 .map((t) => t.trim())
                 .filter(Boolean)
             : [],
+          translations:
+            Object.keys(cleanTranslations).length > 0
+              ? cleanTranslations
+              : null,
         }),
       });
 
@@ -99,171 +138,203 @@ export default function NewBlogPostPage() {
           </p>
         </div>
 
-        <form
-          onSubmit={handleSubmit}
-          className="bg-white border border-border p-8 space-y-6"
-        >
-          {/* Cover Image */}
-          <ImageUpload
-            value={formData.coverImage}
-            onChange={(url) => setFormData((p) => ({ ...p, coverImage: url }))}
-            folder="blog"
-            label="Imagine de copertă"
-          />
+        <div className="bg-white border border-border p-8">
+          <LanguageTabs active={activeLocale} onChange={setActiveLocale} />
+          {activeLocale !== "ro" && (
+            <p className="text-xs text-muted-foreground mb-4 -mt-4">
+              ✏️ Editați traducerea. Câmpurile goale vor folosi textul în
+              română.
+            </p>
+          )}
 
-          {/* Title */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Titlu *
-            </label>
-            <input
-              type="text"
-              required
-              value={formData.title}
-              onChange={(e) => handleTitleChange(e.target.value)}
-              placeholder="Titlul articolului"
-              className="w-full border border-border px-4 py-3 text-lg focus:border-foreground focus:outline-none"
-            />
-          </div>
-
-          {/* Slug */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Slug (URL)
-            </label>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">/blog/</span>
-              <input
-                type="text"
-                required
-                value={formData.slug}
-                onChange={(e) =>
-                  setFormData((p) => ({ ...p, slug: e.target.value }))
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Cover Image - RO only */}
+            {activeLocale === "ro" && (
+              <ImageUpload
+                value={formData.coverImage}
+                onChange={(url) =>
+                  setFormData((p) => ({ ...p, coverImage: url }))
                 }
-                placeholder="titlul-articolului"
-                className="flex-1 border border-border px-4 py-3 focus:border-foreground focus:outline-none"
+                folder="blog"
+                label="Imagine de copertă"
               />
-            </div>
-          </div>
+            )}
 
-          {/* Excerpt */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Descriere scurtă (excerpt)
-            </label>
-            <textarea
-              value={formData.excerpt}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, excerpt: e.target.value }))
-              }
-              rows={2}
-              placeholder="O scurtă descriere a articolului (pentru listare și SEO)"
-              className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none resize-vertical"
-            />
-          </div>
-
-          {/* Content */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Conținut * (Markdown suportat)
-            </label>
-            <textarea
-              required
-              value={formData.content}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, content: e.target.value }))
-              }
-              rows={20}
-              placeholder={`Scrieți conținutul articolului aici...\n\nPuteți folosi Markdown:\n# Titlu\n## Subtitlu\n**text bold**\n*text italic*\n- listă\n1. listă numerotată`}
-              className="w-full border border-border px-4 py-3 font-mono text-sm focus:border-foreground focus:outline-none resize-vertical"
-            />
-          </div>
-
-          {/* Category + Author */}
-          <div className="grid grid-cols-2 gap-6">
+            {/* Title */}
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Categorie
+                Titlu *
               </label>
-              <select
-                value={formData.category}
-                onChange={(e) =>
-                  setFormData((p) => ({ ...p, category: e.target.value }))
+              <input
+                type="text"
+                required={activeLocale === "ro"}
+                value={getField("title")}
+                onChange={(e) => setField("title", e.target.value)}
+                placeholder={
+                  activeLocale !== "ro"
+                    ? formData.title
+                    : "Titlul articolului"
                 }
-                className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none"
+                className="w-full border border-border px-4 py-3 text-lg focus:border-foreground focus:outline-none"
+              />
+            </div>
+
+            {/* Slug - RO only */}
+            {activeLocale === "ro" && (
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Slug (URL)
+                </label>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">/blog/</span>
+                  <input
+                    type="text"
+                    required
+                    value={formData.slug}
+                    onChange={(e) =>
+                      setFormData((p) => ({ ...p, slug: e.target.value }))
+                    }
+                    placeholder="titlul-articolului"
+                    className="flex-1 border border-border px-4 py-3 focus:border-foreground focus:outline-none"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Excerpt */}
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Descriere scurtă (excerpt)
+              </label>
+              <textarea
+                value={getField("excerpt")}
+                onChange={(e) => setField("excerpt", e.target.value)}
+                rows={2}
+                placeholder={
+                  activeLocale !== "ro"
+                    ? formData.excerpt
+                    : "O scurtă descriere a articolului (pentru listare și SEO)"
+                }
+                className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none resize-vertical"
+              />
+            </div>
+
+            {/* Content */}
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                Conținut * (Markdown suportat)
+              </label>
+              <textarea
+                required={activeLocale === "ro"}
+                value={getField("content")}
+                onChange={(e) => setField("content", e.target.value)}
+                rows={20}
+                placeholder={
+                  activeLocale !== "ro"
+                    ? "Traduceți conținutul articolului..."
+                    : `Scrieți conținutul articolului aici...\n\nPuteți folosi Markdown:\n# Titlu\n## Subtitlu\n**text bold**\n*text italic*\n- listă\n1. listă numerotată`
+                }
+                className="w-full border border-border px-4 py-3 font-mono text-sm focus:border-foreground focus:outline-none resize-vertical"
+              />
+            </div>
+
+            {/* Category + Author + Tags + Publish - RO only */}
+            {activeLocale === "ro" && (
+              <>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Categorie
+                    </label>
+                    <select
+                      value={formData.category}
+                      onChange={(e) =>
+                        setFormData((p) => ({
+                          ...p,
+                          category: e.target.value,
+                        }))
+                      }
+                      className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none"
+                    >
+                      {categories.map((cat) => (
+                        <option key={cat.slug} value={cat.slug}>
+                          {cat.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground mb-2">
+                      Autor
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.author}
+                      onChange={(e) =>
+                        setFormData((p) => ({ ...p, author: e.target.value }))
+                      }
+                      className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Taguri (separate prin virgulă)
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.tags}
+                    onChange={(e) =>
+                      setFormData((p) => ({ ...p, tags: e.target.value }))
+                    }
+                    placeholder="stomatologie, igienă, sfaturi"
+                    className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none"
+                  />
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    id="isPublished"
+                    checked={formData.isPublished}
+                    onChange={(e) =>
+                      setFormData((p) => ({
+                        ...p,
+                        isPublished: e.target.checked,
+                      }))
+                    }
+                    className="w-4 h-4"
+                  />
+                  <label
+                    htmlFor="isPublished"
+                    className="text-sm text-foreground"
+                  >
+                    Publică imediat
+                  </label>
+                </div>
+              </>
+            )}
+
+            {/* Actions */}
+            <div className="flex justify-end gap-4 pt-6 border-t border-border">
+              <button
+                type="button"
+                onClick={() => router.push("/admin/blog")}
+                className="px-6 py-3 text-sm font-semibold border border-border hover:bg-muted transition-colors"
               >
-                {categories.map((cat) => (
-                  <option key={cat.slug} value={cat.slug}>
-                    {cat.name}
-                  </option>
-                ))}
-              </select>
+                Anulează
+              </button>
+              <button
+                type="submit"
+                disabled={saving}
+                className="bg-foreground text-white text-sm font-semibold px-6 py-3 hover:bg-foreground/90 transition-colors disabled:opacity-50"
+              >
+                {saving ? "Se salvează..." : "Salvează articolul"}
+              </button>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Autor
-              </label>
-              <input
-                type="text"
-                value={formData.author}
-                onChange={(e) =>
-                  setFormData((p) => ({ ...p, author: e.target.value }))
-                }
-                className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none"
-              />
-            </div>
-          </div>
-
-          {/* Tags */}
-          <div>
-            <label className="block text-sm font-medium text-foreground mb-2">
-              Taguri (separate prin virgulă)
-            </label>
-            <input
-              type="text"
-              value={formData.tags}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, tags: e.target.value }))
-              }
-              placeholder="stomatologie, igienă, sfaturi"
-              className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none"
-            />
-          </div>
-
-          {/* Publish Checkbox */}
-          <div className="flex items-center gap-3">
-            <input
-              type="checkbox"
-              id="isPublished"
-              checked={formData.isPublished}
-              onChange={(e) =>
-                setFormData((p) => ({ ...p, isPublished: e.target.checked }))
-              }
-              className="w-4 h-4"
-            />
-            <label htmlFor="isPublished" className="text-sm text-foreground">
-              Publică imediat
-            </label>
-          </div>
-
-          {/* Actions */}
-          <div className="flex justify-end gap-4 pt-6 border-t border-border">
-            <button
-              type="button"
-              onClick={() => router.push("/admin/blog")}
-              className="px-6 py-3 text-sm font-semibold border border-border hover:bg-muted transition-colors"
-            >
-              Anulează
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="bg-foreground text-white text-sm font-semibold px-6 py-3 hover:bg-foreground/90 transition-colors disabled:opacity-50"
-            >
-              {saving ? "Se salvează..." : "Salvează articolul"}
-            </button>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );

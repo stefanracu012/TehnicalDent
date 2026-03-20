@@ -6,6 +6,7 @@ import ServiceBentoGrid from "@/components/ServiceBentoGrid";
 import TestimonialsCarousel from "@/components/TestimonialsCarousel";
 import GalleryPreview from "@/components/GalleryPreview";
 import { getServices, getTestimonials } from "@/lib/data";
+import { localizeService, localizeTestimonial } from "@/lib/localize";
 import AboutPreview from "@/components/AboutPreview";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
@@ -17,8 +18,8 @@ export default async function HomePage({
   const { locale } = await params;
   setRequestLocale(locale);
 
-  const services = await getServices();
-  const testimonials = await getTestimonials();
+  const services = (await getServices()).map((s) => localizeService(s, locale));
+  const testimonials = (await getTestimonials()).map((t) => localizeTestimonial(t, locale));
   const t = await getTranslations("Home");
 
   return (

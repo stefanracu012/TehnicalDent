@@ -1,4 +1,5 @@
 import prisma from "./prisma";
+import { localizeBlogPost, type TranslationsMap } from "./localize";
 
 export interface BlogPost {
   slug: string;
@@ -245,37 +246,41 @@ function dbPostToBlogPost(dbPost: {
   author: string;
   publishedAt: Date | null;
   createdAt: Date;
-}): BlogPost {
-  const paragraphs = dbPost.content
+  translations?: TranslationsMap | null;
+}, locale?: string): BlogPost {
+  // Localize before transforming if locale provided
+  const post = locale ? localizeBlogPost(dbPost, locale) : dbPost;
+  const paragraphs = (post.content as string)
     .split(/\n\n+/)
     .map((p) => p.trim())
     .filter(Boolean);
 
   return {
-    slug: dbPost.slug,
-    title: dbPost.title,
-    excerpt: dbPost.excerpt,
-    content: paragraphs.length > 0 ? paragraphs : [dbPost.content],
-    category: dbPost.category,
-    image: dbPost.coverImage || "/images/gallery/clinic-1.jpg",
-    readTime: estimateReadTime(dbPost.content),
-    date: (dbPost.publishedAt || dbPost.createdAt).toISOString().split("T")[0],
+    slug: post.slug as string,
+    title: post.title as string,
+    excerpt: post.excerpt as string,
+    content: paragraphs.length > 0 ? paragraphs : [post.content as string],
+    category: post.category as string,
+    image: (post.coverImage as string) || "/images/gallery/clinic-1.jpg",
+    readTime: estimateReadTime(post.content as string),
+    date: ((dbPost.publishedAt || dbPost.createdAt) as Date).toISOString().split("T")[0],
     author: {
-      name: dbPost.author || "TechnicalDent",
+      name: (post.author as string) || "TechnicalDent",
       role: "Echipa TechnicalDent",
     },
-    tags: dbPost.tags,
+    tags: post.tags as string[],
   };
 }
 
-export async function getPublishedBlogPosts(): Promise<BlogPost[]> {
+export async function getPublishedBlogPosts(locale?: string): Promise<BlogPost[]> {
   try {
     const dbPosts = await prisma.blogPost.findMany({
       where: { isPublished: true },
       orderBy: { publishedAt: "desc" },
     });
     if (dbPosts.length > 0) {
-      return dbPosts.map(dbPostToBlogPost);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return dbPosts.map((p) => dbPostToBlogPost(p as any, locale));
     }
   } catch (error) {
     console.log("Database not available for blog, using mock data");
@@ -285,13 +290,15 @@ export async function getPublishedBlogPosts(): Promise<BlogPost[]> {
 
 export async function getPublishedBlogPost(
   slug: string,
+  locale?: string,
 ): Promise<BlogPost | undefined> {
   try {
     const dbPost = await prisma.blogPost.findUnique({
       where: { slug },
     });
     if (dbPost && dbPost.isPublished) {
-      return dbPostToBlogPost(dbPost);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return dbPostToBlogPost(dbPost as any, locale);
     }
   } catch (error) {
     console.log("Database not available for blog post, using mock data");
