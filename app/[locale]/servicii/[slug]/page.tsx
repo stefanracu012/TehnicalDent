@@ -137,26 +137,40 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
           <div className="lg:col-span-2 space-y-16">
             {/* Overview */}
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-3">
-                {t("prezentareSubtitle")}
-              </p>
-              <h2 className="font-serif text-2xl font-medium text-foreground mb-5">
-                {t("prezentareTitle")}
-              </h2>
-              <p className="text-muted-foreground leading-relaxed text-lg">
+              <div className="flex items-center gap-3 mb-5">
+                <span className="flex-shrink-0 w-9 h-9 rounded-full bg-foreground text-white text-sm font-bold flex items-center justify-center">
+                  1
+                </span>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                    {t("prezentareSubtitle")}
+                  </p>
+                  <h2 className="font-serif text-2xl font-medium text-foreground">
+                    {t("prezentareTitle")}
+                  </h2>
+                </div>
+              </div>
+              <p className="text-muted-foreground leading-relaxed text-lg pl-12">
                 {overview}
               </p>
             </div>
 
             {/* Benefits */}
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-3">
-                {t("beneficiiSubtitle")}
-              </p>
-              <h2 className="font-serif text-2xl font-medium text-foreground mb-6">
-                {t("beneficiiTitle")}
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="flex items-center gap-3 mb-6">
+                <span className="flex-shrink-0 w-9 h-9 rounded-full bg-foreground text-white text-sm font-bold flex items-center justify-center">
+                  2
+                </span>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                    {t("beneficiiSubtitle")}
+                  </p>
+                  <h2 className="font-serif text-2xl font-medium text-foreground">
+                    {t("beneficiiTitle")}
+                  </h2>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pl-12">
                 {benefits.map((benefit, index) => (
                   <div
                     key={index}
@@ -187,13 +201,20 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
 
             {/* Process — numbered steps */}
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-3">
-                {t("procesSubtitle")}
-              </p>
-              <h2 className="font-serif text-2xl font-medium text-foreground mb-6">
-                {t("procesTitle")}
-              </h2>
-              <div className="space-y-0">
+              <div className="flex items-center gap-3 mb-6">
+                <span className="flex-shrink-0 w-9 h-9 rounded-full bg-foreground text-white text-sm font-bold flex items-center justify-center">
+                  3
+                </span>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                    {t("procesSubtitle")}
+                  </p>
+                  <h2 className="font-serif text-2xl font-medium text-foreground">
+                    {t("procesTitle")}
+                  </h2>
+                </div>
+              </div>
+              <div className="space-y-0 pl-12">
                 {process
                   .split(". ")
                   .filter((s) => s.trim().length > 10)
@@ -220,26 +241,14 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
             {/* Recovery */}
             <div className="bg-accent/5 border border-accent/15 rounded-2xl p-8">
               <div className="flex items-center gap-3 mb-4">
-                <div className="w-9 h-9 rounded-full bg-accent/10 flex items-center justify-center flex-shrink-0">
-                  <svg
-                    className="w-5 h-5 text-accent"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
-                    />
-                  </svg>
-                </div>
+                <span className="flex-shrink-0 w-9 h-9 rounded-full bg-accent text-white text-sm font-bold flex items-center justify-center">
+                  4
+                </span>
                 <h2 className="font-serif text-xl font-medium text-foreground">
                   {t("recuperareTitle")}
                 </h2>
               </div>
-              <p className="text-muted-foreground leading-relaxed">
+              <p className="text-muted-foreground leading-relaxed pl-12">
                 {recovery}
               </p>
             </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
 import { secureFetch } from "@/lib/csrf-client";
@@ -15,6 +15,7 @@ export default function NewServicePage() {
   const [loading, setLoading] = useState(false);
   const [activeLocale, setActiveLocale] = useState("ro");
   const [translations, setTranslations] = useState<Translations>({});
+  const [existingCategories, setExistingCategories] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     title: "",
     slug: "",
@@ -29,6 +30,16 @@ export default function NewServicePage() {
     order: 0,
     isActive: true,
   });
+
+  useEffect(() => {
+    secureFetch("/api/admin/services")
+      .then((res) => res.json())
+      .then((services: { category: string }[]) => {
+        const cats = [...new Set(services.map((s) => s.category).filter(Boolean))];
+        setExistingCategories(cats.sort());
+      })
+      .catch(() => {});
+  }, []);
 
   const getField = (field: string): string => {
     if (activeLocale === "ro")
@@ -265,22 +276,24 @@ export default function NewServicePage() {
                   Categorie *
                 </label>
                 {activeLocale === "ro" ? (
-                  <select
-                    required
-                    value={formData.category}
-                    onChange={(e) =>
-                      setFormData((p) => ({ ...p, category: e.target.value }))
-                    }
-                    className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none"
-                  >
-                    <option value="">Selectează categoria</option>
-                    <option value="Chirurgie">Chirurgie</option>
-                    <option value="Ortodonție">Ortodonție</option>
-                    <option value="Estetică">Estetică</option>
-                    <option value="Protetică">Protetică</option>
-                    <option value="Tratamente">Tratamente</option>
-                    <option value="Specialități">Specialități</option>
-                  </select>
+                  <>
+                    <input
+                      type="text"
+                      required
+                      list="category-list"
+                      value={formData.category}
+                      onChange={(e) =>
+                        setFormData((p) => ({ ...p, category: e.target.value }))
+                      }
+                      placeholder="Scrie sau selectează categoria"
+                      className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none"
+                    />
+                    <datalist id="category-list">
+                      {existingCategories.map((cat) => (
+                        <option key={cat} value={cat} />
+                      ))}
+                    </datalist>
+                  </>
                 ) : (
                   <input
                     type="text"
