@@ -23,7 +23,9 @@ interface BlogPost {
 export default function AdminBlogPage() {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState<"all" | "published" | "draft">("all");
+  const [filterStatus, setFilterStatus] = useState<
+    "all" | "published" | "draft"
+  >("all");
 
   useEffect(() => {
     fetchPosts();

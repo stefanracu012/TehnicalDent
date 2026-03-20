@@ -55,9 +55,7 @@ export default function EditServicePage({
     try {
       const res = await secureFetch("/api/admin/services");
       const services = await res.json();
-      const service = services.find(
-        (s: { slug: string }) => s.slug === slug,
-      );
+      const service = services.find((s: { slug: string }) => s.slug === slug);
       if (!service) {
         alert("Serviciul nu a fost găsit");
         router.push("/admin/servicii");

@@ -71,9 +71,7 @@ export default function AdminTeamPage() {
     setSaving(true);
 
     try {
-      const url = editing
-        ? `/api/admin/team/${editing.id}`
-        : "/api/admin/team";
+      const url = editing ? `/api/admin/team/${editing.id}` : "/api/admin/team";
       const method = editing ? "PATCH" : "POST";
 
       const res = await secureFetch(url, {
@@ -199,9 +197,7 @@ export default function AdminTeamPage() {
 
                 <ImageUpload
                   value={formData.image}
-                  onChange={(url) =>
-                    setFormData((p) => ({ ...p, image: url }))
-                  }
+                  onChange={(url) => setFormData((p) => ({ ...p, image: url }))}
                   folder="team"
                   label="Fotografie"
                 />

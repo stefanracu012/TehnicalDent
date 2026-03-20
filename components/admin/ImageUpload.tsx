@@ -94,9 +94,7 @@ export default function ImageUpload({
         {uploading ? (
           <div className="flex flex-col items-center py-4">
             <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-            <p className="text-sm text-muted-foreground mt-3">
-              Se încarcă...
-            </p>
+            <p className="text-sm text-muted-foreground mt-3">Se încarcă...</p>
           </div>
         ) : value ? (
           <div className="relative group">

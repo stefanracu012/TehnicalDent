@@ -95,7 +95,10 @@ export default function EditBlogPostPage({
         body: JSON.stringify({
           ...formData,
           tags: formData.tags
-            ? formData.tags.split(",").map((t) => t.trim()).filter(Boolean)
+            ? formData.tags
+                .split(",")
+                .map((t) => t.trim())
+                .filter(Boolean)
             : [],
         }),
       });
@@ -137,7 +140,10 @@ export default function EditBlogPostPage({
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white border border-border p-8 space-y-6">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white border border-border p-8 space-y-6"
+        >
           {/* Cover Image */}
           <ImageUpload
             value={formData.coverImage}

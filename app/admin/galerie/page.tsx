@@ -180,9 +180,7 @@ export default function AdminGalleryPage() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 <ImageUpload
                   value={formData.url}
-                  onChange={(url) =>
-                    setFormData((p) => ({ ...p, url }))
-                  }
+                  onChange={(url) => setFormData((p) => ({ ...p, url }))}
                   folder="gallery"
                   label="Imagine *"
                 />

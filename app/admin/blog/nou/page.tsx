@@ -44,7 +44,10 @@ export default function NewBlogPostPage() {
     setFormData((p) => ({
       ...p,
       title,
-      slug: p.slug === "" || p.slug === generateSlug(p.title) ? generateSlug(title) : p.slug,
+      slug:
+        p.slug === "" || p.slug === generateSlug(p.title)
+          ? generateSlug(title)
+          : p.slug,
     }));
   };
 
@@ -63,7 +66,10 @@ export default function NewBlogPostPage() {
         body: JSON.stringify({
           ...formData,
           tags: formData.tags
-            ? formData.tags.split(",").map((t) => t.trim()).filter(Boolean)
+            ? formData.tags
+                .split(",")
+                .map((t) => t.trim())
+                .filter(Boolean)
             : [],
         }),
       });
@@ -93,7 +99,10 @@ export default function NewBlogPostPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white border border-border p-8 space-y-6">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white border border-border p-8 space-y-6"
+        >
           {/* Cover Image */}
           <ImageUpload
             value={formData.coverImage}
