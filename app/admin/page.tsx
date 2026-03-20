@@ -28,6 +28,11 @@ const adminLinks = [
     href: "/admin/galerie",
   },
   {
+    title: "Blog",
+    description: "Creați și gestionați articolele de pe blog (Recomandări)",
+    href: "/admin/blog",
+  },
+  {
     title: "Mesaje",
     description: "Vezi mesajele primite prin formularul de contact",
     href: "/admin/mesaje",

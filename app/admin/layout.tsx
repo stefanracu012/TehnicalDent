@@ -40,6 +40,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 Galerie
               </Link>
               <Link
+                href="/admin/blog"
+                className="text-sm text-white/70 hover:text-white transition-colors"
+              >
+                Blog
+              </Link>
+              <Link
                 href="/admin/mesaje"
                 className="text-sm text-white/70 hover:text-white transition-colors"
               >

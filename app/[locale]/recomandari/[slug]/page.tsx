@@ -3,21 +3,26 @@ import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { notFound } from "next/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { blogPosts, getBlogPost } from "@/lib/blog-data";
+import {
+  getPublishedBlogPost,
+  getPublishedBlogPosts,
+  getAllPublishedSlugs,
+} from "@/lib/blog-data";
 
 interface Props {
   params: Promise<{ slug: string; locale: string }>;
 }
 
 export async function generateStaticParams() {
-  return blogPosts.map((post) => ({ slug: post.slug }));
+  const slugs = await getAllPublishedSlugs();
+  return slugs.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug, locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("BlogDetail");
-  const post = getBlogPost(slug);
+  const post = await getPublishedBlogPost(slug);
   if (!post) return { title: t("articolNegasit") };
 
   return {
@@ -30,7 +35,7 @@ export default async function BlogPostPage({ params }: Props) {
   const { slug, locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("BlogDetail");
-  const post = getBlogPost(slug);
+  const post = await getPublishedBlogPost(slug);
 
   if (!post) notFound();
 
@@ -41,14 +46,15 @@ export default async function BlogPostPage({ params }: Props) {
   });
 
   // Get related posts (same category, excluding current)
-  const relatedPosts = blogPosts
+  const allPosts = await getPublishedBlogPosts();
+  const relatedPosts = allPosts
     .filter((p) => p.category === post.category && p.slug !== post.slug)
     .slice(0, 2);
 
   // If not enough related posts, fill with other posts
   const morePosts =
     relatedPosts.length < 2
-      ? blogPosts
+      ? allPosts
           .filter(
             (p) =>
               p.slug !== post.slug &&

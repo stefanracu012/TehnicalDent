@@ -1,6 +1,6 @@
 import PageHero from "@/components/PageHero";
 import RecomandariClient from "./RecomandariClient";
-import { blogPosts } from "@/lib/blog-data";
+import { getPublishedBlogPosts } from "@/lib/blog-data";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 export async function generateMetadata({
@@ -22,11 +22,12 @@ export default async function RecomandariPage({
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("Blog");
+  const posts = await getPublishedBlogPosts();
 
   return (
     <>
       <PageHero title={t("heroTitle")} description={t("heroDescription")} />
-      <RecomandariClient posts={blogPosts} />
+      <RecomandariClient posts={posts} />
     </>
   );
 }

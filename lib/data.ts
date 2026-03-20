@@ -46,6 +46,22 @@ export interface GalleryImage {
   isActive: boolean;
 }
 
+export interface BlogPost {
+  id: string;
+  slug: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  coverImage: string;
+  category: string;
+  tags: string[];
+  author: string;
+  isPublished: boolean;
+  publishedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // Mock data for development
 const mockServices: Service[] = [
   {
@@ -396,5 +412,35 @@ export async function createContactSubmission(data: {
   } catch (error) {
     console.log("Database not available, contact form submitted but not saved");
     return { id: "mock", ...data, createdAt: new Date() };
+  }
+}
+
+export async function getBlogPosts(): Promise<BlogPost[]> {
+  try {
+    const posts = await prisma.blogPost.findMany({
+      where: { isPublished: true },
+      orderBy: { publishedAt: "desc" },
+    });
+    return posts as BlogPost[];
+  } catch (error) {
+    console.log("Database not available for blog posts");
+    return [];
+  }
+}
+
+export async function getBlogPostBySlug(
+  slug: string,
+): Promise<BlogPost | null> {
+  try {
+    const post = await prisma.blogPost.findUnique({
+      where: { slug },
+    });
+    if (post && post.isPublished) {
+      return post as BlogPost;
+    }
+    return null;
+  } catch (error) {
+    console.log("Database not available for blog post");
+    return null;
   }
 }

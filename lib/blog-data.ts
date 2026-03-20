@@ -1,3 +1,5 @@
+import prisma from "./prisma";
+
 export interface BlogPost {
   slug: string;
   title: string;
@@ -223,4 +225,91 @@ export function getBlogPost(slug: string): BlogPost | undefined {
 export function getBlogPostsByCategory(categorySlug: string): BlogPost[] {
   if (categorySlug === "toate") return blogPosts;
   return blogPosts.filter((post) => post.category === categorySlug);
+}
+
+// ---- DB-aware async functions ----
+
+function estimateReadTime(text: string): number {
+  const words = text.split(/\s+/).length;
+  return Math.max(1, Math.ceil(words / 200));
+}
+
+function dbPostToBlogPost(dbPost: {
+  slug: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  coverImage: string;
+  category: string;
+  tags: string[];
+  author: string;
+  publishedAt: Date | null;
+  createdAt: Date;
+}): BlogPost {
+  const paragraphs = dbPost.content
+    .split(/\n\n+/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  return {
+    slug: dbPost.slug,
+    title: dbPost.title,
+    excerpt: dbPost.excerpt,
+    content: paragraphs.length > 0 ? paragraphs : [dbPost.content],
+    category: dbPost.category,
+    image: dbPost.coverImage || "/images/gallery/clinic-1.jpg",
+    readTime: estimateReadTime(dbPost.content),
+    date: (dbPost.publishedAt || dbPost.createdAt).toISOString().split("T")[0],
+    author: {
+      name: dbPost.author || "TechnicalDent",
+      role: "Echipa TechnicalDent",
+    },
+    tags: dbPost.tags,
+  };
+}
+
+export async function getPublishedBlogPosts(): Promise<BlogPost[]> {
+  try {
+    const dbPosts = await prisma.blogPost.findMany({
+      where: { isPublished: true },
+      orderBy: { publishedAt: "desc" },
+    });
+    if (dbPosts.length > 0) {
+      return dbPosts.map(dbPostToBlogPost);
+    }
+  } catch (error) {
+    console.log("Database not available for blog, using mock data");
+  }
+  return blogPosts;
+}
+
+export async function getPublishedBlogPost(
+  slug: string,
+): Promise<BlogPost | undefined> {
+  try {
+    const dbPost = await prisma.blogPost.findUnique({
+      where: { slug },
+    });
+    if (dbPost && dbPost.isPublished) {
+      return dbPostToBlogPost(dbPost);
+    }
+  } catch (error) {
+    console.log("Database not available for blog post, using mock data");
+  }
+  return blogPosts.find((post) => post.slug === slug);
+}
+
+export async function getAllPublishedSlugs(): Promise<string[]> {
+  try {
+    const dbPosts = await prisma.blogPost.findMany({
+      where: { isPublished: true },
+      select: { slug: true },
+    });
+    if (dbPosts.length > 0) {
+      return dbPosts.map((p) => p.slug);
+    }
+  } catch {
+    // fall through
+  }
+  return blogPosts.map((p) => p.slug);
 }
