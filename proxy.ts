@@ -175,8 +175,8 @@ export default function middleware(request: NextRequest) {
     }
   }
 
-  // Admin routes should NOT go through intl middleware (no locale prefix)
-  if (pathname.startsWith("/admin")) {
+  // Admin and API routes should NOT go through intl middleware
+  if (pathname.startsWith("/admin") || pathname.startsWith("/api/")) {
     const response = NextResponse.next();
     return addSecurityHeaders(response);
   }
