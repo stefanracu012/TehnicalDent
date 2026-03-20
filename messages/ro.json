@@ -407,5 +407,79 @@
     "en": "English",
     "ru": "Русский",
     "it": "Italiano"
+  },
+  "ServiceData": {
+    "implantologie": {
+      "title": "Implantologie Dentară",
+      "shortDesc": "Restaurarea completă a dinților lipsă prin implanturi dentare de ultimă generație, oferind funcționalitate și estetică naturală.",
+      "overview": "Implantul dentar este o rădăcină artificială din titan, plasată chirurgical în osul maxilar sau mandibular. Peste acest implant se montează o coroană ceramică care arată și funcționează exact ca un dinte natural. Procedura este realizată sub anestezie locală și este practic nedureroasă.",
+      "process": "Procesul de implantare începe cu o evaluare detaliată, incluzând tomografie computerizată 3D pentru planificarea precisă. Intervenția propriu-zisă durează între 30 și 60 de minute per implant. După o perioadă de osteointegrare de 3-6 luni, se montează coroana definitivă.",
+      "recovery": "Recuperarea după implantare este de obicei rapidă. În primele zile pot apărea ușoare disconfort și edem, controlabile cu medicație prescrisă. Majoritatea pacienților revin la activitățile normale în 2-3 zile.",
+      "benefits": "Durabilitate excepțională - pot dura toată viața cu îngrijire corespunzătoare|Aspect natural și funcționalitate completă|Prevenirea resorbției osoase|Nu afectează dinții adiacenți|Confort superior protezelor mobile",
+      "category": "Chirurgie"
+    },
+    "ortodontie": {
+      "title": "Ortodonție",
+      "shortDesc": "Corectarea malocluziilor și alinierea dinților prin aparate dentare moderne, incluzând soluții invizibile pentru adulți.",
+      "overview": "Ortodonția modernă oferă multiple opțiuni de tratament, de la aparate fixe clasice la alignere transparente. Alegerea metodei depinde de complexitatea cazului și preferințele pacientului.",
+      "process": "Tratamentul începe cu o consultație detaliată și analize specifice (radiografii, fotografii, modele digitale). Pe baza acestora se elaborează planul de tratament personalizat. Durata tratamentului variază între 6 luni și 3 ani.",
+      "recovery": "Aparatele ortodontice necesită o perioadă de adaptare de 1-2 săptămâni. Controalele regulate sunt esențiale pentru ajustări și monitorizarea progresului.",
+      "benefits": "Zâmbet estetic și armonios|Îmbunătățirea funcției masticatorii|Prevenirea uzurii premature a dinților|Facilitarea igienei orale|Corectarea problemelor de vorbire",
+      "category": "Ortodonție"
+    },
+    "estetica-dentara": {
+      "title": "Estetică Dentară",
+      "shortDesc": "Transformarea zâmbetului prin fațete, albire profesională și conturare estetică pentru un aspect natural și luminos.",
+      "overview": "Fiecare tratament estetic începe cu o analiză detaliată a zâmbetului și a trăsăturilor faciale. Scopul este obținerea unui rezultat natural, armonios, care să complementeze fizionomia pacientului.",
+      "process": "În funcție de tratamentul ales, procedura poate dura de la o singură ședință (albire profesională) până la câteva săptămâni (fațete ceramice). Folosim materiale premium și tehnologii de ultimă generație.",
+      "recovery": "Majoritatea procedurilor estetice au recuperare minimă. Sensibilitatea dentară temporară poate apărea după albire, dar dispare în câteva zile.",
+      "benefits": "Zâmbet mai alb și mai luminos|Corectarea formei și dimensiunii dinților|Rezultate naturale și de lungă durată|Creșterea încrederii în sine|Proceduri minim invazive",
+      "category": "Estetică"
+    },
+    "chirurgie-orala": {
+      "title": "Chirurgie Orală",
+      "shortDesc": "Intervenții chirurgicale specializate pentru extracții complexe, tratamentul chisturilor și pregătirea pentru implanturi.",
+      "overview": "Echipa noastră de chirurgie orală are experiență vastă în toate tipurile de intervenții, folosind tehnici minim invazive pentru recuperare rapidă și confort maxim.",
+      "process": "Fiecare intervenție este precedată de o evaluare completă și planificare detaliată. Folosim anestezie locală de ultimă generație și, la cerere, sedare conștientă pentru pacienții anxioși.",
+      "recovery": "Timpul de recuperare variază în funcție de complexitatea intervenției. Oferim instrucțiuni detaliate post-operatorii și suntem disponibili pentru orice întrebări.",
+      "benefits": "Tehnici minim invazive|Recuperare rapidă|Anestezie eficientă|Monitorizare post-operatorie|Experiență în cazuri complexe",
+      "category": "Chirurgie"
+    },
+    "protetica-dentara": {
+      "title": "Protetică Dentară",
+      "shortDesc": "Restaurarea funcționalității și esteticii prin coroane, punți și proteze dentare realizate din materiale premium.",
+      "overview": "Folosim tehnologie CAD/CAM pentru proiectarea și realizarea lucrărilor protetice cu precizie maximă. Materialele utilizate sunt ceramică premium și zirconiu, garantând durabilitate și estetică.",
+      "process": "După pregătirea dinților, se realizează amprentă digitală pentru confecționarea lucrării. Timpul de realizare este de 5-10 zile, în funcție de complexitate. Se aplică provizorii pentru perioada de așteptare.",
+      "recovery": "Adaptarea la lucrările protetice noi durează câteva zile. Controalele de ajustare asigură confortul perfect.",
+      "benefits": "Aspect natural și estetic|Materiale biocompatibile|Durabilitate îndelungată|Funcționalitate completă|Tehnologie digitală de precizie",
+      "category": "Protetică"
+    },
+    "endodontie": {
+      "title": "Endodonție",
+      "shortDesc": "Tratamentul de canal și salvarea dinților afectați prin proceduri precise și nedureroase cu instrumentar modern.",
+      "overview": "Folosim microscopie și instrumentar rotativ de ultimă generație pentru tratamente precise și eficiente. Anestezia modernă asigură o procedură complet nedureroasă.",
+      "process": "Tratamentul presupune curățarea și dezinfectarea canalelor radiculare, urmată de umplerea etanșă a acestora. În funcție de complexitate, poate fi realizat într-o singură ședință sau în mai multe.",
+      "recovery": "După tratament poate exista o sensibilitate ușoară timp de câteva zile. Dintele tratat de canal necesită de obicei o coroană pentru protecție pe termen lung.",
+      "benefits": "Salvarea dintelui natural|Eliminarea infecției și durerii|Procedură nedureroasă|Tehnologie de ultimă generație|Rata mare de succes",
+      "category": "Tratamente"
+    },
+    "parodontologie": {
+      "title": "Parodontologie",
+      "shortDesc": "Tratamentul afecțiunilor gingivale și parodontale pentru menținerea sănătății țesuturilor de susținere a dinților.",
+      "overview": "Boala parodontală este una dintre cele mai frecvente afecțiuni orale și cauza principală a pierderii dinților la adulți. Diagnosticul și tratamentul precoce sunt esențiale.",
+      "process": "Tratamentul include igienizare profesională, detartraj subgingival și, în cazuri avansate, proceduri chirurgicale de regenerare. Menținerea rezultatelor necesită controale regulate.",
+      "recovery": "Recuperarea variază în funcție de severitatea afecțiunii și tipul tratamentului. Igiena orală riguroasă acasă este esențială pentru succes.",
+      "benefits": "Stoparea progresiei bolii|Reducerea inflamației și sângerării|Prevenirea pierderii dinților|Îmbunătățirea sănătății orale generale|Tratamente personalizate",
+      "category": "Tratamente"
+    },
+    "pedodontie": {
+      "title": "Pedodonție",
+      "shortDesc": "Stomatologie specializată pentru copii, într-un mediu prietenos care transformă vizita la dentist într-o experiență pozitivă.",
+      "overview": "Mediul nostru este special amenajat pentru a fi primitor și liniștitor pentru micii pacienți. Echipa noastră are experiență în lucrul cu copiii și folosește tehnici de comunicare adaptate vârstei.",
+      "process": "Prima vizită include o familiarizare cu cabinetul și echipamentele. Tratamentele sunt realizate cu răbdare, în ritmul copilului, pentru o experiență pozitivă.",
+      "recovery": "Copiii se recuperează de obicei foarte rapid după tratamente. Oferim sfaturi pentru părinți privind îngrijirea la domiciliu.",
+      "benefits": "Mediu prietenos pentru copii|Prevenție și educație|Tratamente fără durere|Creare de obiceiuri sănătoase|Experiențe pozitive la dentist",
+      "category": "Specialități"
+    }
   }
 }

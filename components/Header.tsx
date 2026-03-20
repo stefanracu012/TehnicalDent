@@ -3,7 +3,6 @@
 import { Link, usePathname } from "@/i18n/navigation";
 import { useState, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
-import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 const navigationItems = [
   { key: "servicii", href: "/servicii" },
@@ -168,15 +167,14 @@ export default function Header() {
             )}
           </div>
 
-          {/* CTA Button + Language Switcher */}
-          <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:items-center lg:gap-4">
+          {/* CTA Button */}
+          <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:items-center">
             <Link
               href="/contact"
               className="rounded-none bg-foreground px-6 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:bg-foreground/90 hover:shadow-lg"
             >
               {tNav("programare")}
             </Link>
-            <LanguageSwitcher />
           </div>
         </div>
 

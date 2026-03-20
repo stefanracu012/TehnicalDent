@@ -34,6 +34,7 @@ export default function ServiceBentoGrid({
   const gridRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const t = useTranslations("Services");
+  const tS = useTranslations("ServiceData");
 
   useEffect(() => {
     const cards =
@@ -97,7 +98,7 @@ export default function ServiceBentoGrid({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={image}
-              alt={service.title}
+              alt={tS(`${service.slug}.title`)}
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110 will-change-transform"
             />
 
@@ -110,13 +111,13 @@ export default function ServiceBentoGrid({
             {/* Card content */}
             <div className="absolute inset-x-0 bottom-0 p-5 z-20">
               <span className="block text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 mb-2">
-                {service.category}
+                {tS(`${service.slug}.category`)}
               </span>
 
               <h3
                 className={`font-serif font-medium text-white leading-snug ${titleSize}`}
               >
-                {service.title}
+                {tS(`${service.slug}.title`)}
               </h3>
 
               {/* Revealed on hover */}
@@ -124,11 +125,11 @@ export default function ServiceBentoGrid({
                 <p
                   className={`text-white/75 text-sm leading-relaxed mt-3 ${descLines}`}
                 >
-                  {service.shortDesc}
+                  {tS(`${service.slug}.shortDesc`)}
                 </p>
                 <div className="flex flex-wrap gap-2 mt-4">
                   <Link
-                    href={`/contact?serviciu=${encodeURIComponent(service.title)}#formular`}
+                    href={`/contact?serviciu=${encodeURIComponent(tS(`${service.slug}.title`))}#formular`}
                     onClick={(e) => e.stopPropagation()}
                     className="relative z-30 inline-flex items-center bg-accent text-white text-xs font-semibold px-4 py-2 rounded-full hover:bg-accent/90 transition-colors"
                   >

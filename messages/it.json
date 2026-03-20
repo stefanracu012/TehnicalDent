@@ -407,5 +407,79 @@
     "en": "English",
     "ru": "Русский",
     "it": "Italiano"
+  },
+  "ServiceData": {
+    "implantologie": {
+      "title": "Implantologia Dentale",
+      "shortDesc": "Ripristino completo dei denti mancanti con impianti dentali di ultima generazione, offrendo funzionalità ed estetica naturale.",
+      "overview": "L'impianto dentale è una radice artificiale in titanio, posizionata chirurgicamente nell'osso mascellare o mandibolare. Sopra questo impianto viene montata una corona in ceramica che appare e funziona esattamente come un dente naturale. La procedura viene eseguita in anestesia locale ed è praticamente indolore.",
+      "process": "Il processo di impianto inizia con una valutazione dettagliata, inclusa la tomografia computerizzata 3D per una pianificazione precisa. L'intervento stesso dura tra 30 e 60 minuti per impianto. Dopo un periodo di osteointegrazione di 3-6 mesi, viene posizionata la corona definitiva.",
+      "recovery": "Il recupero dopo l'impianto è solitamente rapido. Nei primi giorni possono comparire leggero disagio e gonfiore, controllabili con farmaci prescritti. La maggior parte dei pazienti riprende le attività normali in 2-3 giorni.",
+      "benefits": "Durabilità eccezionale — possono durare tutta la vita con cure adeguate|Aspetto naturale e funzionalità completa|Prevenzione del riassorbimento osseo|Non influisce sui denti adiacenti|Comfort superiore rispetto alle protesi mobili",
+      "category": "Chirurgia"
+    },
+    "ortodontie": {
+      "title": "Ortodonzia",
+      "shortDesc": "Correzione delle malocclusioni e allineamento dei denti con apparecchi moderni, incluse soluzioni invisibili per adulti.",
+      "overview": "L'ortodonzia moderna offre molteplici opzioni di trattamento, dagli apparecchi fissi classici agli allineatori trasparenti. La scelta del metodo dipende dalla complessità del caso e dalle preferenze del paziente.",
+      "process": "Il trattamento inizia con una consultazione dettagliata e analisi specifiche (radiografie, fotografie, modelli digitali). Su questa base viene elaborato un piano di trattamento personalizzato. La durata del trattamento varia da 6 mesi a 3 anni.",
+      "recovery": "Gli apparecchi ortodontici richiedono un periodo di adattamento di 1-2 settimane. I controlli regolari sono essenziali per regolazioni e monitoraggio del progresso.",
+      "benefits": "Sorriso estetico e armonioso|Miglioramento della funzione masticatoria|Prevenzione dell'usura prematura dei denti|Facilitazione dell'igiene orale|Correzione dei problemi di pronuncia",
+      "category": "Ortodonzia"
+    },
+    "estetica-dentara": {
+      "title": "Odontoiatria Estetica",
+      "shortDesc": "Trasformazione del sorriso attraverso faccette, sbiancamento professionale e rimodellamento estetico per un aspetto naturale e luminoso.",
+      "overview": "Ogni trattamento estetico inizia con un'analisi dettagliata del sorriso e dei tratti del viso. L'obiettivo è ottenere un risultato naturale e armonioso che completi la fisionomia del paziente.",
+      "process": "A seconda del trattamento scelto, la procedura può durare da una singola seduta (sbiancamento professionale) a diverse settimane (faccette in ceramica). Utilizziamo materiali premium e tecnologie all'avanguardia.",
+      "recovery": "La maggior parte delle procedure estetiche ha un recupero minimo. La sensibilità dentale temporanea può verificarsi dopo lo sbiancamento, ma scompare in pochi giorni.",
+      "benefits": "Sorriso più bianco e luminoso|Correzione della forma e dimensione dei denti|Risultati naturali e duraturi|Aumento della fiducia in sé|Procedure minimamente invasive",
+      "category": "Estetica"
+    },
+    "chirurgie-orala": {
+      "title": "Chirurgia Orale",
+      "shortDesc": "Interventi chirurgici specializzati per estrazioni complesse, trattamento di cisti e preparazione per impianti.",
+      "overview": "Il nostro team di chirurgia orale ha una vasta esperienza in tutti i tipi di interventi, utilizzando tecniche minimamente invasive per un recupero rapido e il massimo comfort.",
+      "process": "Ogni intervento è preceduto da una valutazione completa e una pianificazione dettagliata. Utilizziamo anestesia locale di ultima generazione e, su richiesta, sedazione cosciente per i pazienti ansiosi.",
+      "recovery": "Il tempo di recupero varia a seconda della complessità dell'intervento. Forniamo istruzioni post-operatorie dettagliate e siamo disponibili per qualsiasi domanda.",
+      "benefits": "Tecniche minimamente invasive|Recupero rapido|Anestesia efficace|Monitoraggio post-operatorio|Esperienza in casi complessi",
+      "category": "Chirurgia"
+    },
+    "protetica-dentara": {
+      "title": "Protesi Dentale",
+      "shortDesc": "Ripristino della funzionalità e dell'estetica attraverso corone, ponti e protesi dentali realizzate con materiali premium.",
+      "overview": "Utilizziamo tecnologia CAD/CAM per la progettazione e realizzazione di lavori protesici con massima precisione. I materiali utilizzati sono ceramica premium e zirconio, garantendo durabilità ed estetica.",
+      "process": "Dopo la preparazione dei denti, viene eseguita un'impronta digitale per la fabbricazione. Il tempo di realizzazione è di 5-10 giorni, a seconda della complessità. Vengono applicati provvisori per il periodo di attesa.",
+      "recovery": "L'adattamento ai nuovi lavori protesici richiede qualche giorno. I controlli di regolazione assicurano il comfort perfetto.",
+      "benefits": "Aspetto naturale ed estetico|Materiali biocompatibili|Durabilità prolungata|Funzionalità completa|Tecnologia digitale di precisione",
+      "category": "Protesi"
+    },
+    "endodontie": {
+      "title": "Endodonzia",
+      "shortDesc": "Trattamento canalare e salvataggio dei denti danneggiati attraverso procedure precise e indolori con strumentazione moderna.",
+      "overview": "Utilizziamo microscopia e strumentazione rotante di ultima generazione per trattamenti precisi ed efficienti. L'anestesia moderna garantisce una procedura completamente indolore.",
+      "process": "Il trattamento prevede la pulizia e disinfezione dei canali radicolari, seguita dal loro riempimento ermetico. A seconda della complessità, può essere eseguito in una singola seduta o in più sedute.",
+      "recovery": "Dopo il trattamento può esserci una leggera sensibilità per qualche giorno. Il dente trattato endodonticamente richiede solitamente una corona per la protezione a lungo termine.",
+      "benefits": "Salvataggio del dente naturale|Eliminazione dell'infezione e del dolore|Procedura indolore|Tecnologia di ultima generazione|Alto tasso di successo",
+      "category": "Trattamenti"
+    },
+    "parodontologie": {
+      "title": "Parodontologia",
+      "shortDesc": "Trattamento delle patologie gengivali e parodontali per mantenere la salute dei tessuti di supporto dei denti.",
+      "overview": "La malattia parodontale è una delle patologie orali più comuni e la causa principale della perdita dei denti negli adulti. La diagnosi e il trattamento precoce sono essenziali.",
+      "process": "Il trattamento include pulizia professionale, scaling sottogengivale e, nei casi avanzati, procedure chirurgiche rigenerative. Il mantenimento dei risultati richiede controlli regolari.",
+      "recovery": "Il recupero varia a seconda della gravità della patologia e del tipo di trattamento. Un'igiene orale rigorosa a casa è essenziale per il successo.",
+      "benefits": "Arresto della progressione della malattia|Riduzione dell'infiammazione e del sanguinamento|Prevenzione della perdita dei denti|Miglioramento della salute orale generale|Trattamenti personalizzati",
+      "category": "Trattamenti"
+    },
+    "pedodontie": {
+      "title": "Odontoiatria Pediatrica",
+      "shortDesc": "Odontoiatria specializzata per bambini in un ambiente accogliente che trasforma la visita dal dentista in un'esperienza positiva.",
+      "overview": "Il nostro ambiente è appositamente progettato per essere accogliente e tranquillizzante per i piccoli pazienti. Il nostro team ha esperienza nel lavorare con i bambini e utilizza tecniche di comunicazione adatte all'età.",
+      "process": "La prima visita include la familiarizzazione con lo studio e le attrezzature. I trattamenti vengono eseguiti con pazienza, al ritmo del bambino, per un'esperienza positiva.",
+      "recovery": "I bambini di solito si riprendono molto rapidamente dopo i trattamenti. Offriamo consigli ai genitori per la cura domiciliare.",
+      "benefits": "Ambiente adatto ai bambini|Prevenzione ed educazione|Trattamenti senza dolore|Creazione di abitudini sane|Esperienze positive dal dentista",
+      "category": "Specialità"
+    }
   }
 }

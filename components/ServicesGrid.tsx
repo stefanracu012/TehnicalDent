@@ -15,10 +15,17 @@ interface Service {
 export default function ServicesGrid({ services }: { services: Service[] }) {
   const router = useRouter();
   const t = useTranslations("Services");
-  const categories = [
-    "Toate",
-    ...Array.from(new Set(services.map((s) => s.category))),
-  ];
+  const tS = useTranslations("ServiceData");
+
+  // Build unique categories from translated data (keyed by original category value for filtering)
+  const categoryMap = new Map<string, string>();
+  services.forEach((s) => {
+    const translated = tS(`${s.slug}.category`);
+    if (!categoryMap.has(s.category)) {
+      categoryMap.set(s.category, translated);
+    }
+  });
+
   const [active, setActive] = useState("Toate");
   const gridRef = useRef<HTMLDivElement>(null);
 
@@ -51,17 +58,27 @@ export default function ServicesGrid({ services }: { services: Service[] }) {
     <div>
       {/* ── Filter tabs ── */}
       <div className="flex flex-wrap gap-2 mb-10">
-        {categories.map((cat) => (
+        <button
+          onClick={() => setActive("Toate")}
+          className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
+            active === "Toate"
+              ? "bg-foreground text-white shadow-sm"
+              : "bg-muted text-muted-foreground hover:bg-border hover:text-foreground"
+          }`}
+        >
+          {t("filtrulToate")}
+        </button>
+        {Array.from(categoryMap.entries()).map(([originalCat, translatedCat]) => (
           <button
-            key={cat}
-            onClick={() => setActive(cat)}
+            key={originalCat}
+            onClick={() => setActive(originalCat)}
             className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
-              active === cat
+              active === originalCat
                 ? "bg-foreground text-white shadow-sm"
                 : "bg-muted text-muted-foreground hover:bg-border hover:text-foreground"
             }`}
           >
-            {cat === "Toate" ? t("filtrulToate") : cat}
+            {translatedCat}
           </button>
         ))}
       </div>
@@ -87,7 +104,7 @@ export default function ServicesGrid({ services }: { services: Service[] }) {
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={`/images/services/${service.slug}.jpg`}
-              alt={service.title}
+              alt={tS(`${service.slug}.title`)}
               className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110 will-change-transform"
             />
 
@@ -98,23 +115,23 @@ export default function ServicesGrid({ services }: { services: Service[] }) {
             {/* Content */}
             <div className="absolute inset-x-0 bottom-0 p-5 z-10">
               <span className="block text-[10px] font-semibold uppercase tracking-[0.2em] text-white/50 mb-1.5">
-                {service.category}
+                {tS(`${service.slug}.category`)}
               </span>
               <h3 className="font-serif text-lg font-medium text-white leading-snug">
-                {service.title}
+                {tS(`${service.slug}.title`)}
               </h3>
 
               {/* Revealed on hover */}
               <div className="overflow-hidden max-h-0 group-hover:max-h-[160px] transition-all duration-500 ease-out">
                 <p className="text-white/70 text-xs leading-relaxed mt-2 line-clamp-2">
-                  {service.shortDesc}
+                  {tS(`${service.slug}.shortDesc`)}
                 </p>
                 <div className="flex gap-2 mt-3">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       router.push(
-                        `/contact?serviciu=${encodeURIComponent(service.title)}#formular`,
+                        `/contact?serviciu=${encodeURIComponent(tS(`${service.slug}.title`))}#formular`,
                       );
                     }}
                     className="inline-flex items-center bg-accent text-white text-xs font-semibold px-3.5 py-1.5 rounded-full hover:bg-accent/90 transition-colors"

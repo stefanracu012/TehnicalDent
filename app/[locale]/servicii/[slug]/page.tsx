@@ -12,9 +12,13 @@ export async function generateMetadata({ params }: ServicePageProps) {
   const { slug, locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations("ServiceDetail");
+  const tS = await getTranslations("ServiceData");
   const service = await getServiceBySlug(slug);
   if (!service) return { title: t("serviciuNegasit") };
-  return { title: service.title, description: service.shortDesc };
+  return {
+    title: tS(`${slug}.title`),
+    description: tS(`${slug}.shortDesc`),
+  };
 }
 
 export async function generateStaticParams() {
@@ -27,6 +31,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
   setRequestLocale(locale);
   const t = await getTranslations("ServiceDetail");
   const tNav = await getTranslations("Nav");
+  const tS = await getTranslations("ServiceData");
   const service = await getServiceBySlug(slug);
   if (!service) notFound();
 
@@ -37,6 +42,15 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
 
   const heroImage = `/images/services/${service.slug}.jpg`;
 
+  // Translated content
+  const title = tS(`${slug}.title`);
+  const shortDesc = tS(`${slug}.shortDesc`);
+  const overview = tS(`${slug}.overview`);
+  const process = tS(`${slug}.process`);
+  const recovery = tS(`${slug}.recovery`);
+  const benefits = tS(`${slug}.benefits`).split("|");
+  const category = tS(`${slug}.category`);
+
   return (
     <>
       {/* ── HERO ── */}
@@ -46,7 +60,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={heroImage}
-            alt={service.title}
+            alt={title}
             className="w-full h-full object-cover scale-105"
             style={{ filter: "brightness(0.45) saturate(0.8)" }}
           />
@@ -68,22 +82,22 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
               {tNav("servicii")}
             </Link>
             <span>/</span>
-            <span className="text-white/80">{service.title}</span>
+            <span className="text-white/80">{title}</span>
           </nav>
 
           <span className="inline-block text-xs font-semibold uppercase tracking-[0.2em] text-accent mb-4">
-            {service.category}
+            {category}
           </span>
           <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-medium text-white tracking-tight max-w-3xl">
-            {service.title}
+            {title}
           </h1>
           <p className="mt-5 text-lg text-white/80 max-w-2xl leading-relaxed">
-            {service.shortDesc}
+            {shortDesc}
           </p>
 
           <div className="mt-8 flex flex-wrap gap-3">
             <Button
-              href={`/contact?serviciu=${encodeURIComponent(service.title)}#formular`}
+              href={`/contact?serviciu=${encodeURIComponent(title)}#formular`}
               size="lg"
             >
               {t("programeazaConsultatie")}
@@ -125,7 +139,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
                 {t("prezentareTitle")}
               </h2>
               <p className="text-muted-foreground leading-relaxed text-lg">
-                {service.overview}
+                {overview}
               </p>
             </div>
 
@@ -138,7 +152,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
                 {t("beneficiiTitle")}
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {service.benefits.map((benefit, index) => (
+                {benefits.map((benefit, index) => (
                   <div
                     key={index}
                     className="flex items-start gap-3 bg-muted rounded-xl p-4"
@@ -175,7 +189,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
                 {t("procesTitle")}
               </h2>
               <div className="space-y-0">
-                {service.process
+                {process
                   .split(". ")
                   .filter((s) => s.trim().length > 10)
                   .map((step, i, arr) => (
@@ -221,7 +235,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
                 </h2>
               </div>
               <p className="text-muted-foreground leading-relaxed">
-                {service.recovery}
+                {recovery}
               </p>
             </div>
           </div>
@@ -241,7 +255,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
                 </div>
                 <div className="px-6 py-6 space-y-3">
                   <Button
-                    href={`/contact?serviciu=${encodeURIComponent(service.title)}#formular`}
+                    href={`/contact?serviciu=${encodeURIComponent(title)}#formular`}
                     className="w-full justify-center"
                   >
                     {t("programeazaAcum")}
@@ -274,7 +288,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
                   {t("categorie")}
                 </p>
                 <p className="font-medium text-foreground">
-                  {service.category}
+                  {category}
                 </p>
               </div>
 
@@ -301,10 +315,10 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-foreground group-hover:text-accent transition-colors truncate">
-                            {related.title}
+                            {tS(`${related.slug}.title`)}
                           </p>
                           <p className="text-xs text-muted-foreground mt-0.5">
-                            {related.category}
+                            {tS(`${related.slug}.category`)}
                           </p>
                         </div>
                         <svg

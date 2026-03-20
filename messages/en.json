@@ -407,5 +407,79 @@
     "en": "English",
     "ru": "Русский",
     "it": "Italiano"
+  },
+  "ServiceData": {
+    "implantologie": {
+      "title": "Dental Implantology",
+      "shortDesc": "Complete restoration of missing teeth with state-of-the-art dental implants, providing natural functionality and aesthetics.",
+      "overview": "A dental implant is an artificial titanium root surgically placed in the jawbone. A ceramic crown is mounted over this implant that looks and functions exactly like a natural tooth. The procedure is performed under local anesthesia and is virtually painless.",
+      "process": "The implant process begins with a detailed evaluation, including 3D computed tomography for precise planning. The actual procedure takes between 30 and 60 minutes per implant. After an osseointegration period of 3-6 months, the permanent crown is placed.",
+      "recovery": "Recovery after implantation is usually quick. In the first few days, slight discomfort and swelling may occur, manageable with prescribed medication. Most patients return to normal activities within 2-3 days.",
+      "benefits": "Exceptional durability — can last a lifetime with proper care|Natural appearance and complete functionality|Prevention of bone resorption|Does not affect adjacent teeth|Superior comfort compared to removable dentures",
+      "category": "Surgery"
+    },
+    "ortodontie": {
+      "title": "Orthodontics",
+      "shortDesc": "Correction of malocclusions and teeth alignment with modern dental appliances, including invisible solutions for adults.",
+      "overview": "Modern orthodontics offers multiple treatment options, from classic fixed braces to clear aligners. The choice of method depends on the complexity of the case and the patient's preferences.",
+      "process": "Treatment begins with a detailed consultation and specific analyses (X-rays, photographs, digital models). Based on these, a personalized treatment plan is developed. Treatment duration varies between 6 months and 3 years.",
+      "recovery": "Orthodontic appliances require an adjustment period of 1-2 weeks. Regular check-ups are essential for adjustments and progress monitoring.",
+      "benefits": "Aesthetic and harmonious smile|Improved chewing function|Prevention of premature tooth wear|Easier oral hygiene|Correction of speech problems",
+      "category": "Orthodontics"
+    },
+    "estetica-dentara": {
+      "title": "Cosmetic Dentistry",
+      "shortDesc": "Smile transformation through veneers, professional whitening and aesthetic contouring for a natural, luminous look.",
+      "overview": "Each cosmetic treatment begins with a detailed analysis of the smile and facial features. The goal is to achieve a natural, harmonious result that complements the patient's physiognomy.",
+      "process": "Depending on the chosen treatment, the procedure can last from a single session (professional whitening) to several weeks (ceramic veneers). We use premium materials and cutting-edge technology.",
+      "recovery": "Most cosmetic procedures have minimal recovery. Temporary dental sensitivity may occur after whitening, but disappears within a few days.",
+      "benefits": "Whiter and brighter smile|Correction of tooth shape and size|Natural and long-lasting results|Increased self-confidence|Minimally invasive procedures",
+      "category": "Cosmetic"
+    },
+    "chirurgie-orala": {
+      "title": "Oral Surgery",
+      "shortDesc": "Specialized surgical interventions for complex extractions, cyst treatment and implant preparation.",
+      "overview": "Our oral surgery team has extensive experience in all types of interventions, using minimally invasive techniques for quick recovery and maximum comfort.",
+      "process": "Each intervention is preceded by a complete evaluation and detailed planning. We use state-of-the-art local anesthesia and, upon request, conscious sedation for anxious patients.",
+      "recovery": "Recovery time varies depending on the complexity of the intervention. We provide detailed post-operative instructions and are available for any questions.",
+      "benefits": "Minimally invasive techniques|Quick recovery|Effective anesthesia|Post-operative monitoring|Experience in complex cases",
+      "category": "Surgery"
+    },
+    "protetica-dentara": {
+      "title": "Dental Prosthetics",
+      "shortDesc": "Restoration of functionality and aesthetics through crowns, bridges and dental prostheses made from premium materials.",
+      "overview": "We use CAD/CAM technology for designing and manufacturing prosthetic work with maximum precision. Materials used are premium ceramics and zirconia, ensuring durability and aesthetics.",
+      "process": "After tooth preparation, a digital impression is taken for fabrication. Production time is 5-10 days, depending on complexity. Temporary restorations are applied during the waiting period.",
+      "recovery": "Adapting to new prosthetic work takes a few days. Adjustment check-ups ensure perfect comfort.",
+      "benefits": "Natural and aesthetic appearance|Biocompatible materials|Long-lasting durability|Complete functionality|Digital precision technology",
+      "category": "Prosthetics"
+    },
+    "endodontie": {
+      "title": "Endodontics",
+      "shortDesc": "Root canal treatment and saving affected teeth through precise and painless procedures with modern instruments.",
+      "overview": "We use microscopy and state-of-the-art rotary instruments for precise and efficient treatments. Modern anesthesia ensures a completely painless procedure.",
+      "process": "Treatment involves cleaning and disinfecting the root canals, followed by their hermetic filling. Depending on complexity, it can be performed in a single session or in several.",
+      "recovery": "After treatment, mild sensitivity may exist for a few days. A root canal treated tooth usually requires a crown for long-term protection.",
+      "benefits": "Saving the natural tooth|Elimination of infection and pain|Painless procedure|State-of-the-art technology|High success rate",
+      "category": "Treatments"
+    },
+    "parodontologie": {
+      "title": "Periodontics",
+      "shortDesc": "Treatment of gum and periodontal conditions to maintain the health of the teeth's supporting tissues.",
+      "overview": "Periodontal disease is one of the most common oral conditions and the leading cause of tooth loss in adults. Early diagnosis and treatment are essential.",
+      "process": "Treatment includes professional cleaning, subgingival scaling and, in advanced cases, regenerative surgical procedures. Maintaining results requires regular check-ups.",
+      "recovery": "Recovery varies depending on the severity of the condition and the type of treatment. Rigorous oral hygiene at home is essential for success.",
+      "benefits": "Stopping disease progression|Reducing inflammation and bleeding|Preventing tooth loss|Improving overall oral health|Personalized treatments",
+      "category": "Treatments"
+    },
+    "pedodontie": {
+      "title": "Pediatric Dentistry",
+      "shortDesc": "Specialized dentistry for children in a friendly environment that turns the dental visit into a positive experience.",
+      "overview": "Our environment is specially designed to be welcoming and calming for young patients. Our team has experience working with children and uses age-appropriate communication techniques.",
+      "process": "The first visit includes familiarization with the office and equipment. Treatments are carried out patiently, at the child's pace, for a positive experience.",
+      "recovery": "Children usually recover very quickly after treatments. We offer advice for parents regarding home care.",
+      "benefits": "Child-friendly environment|Prevention and education|Painless treatments|Building healthy habits|Positive dental experiences",
+      "category": "Specialties"
+    }
   }
 }
