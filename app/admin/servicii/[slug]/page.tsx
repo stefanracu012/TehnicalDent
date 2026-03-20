@@ -1,14 +1,36 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import Button from "@/components/Button";
 import ImageUpload from "@/components/admin/ImageUpload";
 
-export default function NewServicePage() {
+interface ServiceForm {
+  title: string;
+  slug: string;
+  shortDesc: string;
+  description: string;
+  overview: string;
+  process: string;
+  recovery: string;
+  benefits: string[];
+  images: string[];
+  category: string;
+  order: number;
+  isActive: boolean;
+}
+
+export default function EditServicePage({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}) {
+  const { slug } = use(params);
   const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [serviceId, setServiceId] = useState("");
+  const [formData, setFormData] = useState<ServiceForm>({
     title: "",
     slug: "",
     shortDesc: "",
@@ -22,6 +44,46 @@ export default function NewServicePage() {
     order: 0,
     isActive: true,
   });
+
+  useEffect(() => {
+    fetchService();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slug]);
+
+  const fetchService = async () => {
+    try {
+      const res = await fetch("/api/admin/services");
+      const services = await res.json();
+      const service = services.find(
+        (s: { slug: string }) => s.slug === slug,
+      );
+      if (!service) {
+        alert("Serviciul nu a fost găsit");
+        router.push("/admin/servicii");
+        return;
+      }
+      setServiceId(service.id);
+      setFormData({
+        title: service.title,
+        slug: service.slug,
+        shortDesc: service.shortDesc,
+        description: service.description,
+        overview: service.overview || "",
+        process: service.process || "",
+        recovery: service.recovery || "",
+        benefits: service.benefits?.length ? service.benefits : [""],
+        images: service.images?.length ? service.images : [""],
+        category: service.category,
+        order: service.order,
+        isActive: service.isActive,
+      });
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Eroare la încărcarea serviciului");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -61,23 +123,13 @@ export default function NewServicePage() {
     }));
   };
 
-  const generateSlug = () => {
-    const slug = formData.title
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)/g, "");
-    setFormData((prev) => ({ ...prev, slug }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
+    setSaving(true);
 
     try {
-      const response = await fetch("/api/admin/services", {
-        method: "POST",
+      const response = await fetch(`/api/admin/services/${serviceId}`, {
+        method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
@@ -89,25 +141,33 @@ export default function NewServicePage() {
       if (response.ok) {
         router.push("/admin/servicii");
       } else {
-        alert("A apărut o eroare la salvarea serviciului.");
+        alert("Eroare la salvarea serviciului.");
       }
     } catch (error) {
-      console.error("Error creating service:", error);
-      alert("A apărut o eroare la salvarea serviciului.");
+      console.error("Error:", error);
+      alert("Eroare la salvarea serviciului.");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-muted pt-24 flex items-center justify-center">
+        <div className="text-muted-foreground">Se încarcă...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-muted pt-24">
       <div className="mx-auto max-w-4xl px-6 lg:px-8 py-12">
         <div className="mb-12">
           <h1 className="font-serif text-3xl font-medium text-foreground">
-            Adaugă serviciu nou
+            Editează serviciu
           </h1>
           <p className="mt-2 text-muted-foreground">
-            Completați informațiile pentru noul serviciu
+            Modifică informațiile pentru „{formData.title}"
           </p>
         </div>
 
@@ -128,7 +188,6 @@ export default function NewServicePage() {
                   required
                   value={formData.title}
                   onChange={handleChange}
-                  onBlur={generateSlug}
                   className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none"
                 />
               </div>
@@ -142,7 +201,8 @@ export default function NewServicePage() {
                   required
                   value={formData.slug}
                   onChange={handleChange}
-                  className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none"
+                  className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none bg-muted"
+                  readOnly
                 />
               </div>
             </div>
@@ -212,11 +272,10 @@ export default function NewServicePage() {
 
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Prezentare generală *
+                Prezentare generală
               </label>
               <textarea
                 name="overview"
-                required
                 rows={4}
                 value={formData.overview}
                 onChange={handleChange}
@@ -226,11 +285,10 @@ export default function NewServicePage() {
 
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Procesul de tratament *
+                Procesul de tratament
               </label>
               <textarea
                 name="process"
-                required
                 rows={4}
                 value={formData.process}
                 onChange={handleChange}
@@ -240,11 +298,10 @@ export default function NewServicePage() {
 
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">
-                Recuperare și îngrijire *
+                Recuperare și îngrijire
               </label>
               <textarea
                 name="recovery"
-                required
                 rows={3}
                 value={formData.recovery}
                 onChange={handleChange}
@@ -346,8 +403,8 @@ export default function NewServicePage() {
               <Button href="/admin/servicii" variant="outline">
                 Anulează
               </Button>
-              <Button type="submit" disabled={loading}>
-                {loading ? "Se salvează..." : "Salvează serviciu"}
+              <Button type="submit" disabled={saving}>
+                {saving ? "Se salvează..." : "Salvează modificările"}
               </Button>
             </div>
           </div>

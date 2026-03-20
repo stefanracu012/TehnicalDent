@@ -36,6 +36,9 @@ yarn-error.log*
 # vercel
 .vercel
 
+# uploaded images (managed via admin panel)
+/public/uploads/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
