@@ -4,7 +4,7 @@ import Button from "@/components/Button";
 import { getServiceBySlug, getServices } from "@/lib/data";
 import { localizeService } from "@/lib/localize";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { getAlternates } from "@/lib/seo";
+import { getAlternates, getKeywords } from "@/lib/seo";
 
 interface ServicePageProps {
   params: Promise<{ slug: string; locale: string }>;
@@ -20,6 +20,10 @@ export async function generateMetadata({ params }: ServicePageProps) {
   return {
     title: localized.title as string,
     description: localized.shortDesc as string,
+    keywords: getKeywords(
+      [localized.title as string, localized.category as string, localized.shortDesc as string],
+      locale,
+    ),
     alternates: getAlternates(`/servicii/${slug}`, locale),
     openGraph: {
       title: `${localized.title} | TechnicalDent`,

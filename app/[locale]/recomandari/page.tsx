@@ -2,7 +2,7 @@ import PageHero from "@/components/PageHero";
 import RecomandariClient from "./RecomandariClient";
 import { getPublishedBlogPosts } from "@/lib/blog-data";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { getAlternates } from "@/lib/seo";
+import { getAlternates, getKeywords } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -15,6 +15,10 @@ export async function generateMetadata({
   return {
     title: t("metaTitle"),
     description: t("metaDescription"),
+    keywords: getKeywords(
+      [t("metaTitle"), t("metaDescription")],
+      locale,
+    ),
     alternates: getAlternates("/recomandari", locale),
   };
 }

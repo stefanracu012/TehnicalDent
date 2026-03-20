@@ -403,88 +403,101 @@ export default function EditServicePage({
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Prezentare generală
-              </label>
-              <textarea
-                rows={4}
-                value={getField("overview")}
-                onChange={(e) => setField("overview", e.target.value)}
-                placeholder={
-                  activeLocale !== "ro" ? formData.overview : undefined
-                }
-                className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none resize-none"
-              />
-            </div>
+            {/* ── SECȚIUNILE PAGINII PUBLICE (1-4) ── */}
+            <div className="border-t border-border pt-8 mt-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-6">Secțiunile paginii publice</p>
 
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Procesul de tratament
-              </label>
-              <textarea
-                rows={4}
-                value={getField("process")}
-                onChange={(e) => setField("process", e.target.value)}
-                placeholder={
-                  activeLocale !== "ro" ? formData.process : undefined
-                }
-                className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none resize-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Recuperare și îngrijire
-              </label>
-              <textarea
-                rows={3}
-                value={getField("recovery")}
-                onChange={(e) => setField("recovery", e.target.value)}
-                placeholder={
-                  activeLocale !== "ro" ? formData.recovery : undefined
-                }
-                className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none resize-none"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Beneficii
-              </label>
-              {benefits.map((benefit, index) => (
-                <div key={index} className="flex gap-2 mb-2">
-                  <input
-                    type="text"
-                    value={benefit}
-                    onChange={(e) => setBenefit(index, e.target.value)}
-                    className="flex-1 border border-border px-4 py-2 focus:border-foreground focus:outline-none"
-                    placeholder={
-                      activeLocale !== "ro"
-                        ? formData.benefits[index] || "Traducere beneficiu..."
-                        : "Beneficiu..."
-                    }
-                  />
-                  {activeLocale === "ro" && (
-                    <button
-                      type="button"
-                      onClick={() => removeArrayItem("benefits", index)}
-                      className="px-3 py-2 text-red-600 hover:bg-red-50"
-                    >
-                      ×
-                    </button>
-                  )}
+              {/* Secțiunea 1 — Prezentare generală */}
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="flex-shrink-0 w-7 h-7 rounded-full bg-foreground text-white text-xs font-bold flex items-center justify-center">1</span>
+                  <label className="text-sm font-medium text-foreground">Prezentare generală</label>
                 </div>
-              ))}
-              {activeLocale === "ro" && (
-                <button
-                  type="button"
-                  onClick={() => addArrayItem("benefits")}
-                  className="text-sm text-accent hover:text-accent/80"
-                >
-                  + Adaugă beneficiu
-                </button>
-              )}
+                <textarea
+                  rows={4}
+                  value={getField("overview")}
+                  onChange={(e) => setField("overview", e.target.value)}
+                  placeholder={
+                    activeLocale !== "ro" ? formData.overview : "Descrieți pe scurt serviciul — ce este, pentru cine este recomandat..."
+                  }
+                  className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none resize-none"
+                />
+              </div>
+
+              {/* Secțiunea 2 — Beneficii */}
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="flex-shrink-0 w-7 h-7 rounded-full bg-foreground text-white text-xs font-bold flex items-center justify-center">2</span>
+                  <label className="text-sm font-medium text-foreground">Beneficii</label>
+                </div>
+                {benefits.map((benefit, index) => (
+                  <div key={index} className="flex gap-2 mb-2">
+                    <input
+                      type="text"
+                      value={benefit}
+                      onChange={(e) => setBenefit(index, e.target.value)}
+                      className="flex-1 border border-border px-4 py-2 focus:border-foreground focus:outline-none"
+                      placeholder={
+                        activeLocale !== "ro"
+                          ? formData.benefits[index] || "Traducere beneficiu..."
+                          : "Beneficiu..."
+                      }
+                    />
+                    {activeLocale === "ro" && (
+                      <button
+                        type="button"
+                        onClick={() => removeArrayItem("benefits", index)}
+                        className="px-3 py-2 text-red-600 hover:bg-red-50"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {activeLocale === "ro" && (
+                  <button
+                    type="button"
+                    onClick={() => addArrayItem("benefits")}
+                    className="text-sm text-accent hover:text-accent/80"
+                  >
+                    + Adaugă beneficiu
+                  </button>
+                )}
+              </div>
+
+              {/* Secțiunea 3 — Procesul de tratament */}
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="flex-shrink-0 w-7 h-7 rounded-full bg-foreground text-white text-xs font-bold flex items-center justify-center">3</span>
+                  <label className="text-sm font-medium text-foreground">Procesul de tratament</label>
+                </div>
+                <textarea
+                  rows={4}
+                  value={getField("process")}
+                  onChange={(e) => setField("process", e.target.value)}
+                  placeholder={
+                    activeLocale !== "ro" ? formData.process : "Descrieți pașii procedurii, separați prin punct. Ex: Consultație inițială. Pregătirea dintelui. Aplicarea coroanei."
+                  }
+                  className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none resize-none"
+                />
+              </div>
+
+              {/* Secțiunea 4 — Recuperare și îngrijire */}
+              <div>
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="flex-shrink-0 w-7 h-7 rounded-full bg-accent text-white text-xs font-bold flex items-center justify-center">4</span>
+                  <label className="text-sm font-medium text-foreground">Recuperare și îngrijire</label>
+                </div>
+                <textarea
+                  rows={3}
+                  value={getField("recovery")}
+                  onChange={(e) => setField("recovery", e.target.value)}
+                  placeholder={
+                    activeLocale !== "ro" ? formData.recovery : "Descrieți perioada de recuperare, ce trebuie să facă pacientul..."
+                  }
+                  className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none resize-none"
+                />
+              </div>
             </div>
 
             {activeLocale === "ro" && (

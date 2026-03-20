@@ -4,7 +4,7 @@ import ServicesGrid from "@/components/ServicesGrid";
 import { getServices } from "@/lib/data";
 import { localizeService } from "@/lib/localize";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { getAlternates } from "@/lib/seo";
+import { getAlternates, getKeywords } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -17,6 +17,10 @@ export async function generateMetadata({
   return {
     title: t("metaTitle"),
     description: t("metaDescription"),
+    keywords: getKeywords(
+      [t("metaTitle"), t("metaDescription")],
+      locale,
+    ),
     alternates: getAlternates("/servicii", locale),
   };
 }
