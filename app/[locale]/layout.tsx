@@ -46,6 +46,10 @@ export async function generateMetadata({
     description: t("description"),
     keywords: t("keywords"),
     authors: [{ name: "TechnicalDent" }],
+    icons: {
+      icon: "/tehnicaldent_logo.png",
+      apple: "/tehnicaldent_logo.png",
+    },
     openGraph: {
       type: "website",
       locale:
