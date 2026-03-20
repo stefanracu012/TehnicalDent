@@ -3,10 +3,11 @@ import { put } from "@vercel/blob";
 
 export async function POST(request: Request) {
   try {
-    if (!process.env.BLOB_READ_WRITE_TOKEN) {
-      console.error("BLOB_READ_WRITE_TOKEN is not configured");
+    const blobToken = process.env.TEHNICAL_READ_WRITE_TOKEN;
+    if (!blobToken) {
+      console.error("TEHNICAL_READ_WRITE_TOKEN is not configured");
       return NextResponse.json(
-        { error: "Stocarea imaginilor nu este configurată pe server. Adăugați BLOB_READ_WRITE_TOKEN în variabilele de mediu." },
+        { error: "Stocarea imaginilor nu este configurată pe server. Adăugați TEHNICAL_READ_WRITE_TOKEN în variabilele de mediu." },
         { status: 500 },
       );
     }
@@ -55,6 +56,7 @@ export async function POST(request: Request) {
     const blob = await put(uniqueName, file, {
       access: "public",
       addRandomSuffix: false,
+      token: blobToken,
     });
 
     return NextResponse.json(
