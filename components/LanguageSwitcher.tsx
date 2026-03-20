@@ -48,8 +48,12 @@ export default function LanguageSwitcher({ dark = false }: { dark?: boolean }) {
         }`}
         aria-label="Change language"
       >
-        <span className={dark ? "text-sm" : "text-base"}>{localeFlags[locale]}</span>
-        <span className={dark ? "inline" : "hidden sm:inline"}>{locale.toUpperCase()}</span>
+        <span className={dark ? "text-sm" : "text-base"}>
+          {localeFlags[locale]}
+        </span>
+        <span className={dark ? "inline" : "hidden sm:inline"}>
+          {locale.toUpperCase()}
+        </span>
         <svg
           className={`${dark ? "w-3 h-3" : "w-3.5 h-3.5"} transition-transform ${open ? "rotate-180" : ""}`}
           fill="none"
