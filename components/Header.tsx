@@ -1,7 +1,7 @@
 "use client";
 
-import { Link } from "@/i18n/navigation";
-import { useState, useRef } from "react";
+import { Link, usePathname } from "@/i18n/navigation";
+import { useState, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 
@@ -51,6 +51,17 @@ export default function Header() {
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tNav = useTranslations("Nav");
   const tMega = useTranslations("MegaMenu");
+  const pathname = usePathname();
+
+  const handleLogoClick = useCallback(
+    (e: React.MouseEvent) => {
+      if (pathname === "/") {
+        e.preventDefault();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    },
+    [pathname],
+  );
 
   const openMega = () => {
     if (closeTimer.current) clearTimeout(closeTimer.current);
@@ -66,7 +77,7 @@ export default function Header() {
         <div className="flex h-24 items-center justify-between">
           {/* Logo */}
           <div className="flex lg:flex-1">
-            <Link href="/" className="flex items-center gap-3 group">
+            <Link href="/" onClick={handleLogoClick} className="flex items-center gap-3 group">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/images/logo.svg"
