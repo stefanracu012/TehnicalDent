@@ -9,7 +9,7 @@ function isValidAdminSession(request: NextRequest): boolean {
   if (!session?.value) return false;
 
   try {
-    const decoded = Buffer.from(session.value, "base64").toString("utf-8");
+    const decoded = atob(session.value);
     const [email, timestamp, secret] = decoded.split(":");
 
     const adminEmail = process.env.ADMIN_EMAIL;

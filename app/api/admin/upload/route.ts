@@ -3,6 +3,14 @@ import { put } from "@vercel/blob";
 
 export async function POST(request: Request) {
   try {
+    if (!process.env.BLOB_READ_WRITE_TOKEN) {
+      console.error("BLOB_READ_WRITE_TOKEN is not configured");
+      return NextResponse.json(
+        { error: "Stocarea imaginilor nu este configurată pe server. Adăugați BLOB_READ_WRITE_TOKEN în variabilele de mediu." },
+        { status: 500 },
+      );
+    }
+
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
     const folder = (formData.get("folder") as string) || "uploads";
@@ -55,8 +63,9 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error("Upload error:", error);
+    const message = error instanceof Error ? error.message : "Eroare necunoscută";
     return NextResponse.json(
-      { error: "Failed to upload file" },
+      { error: `Eroare la încărcarea fișierului: ${message}` },
       { status: 500 },
     );
   }
