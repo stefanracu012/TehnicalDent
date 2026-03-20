@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 
 export async function POST(request: Request) {
   try {
@@ -9,6 +8,7 @@ export async function POST(request: Request) {
     const adminPassword = process.env.ADMIN_PASSWORD;
 
     if (!adminEmail || !adminPassword) {
+      console.error("Missing ADMIN_EMAIL or ADMIN_PASSWORD env vars");
       return NextResponse.json(
         { error: "Autentificarea nu este configurată pe server." },
         { status: 500 },
@@ -26,13 +26,10 @@ export async function POST(request: Request) {
     const secret = process.env.ADMIN_SESSION_SECRET || "fallback-secret";
     const timestamp = Date.now();
     const tokenData = `${email}:${timestamp}:${secret}`;
+    const token = btoa(tokenData);
 
-    // Simple hash using btoa (base64) — not cryptographic, but sufficient
-    // for a single-user admin panel with env-based credentials
-    const token = Buffer.from(tokenData).toString("base64");
-
-    const cookieStore = await cookies();
-    cookieStore.set("admin_session", token, {
+    const response = NextResponse.json({ success: true });
+    response.cookies.set("admin_session", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -40,7 +37,7 @@ export async function POST(request: Request) {
       maxAge: 60 * 60 * 24 * 7, // 7 days
     });
 
-    return NextResponse.json({ success: true });
+    return response;
   } catch (error) {
     console.error("Login error:", error);
     return NextResponse.json(

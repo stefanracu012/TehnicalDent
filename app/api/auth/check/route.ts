@@ -1,16 +1,14 @@
-import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
-  const cookieStore = await cookies();
-  const session = cookieStore.get("admin_session");
+export async function GET(request: NextRequest) {
+  const session = request.cookies.get("admin_session");
 
   if (!session?.value) {
     return NextResponse.json({ authenticated: false }, { status: 401 });
   }
 
   try {
-    const decoded = Buffer.from(session.value, "base64").toString("utf-8");
+    const decoded = atob(session.value);
     const [email, timestamp, secret] = decoded.split(":");
 
     const adminEmail = process.env.ADMIN_EMAIL;
