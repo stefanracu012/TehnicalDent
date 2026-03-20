@@ -1,7 +1,18 @@
+"use client";
+
 import { ReactNode } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import LogoutButton from "@/components/admin/LogoutButton";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
+
+  // Login page — no admin nav bar
+  if (pathname === "/admin/login") {
+    return <>{children}</>;
+  }
+
   return (
     <>
       {/* Admin Navigation Bar */}
@@ -52,12 +63,15 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 Mesaje
               </Link>
             </div>
-            <Link
-              href="/"
-              className="text-sm text-white/70 hover:text-white transition-colors"
-            >
-              ← Înapoi la site
-            </Link>
+            <div className="flex items-center gap-4">
+              <Link
+                href="/"
+                className="text-sm text-white/70 hover:text-white transition-colors"
+              >
+                ← Înapoi la site
+              </Link>
+              <LogoutButton />
+            </div>
           </div>
         </div>
       </div>
