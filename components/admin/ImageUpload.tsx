@@ -20,6 +20,7 @@ export default function ImageUpload({
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [imgError, setImgError] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleUpload = async (file: File) => {
@@ -41,6 +42,7 @@ export default function ImageUpload({
       }
 
       const data = await res.json();
+      setImgError(false);
       onChange(data.url);
     } catch {
       alert("Eroare la încărcarea imaginii");
@@ -96,13 +98,14 @@ export default function ImageUpload({
             <div className="w-8 h-8 border-2 border-accent border-t-transparent rounded-full animate-spin" />
             <p className="text-sm text-muted-foreground mt-3">Se încarcă...</p>
           </div>
-        ) : value ? (
+        ) : value && !imgError ? (
           <div className="relative group">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={value}
               alt="Preview"
               className="w-full h-48 object-cover rounded-md"
+              onError={() => setImgError(true)}
             />
             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-md flex items-center justify-center gap-3">
               <button
@@ -157,7 +160,10 @@ export default function ImageUpload({
         <input
           type="text"
           value={value}
-          onChange={(e) => onChange(e.target.value)}
+          onChange={(e) => {
+            setImgError(false);
+            onChange(e.target.value);
+          }}
           placeholder="Sau introdu URL-ul imaginii manual..."
           className="w-full text-xs border border-border px-3 py-2 focus:border-foreground focus:outline-none text-muted-foreground"
         />
