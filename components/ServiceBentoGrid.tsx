@@ -2,6 +2,7 @@
 
 import { Link } from "@/i18n/navigation";
 import { useRouter } from "@/i18n/navigation";
+import Image from "next/image";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef } from "react";
 
@@ -94,11 +95,12 @@ export default function ServiceBentoGrid({
             }}
           >
             {/* Background image */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src={image}
               alt={service.title}
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110 will-change-transform"
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className="object-cover transition-transform duration-700 ease-out group-hover:scale-110 will-change-transform"
             />
 
             {/* Base gradient */}

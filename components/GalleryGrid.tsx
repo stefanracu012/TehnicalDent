@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import Image from "next/image";
 
 interface GalleryImage {
   url: string;
@@ -125,11 +126,12 @@ export default function GalleryGrid({
               }}
               onClick={() => openLightbox(index)}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={image.url}
                 alt={image.alt}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400" />
               {image.category && (
@@ -197,11 +199,12 @@ export default function GalleryGrid({
               }}
               onClick={() => openLightbox(index)}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src={image.url}
                 alt={image.alt}
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400" />
               {image.category && (

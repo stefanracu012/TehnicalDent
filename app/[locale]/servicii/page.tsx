@@ -4,6 +4,7 @@ import ServicesGrid from "@/components/ServicesGrid";
 import { getServices } from "@/lib/data";
 import { localizeService } from "@/lib/localize";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import Image from "next/image";
 import { getAlternates, getKeywords } from "@/lib/seo";
 
 export async function generateMetadata({
@@ -17,10 +18,7 @@ export async function generateMetadata({
   return {
     title: t("metaTitle"),
     description: t("metaDescription"),
-    keywords: getKeywords(
-      [t("metaTitle"), t("metaDescription")],
-      locale,
-    ),
+    keywords: getKeywords([t("metaTitle"), t("metaDescription")], locale),
     alternates: getAlternates("/servicii", locale),
   };
 }
@@ -41,11 +39,13 @@ export default async function ServicesPage({
       {/* ── HERO ── */}
       <section className="relative min-h-[50vh] flex items-end pb-16 pt-[11rem]">
         <div className="absolute inset-0 overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/images/hero-dentist.jpg"
             alt="Clinică stomatologică TechnicalDent"
-            className="w-full h-full object-cover"
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
             style={{ filter: "brightness(0.38) saturate(0.7)" }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent" />

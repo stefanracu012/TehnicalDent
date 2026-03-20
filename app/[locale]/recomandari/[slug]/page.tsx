@@ -9,6 +9,7 @@ import {
   getAllPublishedSlugs,
 } from "@/lib/blog-data";
 import { getAlternates, getKeywords } from "@/lib/seo";
+import { ArticleSchema, BreadcrumbSchema } from "@/components/JsonLd";
 
 interface Props {
   params: Promise<{ slug: string; locale: string }>;
@@ -29,10 +30,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: post.title,
     description: post.excerpt,
-    keywords: getKeywords(
-      [post.title, ...(post.tags || [])],
-      locale,
-    ),
+    keywords: getKeywords([post.title, ...(post.tags || [])], locale),
     alternates: getAlternates(`/recomandari/${slug}`, locale),
     openGraph: {
       title: post.title,
@@ -79,6 +77,21 @@ export default async function BlogPostPage({ params }: Props) {
 
   return (
     <>
+      <ArticleSchema
+        title={post.title}
+        description={post.excerpt}
+        slug={post.slug}
+        image={post.image}
+        datePublished={post.date}
+        author={post.author.name}
+      />
+      <BreadcrumbSchema
+        items={[
+          { name: "TechnicalDent", url: `https://tehnicaldent.com/${locale}` },
+          { name: "Recomandări", url: `https://tehnicaldent.com/${locale}/recomandari` },
+          { name: post.title, url: `https://tehnicaldent.com/${locale}/recomandari/${post.slug}` },
+        ]}
+      />
       {/* Hero Image */}
       <section className="relative pt-[11rem]">
         <div className="relative aspect-[21/9] max-h-[500px] w-full overflow-hidden">

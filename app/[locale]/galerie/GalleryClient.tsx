@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import GalleryGrid from "@/components/GalleryGrid";
@@ -122,12 +123,14 @@ export default function GalleryClient({ images }: Props) {
         {/* BG slideshow */}
         <div className="absolute inset-0">
           {images.slice(0, 10).map((img, i) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               key={img.url}
               src={img.url}
               alt={img.alt}
-              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-[1.5s] ease-in-out ${
+              fill
+              sizes="100vw"
+              priority={i === 0}
+              className={`object-cover transition-opacity duration-[1.5s] ease-in-out ${
                 i === heroSlide ? "opacity-100" : "opacity-0"
               }`}
               style={{ filter: "saturate(0.75) brightness(0.55)" }}
@@ -401,28 +404,31 @@ export default function GalleryClient({ images }: Props) {
             {/* Image collage column */}
             <div className="grid grid-cols-2 gap-3 h-[500px]">
               <div className="relative overflow-hidden">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src="/images/gallery/clinic-3.jpg"
                   alt="Echipament stomatologic"
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
+                  fill
+                  sizes="(max-width: 1024px) 50vw, 25vw"
+                  className="object-cover hover:scale-105 transition-transform duration-700"
                 />
               </div>
               <div className="grid grid-rows-2 gap-3">
                 <div className="relative overflow-hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <Image
                     src="/images/gallery/clinic-5.jpg"
                     alt="Cabinet de chirurgie"
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
+                    fill
+                    sizes="(max-width: 1024px) 25vw, 12.5vw"
+                    className="object-cover hover:scale-105 transition-transform duration-700"
                   />
                 </div>
                 <div className="relative overflow-hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                  <Image
                     src="/images/gallery/clinic-6.jpg"
                     alt="Zonă sterilizare"
-                    className="w-full h-full object-cover hover:scale-105 transition-transform duration-700"
+                    fill
+                    sizes="(max-width: 1024px) 25vw, 12.5vw"
+                    className="object-cover hover:scale-105 transition-transform duration-700"
                   />
                 </div>
               </div>
@@ -458,11 +464,12 @@ export default function GalleryClient({ images }: Props) {
       {/* ─── CTA SECTION ───────────────────────────────────────────────── */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/images/gallery/clinic-2.jpg"
             alt="Cabinet TechnicalDent"
-            className="w-full h-full object-cover"
+            fill
+            sizes="100vw"
+            className="object-cover"
             style={{ filter: "brightness(0.25) saturate(0.4)" }}
           />
         </div>

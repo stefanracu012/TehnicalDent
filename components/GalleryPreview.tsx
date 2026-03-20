@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
+import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 import GallerySlideshow from "@/components/GallerySlideshow";
@@ -472,11 +473,12 @@ function GalleryCard({
           "opacity 0.7s cubic-bezier(0.22,1,0.36,1), transform 0.7s cubic-bezier(0.22,1,0.36,1)",
       }}
     >
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <Image
         src={item.src}
         alt={item.alt}
-        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+        fill
+        sizes="(max-width: 768px) 50vw, 25vw"
+        className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
       />
 
       {/* Gradient overlay */}

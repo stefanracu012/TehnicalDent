@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 
@@ -45,11 +46,12 @@ export default function AboutPreview() {
           }}
         >
           <div className="aspect-[4/3] relative overflow-hidden rounded-xl shadow-xl">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src="/images/about-clinic.jpg"
               alt={t("imgAlt")}
-              className="w-full h-full object-cover"
+              fill
+              sizes="(max-width: 1024px) 100vw, 50vw"
+              className="object-cover"
             />
             {/* subtle inner vignette */}
             <div className="absolute inset-0 ring-1 ring-inset ring-black/8 rounded-xl pointer-events-none" />

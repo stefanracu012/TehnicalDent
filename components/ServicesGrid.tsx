@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { useRouter } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 
@@ -101,11 +102,12 @@ export default function ServicesGrid({ services }: { services: Service[] }) {
             }}
           >
             {/* Image */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <Image
               src={`/images/services/${service.slug}.jpg`}
               alt={service.title}
-              className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110 will-change-transform"
+              fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+              className="object-cover transition-transform duration-700 ease-out group-hover:scale-110 will-change-transform"
             />
 
             {/* Gradients */}

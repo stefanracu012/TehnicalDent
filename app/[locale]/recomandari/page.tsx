@@ -15,10 +15,7 @@ export async function generateMetadata({
   return {
     title: t("metaTitle"),
     description: t("metaDescription"),
-    keywords: getKeywords(
-      [t("metaTitle"), t("metaDescription")],
-      locale,
-    ),
+    keywords: getKeywords([t("metaTitle"), t("metaDescription")], locale),
     alternates: getAlternates("/recomandari", locale),
   };
 }

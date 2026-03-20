@@ -1,6 +1,7 @@
 "use client";
 
 import { Link, usePathname } from "@/i18n/navigation";
+import Image from "next/image";
 import { useState, useRef, useCallback } from "react";
 import { useTranslations } from "next-intl";
 
@@ -81,10 +82,11 @@ export default function Header() {
               onClick={handleLogoClick}
               className="flex items-center gap-3 group"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+              <Image
                 src="/images/logo.svg"
                 alt="Tehnical Dent logo"
+                width={80}
+                height={80}
                 className="h-20 w-auto transition-opacity duration-200 group-hover:opacity-80"
               />
               <div className="flex flex-col leading-none">

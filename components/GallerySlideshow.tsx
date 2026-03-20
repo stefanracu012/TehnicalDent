@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import Image from "next/image";
 
 interface SlideItem {
   src: string;
@@ -81,12 +82,13 @@ export default function GallerySlideshow({
           }`}
         >
           {/* key trick: forces img remount on activation → Ken Burns restarts */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             key={i === current ? `a-${current}` : `i-${i}`}
             src={item.src}
             alt={item.alt}
-            className={`w-full h-full object-cover ${
+            fill
+            sizes="100vw"
+            className={`object-cover ${
               i === current ? "animate-ken-burns" : ""
             }`}
           />

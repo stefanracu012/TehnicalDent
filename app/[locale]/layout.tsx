@@ -14,6 +14,7 @@ import {
 import { routing } from "@/i18n/routing";
 import { notFound } from "next/navigation";
 import { getAlternates, getOgLocale } from "@/lib/seo";
+import { DentistSchema } from "@/components/JsonLd";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -58,6 +59,20 @@ export async function generateMetadata({
       locale: getOgLocale(locale),
       siteName: "TechnicalDent",
       url: `https://tehnicaldent.com/${locale}`,
+      images: [
+        {
+          url: "https://tehnicaldent.com/images/hero-dentist.jpg",
+          width: 1200,
+          height: 630,
+          alt: "TechnicalDent — Clinică Stomatologică",
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: t("title"),
+      description: t("description"),
+      images: ["https://tehnicaldent.com/images/hero-dentist.jpg"],
     },
   };
 }
@@ -85,6 +100,7 @@ export default async function LocaleLayout({
       className={`${inter.variable} ${playfair.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <DentistSchema locale={locale} />
         <NextIntlClientProvider messages={messages}>
           <TopBar />
           <Header />

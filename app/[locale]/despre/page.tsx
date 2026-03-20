@@ -1,5 +1,6 @@
 ﻿import { Link } from "@/i18n/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+import Image from "next/image";
 import Button from "@/components/Button";
 import { getTeamMembers } from "@/lib/data";
 import { localizeTeamMember } from "@/lib/localize";
@@ -116,11 +117,13 @@ export default async function AboutPage({
       {/* ── HERO ── */}
       <section className="relative min-h-[55vh] flex items-end pb-16 pt-[11rem]">
         <div className="absolute inset-0 overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/images/about-story.jpg"
             alt="Clinică TechnicalDent"
-            className="w-full h-full object-cover"
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
             style={{ filter: "brightness(0.38) saturate(0.7)" }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
@@ -177,12 +180,13 @@ export default async function AboutPage({
             </div>
           </div>
           <div className="relative">
-            <div className="aspect-[4/5] overflow-hidden rounded-2xl shadow-xl">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
+            <div className="aspect-[4/5] overflow-hidden rounded-2xl shadow-xl relative">
+              <Image
                 src="/images/about-story.jpg"
                 alt={t("clinicaImgAlt")}
-                className="w-full h-full object-cover"
+                fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover"
               />
             </div>
             <div className="absolute -bottom-5 -left-5 w-36 h-36 bg-accent rounded-2xl hidden lg:flex items-center justify-center">
@@ -251,11 +255,12 @@ export default async function AboutPage({
           {teamMembers.map((member) => (
             <div key={member.id} className="group">
               <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-muted">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={member.image}
                   alt={member.name}
-                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div className="absolute inset-x-0 bottom-0 p-5 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
@@ -282,20 +287,22 @@ export default async function AboutPage({
         <div className="mx-auto max-w-7xl px-6 lg:px-8 py-16 lg:py-24">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <div className="grid grid-cols-2 gap-4">
-              <div className="aspect-[3/4] overflow-hidden rounded-2xl">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+              <div className="aspect-[3/4] overflow-hidden rounded-2xl relative">
+                <Image
                   src="/images/facility-1.jpg"
                   alt={t("cabinetConsultatie")}
-                  className="w-full h-full object-cover"
+                  fill
+                  sizes="(max-width: 1024px) 50vw, 25vw"
+                  className="object-cover"
                 />
               </div>
-              <div className="aspect-[3/4] overflow-hidden rounded-2xl mt-8">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+              <div className="aspect-[3/4] overflow-hidden rounded-2xl mt-8 relative">
+                <Image
                   src="/images/facility-2.jpg"
                   alt={t("echipamentModern")}
-                  className="w-full h-full object-cover"
+                  fill
+                  sizes="(max-width: 1024px) 50vw, 25vw"
+                  className="object-cover"
                 />
               </div>
             </div>

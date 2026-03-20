@@ -8,7 +8,13 @@ import { useState, useRef, useEffect } from "react";
 /* Inline SVG flag icons – consistent across all platforms */
 function FlagRO({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 16" className={className ?? "w-5 h-3.5 rounded-[1px] shadow-[0_0_0_0.5px_rgba(0,0,0,0.08)]"}>
+    <svg
+      viewBox="0 0 24 16"
+      className={
+        className ??
+        "w-5 h-3.5 rounded-[1px] shadow-[0_0_0_0.5px_rgba(0,0,0,0.08)]"
+      }
+    >
       <rect width="8" height="16" fill="#002B7F" />
       <rect x="8" width="8" height="16" fill="#FCD116" />
       <rect x="16" width="8" height="16" fill="#CE1126" />
@@ -17,22 +23,43 @@ function FlagRO({ className }: { className?: string }) {
 }
 function FlagEN({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 60 30" className={className ?? "w-5 h-3.5 rounded-[1px] shadow-[0_0_0_0.5px_rgba(0,0,0,0.08)]"}>
-      <clipPath id="ls"><path d="M0,0 v30 h60 v-30 z"/></clipPath>
-      <clipPath id="lt"><path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z"/></clipPath>
+    <svg
+      viewBox="0 0 60 30"
+      className={
+        className ??
+        "w-5 h-3.5 rounded-[1px] shadow-[0_0_0_0.5px_rgba(0,0,0,0.08)]"
+      }
+    >
+      <clipPath id="ls">
+        <path d="M0,0 v30 h60 v-30 z" />
+      </clipPath>
+      <clipPath id="lt">
+        <path d="M30,15 h30 v15 z v15 h-30 z h-30 v-15 z v-15 h30 z" />
+      </clipPath>
       <g clipPath="url(#ls)">
-        <path d="M0,0 v30 h60 v-30 z" fill="#012169"/>
-        <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" strokeWidth="6"/>
-        <path d="M0,0 L60,30 M60,0 L0,30" clipPath="url(#lt)" stroke="#C8102E" strokeWidth="4"/>
-        <path d="M30,0 v30 M0,15 h60" stroke="#fff" strokeWidth="10"/>
-        <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" strokeWidth="6"/>
+        <path d="M0,0 v30 h60 v-30 z" fill="#012169" />
+        <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" strokeWidth="6" />
+        <path
+          d="M0,0 L60,30 M60,0 L0,30"
+          clipPath="url(#lt)"
+          stroke="#C8102E"
+          strokeWidth="4"
+        />
+        <path d="M30,0 v30 M0,15 h60" stroke="#fff" strokeWidth="10" />
+        <path d="M30,0 v30 M0,15 h60" stroke="#C8102E" strokeWidth="6" />
       </g>
     </svg>
   );
 }
 function FlagRU({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 16" className={className ?? "w-5 h-3.5 rounded-[1px] shadow-[0_0_0_0.5px_rgba(0,0,0,0.08)]"}>
+    <svg
+      viewBox="0 0 24 16"
+      className={
+        className ??
+        "w-5 h-3.5 rounded-[1px] shadow-[0_0_0_0.5px_rgba(0,0,0,0.08)]"
+      }
+    >
       <rect width="24" height="5.33" fill="#fff" />
       <rect y="5.33" width="24" height="5.33" fill="#0039A6" />
       <rect y="10.67" width="24" height="5.33" fill="#D52B1E" />
@@ -41,7 +68,13 @@ function FlagRU({ className }: { className?: string }) {
 }
 function FlagIT({ className }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 16" className={className ?? "w-5 h-3.5 rounded-[1px] shadow-[0_0_0_0.5px_rgba(0,0,0,0.08)]"}>
+    <svg
+      viewBox="0 0 24 16"
+      className={
+        className ??
+        "w-5 h-3.5 rounded-[1px] shadow-[0_0_0_0.5px_rgba(0,0,0,0.08)]"
+      }
+    >
       <rect width="8" height="16" fill="#009246" />
       <rect x="8" width="8" height="16" fill="#fff" />
       <rect x="16" width="8" height="16" fill="#CE2B37" />
@@ -49,7 +82,10 @@ function FlagIT({ className }: { className?: string }) {
   );
 }
 
-const localeFlags: Record<string, ({ className }: { className?: string }) => React.JSX.Element> = {
+const localeFlags: Record<
+  string,
+  ({ className }: { className?: string }) => React.JSX.Element
+> = {
   ro: FlagRO,
   en: FlagEN,
   ru: FlagRU,
@@ -93,7 +129,10 @@ export default function LanguageSwitcher({ dark = false }: { dark?: boolean }) {
         aria-label="Change language"
       >
         <span className={`inline-flex items-center ${dark ? "" : ""}`}>
-          {(() => { const Flag = localeFlags[locale]; return Flag ? <Flag /> : null; })()}
+          {(() => {
+            const Flag = localeFlags[locale];
+            return Flag ? <Flag /> : null;
+          })()}
         </span>
         <span className={dark ? "inline" : "hidden sm:inline"}>
           {locale.toUpperCase()}
@@ -126,7 +165,10 @@ export default function LanguageSwitcher({ dark = false }: { dark?: boolean }) {
               }`}
             >
               <span className="inline-flex items-center">
-                {(() => { const Flag = localeFlags[l]; return Flag ? <Flag /> : null; })()}
+                {(() => {
+                  const Flag = localeFlags[l];
+                  return Flag ? <Flag /> : null;
+                })()}
               </span>
               <span>{t(l as "ro" | "en" | "ru" | "it")}</span>
             </button>

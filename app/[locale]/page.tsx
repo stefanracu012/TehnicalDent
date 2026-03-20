@@ -29,11 +29,13 @@ export default async function HomePage({
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center pt-[11rem]">
         <div className="absolute inset-0 z-0 overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src="/images/hero-dentist.jpg"
             alt={t("heroImgAlt")}
-            className="w-full h-full object-cover animate-ken-burns"
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover animate-ken-burns"
             style={{ filter: "saturate(0.8) brightness(0.6)" }}
           />
           <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/30 to-black/10" />

@@ -16,7 +16,7 @@ interface ServiceForm {
   shortDesc: string;
   description: string;
   overview: string;
-  process: string;
+  processSteps: string[];
   recovery: string;
   benefits: string[];
   images: string[];
@@ -44,7 +44,7 @@ export default function EditServicePage({
     shortDesc: "",
     description: "",
     overview: "",
-    process: "",
+    processSteps: [""],
     recovery: "",
     benefits: [""],
     images: [""],
@@ -96,6 +96,29 @@ export default function EditServicePage({
     }
   };
 
+  const getProcessSteps = (): string[] => {
+    if (activeLocale === "ro") return formData.processSteps;
+    const t = translations[activeLocale]?.processSteps;
+    if (Array.isArray(t) && t.length > 0) return t as string[];
+    return formData.processSteps.map(() => "");
+  };
+
+  const setProcessStep = (index: number, value: string) => {
+    if (activeLocale === "ro") {
+      setFormData((prev) => ({
+        ...prev,
+        processSteps: prev.processSteps.map((s, i) => (i === index ? value : s)),
+      }));
+    } else {
+      const current = getProcessSteps();
+      const updated = current.map((s, i) => (i === index ? value : s));
+      setTranslations((prev) => ({
+        ...prev,
+        [activeLocale]: { ...(prev[activeLocale] || {}), processSteps: updated },
+      }));
+    }
+  };
+
   useEffect(() => {
     fetchService();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -105,7 +128,11 @@ export default function EditServicePage({
     try {
       const res = await secureFetch("/api/admin/services");
       const services = await res.json();
-      const cats = [...new Set(services.map((s: { category: string }) => s.category).filter(Boolean))] as string[];
+      const cats = [
+        ...new Set(
+          services.map((s: { category: string }) => s.category).filter(Boolean),
+        ),
+      ] as string[];
       setExistingCategories(cats.sort());
       const service = services.find((s: { slug: string }) => s.slug === slug);
       if (!service) {
@@ -120,7 +147,9 @@ export default function EditServicePage({
         shortDesc: service.shortDesc,
         description: service.description,
         overview: service.overview || "",
-        process: service.process || "",
+        processSteps: service.process
+          ? service.process.split(". ").filter((s: string) => s.trim().length > 0).map((s: string) => s.trim().replace(/\.$/, ""))
+          : [""],
         recovery: service.recovery || "",
         benefits: service.benefits?.length ? service.benefits : [""],
         images: service.images?.length ? service.images : [""],
@@ -129,7 +158,17 @@ export default function EditServicePage({
         isActive: service.isActive,
       });
       if (service.translations) {
-        setTranslations(service.translations);
+        const loadedTranslations = { ...service.translations };
+        for (const loc of Object.keys(loadedTranslations)) {
+          if (typeof loadedTranslations[loc].process === "string") {
+            loadedTranslations[loc].processSteps = (loadedTranslations[loc].process as string)
+              .split(". ")
+              .filter((s: string) => s.trim().length > 0)
+              .map((s: string) => s.trim().replace(/\.$/, ""));
+            delete loadedTranslations[loc].process;
+          }
+        }
+        setTranslations(loadedTranslations);
       }
     } catch (error) {
       console.error("Error:", error);
@@ -146,16 +185,16 @@ export default function EditServicePage({
     }));
   };
 
-  const addArrayItem = (field: "benefits" | "images") => {
-    if (field === "benefits") {
-      setFormData((prev) => ({ ...prev, benefits: [...prev.benefits, ""] }));
+  const addArrayItem = (field: "benefits" | "processSteps" | "images") => {
+    if (field === "benefits" || field === "processSteps") {
+      setFormData((prev) => ({ ...prev, [field]: [...prev[field], ""] }));
       setTranslations((prev) => {
         const updated = { ...prev };
         for (const loc of ["en", "ru", "it"]) {
-          if (updated[loc]?.benefits && Array.isArray(updated[loc].benefits)) {
+          if (updated[loc]?.[field] && Array.isArray(updated[loc][field])) {
             updated[loc] = {
               ...updated[loc],
-              benefits: [...(updated[loc].benefits as string[]), ""],
+              [field]: [...(updated[loc][field] as string[]), ""],
             };
           }
         }
@@ -166,19 +205,19 @@ export default function EditServicePage({
     }
   };
 
-  const removeArrayItem = (field: "benefits" | "images", index: number) => {
-    if (field === "benefits") {
+  const removeArrayItem = (field: "benefits" | "processSteps" | "images", index: number) => {
+    if (field === "benefits" || field === "processSteps") {
       setFormData((prev) => ({
         ...prev,
-        benefits: prev.benefits.filter((_, i) => i !== index),
+        [field]: prev[field].filter((_, i) => i !== index),
       }));
       setTranslations((prev) => {
         const updated = { ...prev };
         for (const loc of ["en", "ru", "it"]) {
-          if (updated[loc]?.benefits && Array.isArray(updated[loc].benefits)) {
+          if (updated[loc]?.[field] && Array.isArray(updated[loc][field])) {
             updated[loc] = {
               ...updated[loc],
-              benefits: (updated[loc].benefits as string[]).filter(
+              [field]: (updated[loc][field] as string[]).filter(
                 (_, i) => i !== index,
               ),
             };
@@ -212,16 +251,29 @@ export default function EditServicePage({
         if (Object.keys(cleaned).length > 0) cleanTranslations[loc] = cleaned;
       }
 
+      // Join processSteps arrays into process strings for DB storage
+      const finalTranslations: Translations = {};
+      for (const [loc, fields] of Object.entries(cleanTranslations)) {
+        const f = { ...fields };
+        if (Array.isArray(f.processSteps)) {
+          f.process = (f.processSteps as string[]).filter((s) => s.trim()).join(". ");
+          delete f.processSteps;
+        }
+        finalTranslations[loc] = f;
+      }
+
+      const { processSteps: _ps, ...restFormData } = formData;
       const response = await secureFetch(`/api/admin/services/${serviceId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...formData,
+          ...restFormData,
+          process: formData.processSteps.filter((s) => s.trim()).join(". "),
           benefits: formData.benefits.filter((b) => b.trim()),
           images: formData.images.filter((i) => i.trim()),
           translations:
-            Object.keys(cleanTranslations).length > 0
-              ? cleanTranslations
+            Object.keys(finalTranslations).length > 0
+              ? finalTranslations
               : null,
         }),
       });
@@ -247,6 +299,7 @@ export default function EditServicePage({
   }
 
   const benefits = getBenefits();
+  const processSteps = getProcessSteps();
 
   return (
     <div className="min-h-screen bg-muted pt-24">
@@ -269,7 +322,7 @@ export default function EditServicePage({
               "shortDesc",
               "description",
               "overview",
-              "process",
+              "processSteps",
               "recovery",
               "benefits",
               "category",
@@ -278,7 +331,24 @@ export default function EditServicePage({
           />
           {activeLocale !== "ro" && (
             <p className="text-xs text-muted-foreground inline-flex items-center gap-1">
-              <svg className="h-3.5 w-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
+              <svg
+                className="h-3.5 w-3.5 shrink-0"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth={2}
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10"
+                />
+              </svg>
               Editați traducerea. Câmpurile goale vor folosi textul în română.
             </p>
           )}
@@ -405,20 +475,28 @@ export default function EditServicePage({
 
             {/* ── SECȚIUNILE PAGINII PUBLICE (1-4) ── */}
             <div className="border-t border-border pt-8 mt-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-6">Secțiunile paginii publice</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-6">
+                Secțiunile paginii publice
+              </p>
 
               {/* Secțiunea 1 — Prezentare generală */}
               <div className="mb-8">
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="flex-shrink-0 w-7 h-7 rounded-full bg-foreground text-white text-xs font-bold flex items-center justify-center">1</span>
-                  <label className="text-sm font-medium text-foreground">Prezentare generală</label>
+                  <span className="flex-shrink-0 w-7 h-7 rounded-full bg-foreground text-white text-xs font-bold flex items-center justify-center">
+                    1
+                  </span>
+                  <label className="text-sm font-medium text-foreground">
+                    Prezentare generală
+                  </label>
                 </div>
                 <textarea
                   rows={4}
                   value={getField("overview")}
                   onChange={(e) => setField("overview", e.target.value)}
                   placeholder={
-                    activeLocale !== "ro" ? formData.overview : "Descrieți pe scurt serviciul — ce este, pentru cine este recomandat..."
+                    activeLocale !== "ro"
+                      ? formData.overview
+                      : "Descrieți pe scurt serviciul — ce este, pentru cine este recomandat..."
                   }
                   className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none resize-none"
                 />
@@ -427,8 +505,12 @@ export default function EditServicePage({
               {/* Secțiunea 2 — Beneficii */}
               <div className="mb-8">
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="flex-shrink-0 w-7 h-7 rounded-full bg-foreground text-white text-xs font-bold flex items-center justify-center">2</span>
-                  <label className="text-sm font-medium text-foreground">Beneficii</label>
+                  <span className="flex-shrink-0 w-7 h-7 rounded-full bg-foreground text-white text-xs font-bold flex items-center justify-center">
+                    2
+                  </span>
+                  <label className="text-sm font-medium text-foreground">
+                    Beneficii
+                  </label>
                 </div>
                 {benefits.map((benefit, index) => (
                   <div key={index} className="flex gap-2 mb-2">
@@ -468,32 +550,69 @@ export default function EditServicePage({
               {/* Secțiunea 3 — Procesul de tratament */}
               <div className="mb-8">
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="flex-shrink-0 w-7 h-7 rounded-full bg-foreground text-white text-xs font-bold flex items-center justify-center">3</span>
-                  <label className="text-sm font-medium text-foreground">Procesul de tratament</label>
+                  <span className="flex-shrink-0 w-7 h-7 rounded-full bg-foreground text-white text-xs font-bold flex items-center justify-center">
+                    3
+                  </span>
+                  <label className="text-sm font-medium text-foreground">
+                    Procesul de tratament
+                  </label>
                 </div>
-                <textarea
-                  rows={4}
-                  value={getField("process")}
-                  onChange={(e) => setField("process", e.target.value)}
-                  placeholder={
-                    activeLocale !== "ro" ? formData.process : "Descrieți pașii procedurii, separați prin punct. Ex: Consultație inițială. Pregătirea dintelui. Aplicarea coroanei."
-                  }
-                  className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none resize-none"
-                />
+                {processSteps.map((step, index) => (
+                  <div key={index} className="flex gap-2 mb-2 items-start">
+                    <span className="flex-shrink-0 w-7 h-7 rounded-full bg-muted text-foreground text-xs font-bold flex items-center justify-center mt-2">
+                      {index + 1}
+                    </span>
+                    <textarea
+                      rows={2}
+                      value={step}
+                      onChange={(e) => setProcessStep(index, e.target.value)}
+                      className="flex-1 border border-border px-4 py-2 focus:border-foreground focus:outline-none resize-none"
+                      placeholder={
+                        activeLocale !== "ro"
+                          ? formData.processSteps[index] || "Traducere pas..."
+                          : `Pasul ${index + 1}...`
+                      }
+                    />
+                    {activeLocale === "ro" && (
+                      <button
+                        type="button"
+                        onClick={() => removeArrayItem("processSteps", index)}
+                        className="px-3 py-2 text-red-600 hover:bg-red-50"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                ))}
+                {activeLocale === "ro" && (
+                  <button
+                    type="button"
+                    onClick={() => addArrayItem("processSteps")}
+                    className="text-sm text-accent hover:text-accent/80"
+                  >
+                    + Adaugă pas
+                  </button>
+                )}
               </div>
 
               {/* Secțiunea 4 — Recuperare și îngrijire */}
               <div>
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="flex-shrink-0 w-7 h-7 rounded-full bg-accent text-white text-xs font-bold flex items-center justify-center">4</span>
-                  <label className="text-sm font-medium text-foreground">Recuperare și îngrijire</label>
+                  <span className="flex-shrink-0 w-7 h-7 rounded-full bg-accent text-white text-xs font-bold flex items-center justify-center">
+                    4
+                  </span>
+                  <label className="text-sm font-medium text-foreground">
+                    Recuperare și îngrijire
+                  </label>
                 </div>
                 <textarea
                   rows={3}
                   value={getField("recovery")}
                   onChange={(e) => setField("recovery", e.target.value)}
                   placeholder={
-                    activeLocale !== "ro" ? formData.recovery : "Descrieți perioada de recuperare, ce trebuie să facă pacientul..."
+                    activeLocale !== "ro"
+                      ? formData.recovery
+                      : "Descrieți perioada de recuperare, ce trebuie să facă pacientul..."
                   }
                   className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none resize-none"
                 />

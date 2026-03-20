@@ -1,10 +1,12 @@
 import { Link } from "@/i18n/navigation";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import Button from "@/components/Button";
 import { getServiceBySlug, getServices } from "@/lib/data";
 import { localizeService } from "@/lib/localize";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getAlternates, getKeywords } from "@/lib/seo";
+import { ServiceSchema, BreadcrumbSchema } from "@/components/JsonLd";
 
 interface ServicePageProps {
   params: Promise<{ slug: string; locale: string }>;
@@ -21,7 +23,11 @@ export async function generateMetadata({ params }: ServicePageProps) {
     title: localized.title as string,
     description: localized.shortDesc as string,
     keywords: getKeywords(
-      [localized.title as string, localized.category as string, localized.shortDesc as string],
+      [
+        localized.title as string,
+        localized.category as string,
+        localized.shortDesc as string,
+      ],
       locale,
     ),
     alternates: getAlternates(`/servicii/${slug}`, locale),
@@ -70,15 +76,31 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
 
   return (
     <>
+      <ServiceSchema
+        title={title}
+        description={shortDesc}
+        slug={service.slug}
+        category={category}
+        image={service.images?.[0] as string | undefined}
+      />
+      <BreadcrumbSchema
+        items={[
+          { name: "TechnicalDent", url: `https://tehnicaldent.com/${locale}` },
+          { name: tNav("servicii"), url: `https://tehnicaldent.com/${locale}/servicii` },
+          { name: title, url: `https://tehnicaldent.com/${locale}/servicii/${service.slug}` },
+        ]}
+      />
       {/* ── HERO ── */}
       <section className="relative min-h-[55vh] flex items-end pb-16 pt-[11rem]">
         {/* Background */}
         <div className="absolute inset-0 overflow-hidden">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+          <Image
             src={heroImage}
             alt={title}
-            className="w-full h-full object-cover scale-105"
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover scale-105"
             style={{ filter: "brightness(0.45) saturate(0.8)" }}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/20" />
@@ -330,11 +352,12 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
                         className="flex items-center gap-4 px-6 py-4 group hover:bg-muted transition-colors"
                       >
                         <div className="relative w-14 h-12 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
-                          {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img
+                          <Image
                             src={`/images/services/${related.slug}.jpg`}
                             alt={related.title}
-                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                            fill
+                            sizes="56px"
+                            className="object-cover transition-transform duration-300 group-hover:scale-110"
                           />
                         </div>
                         <div className="min-w-0">
