@@ -172,20 +172,20 @@ export default function AdminGalleryPage() {
       : images.filter((img) => img.category === filterCat);
 
   return (
-    <div className="min-h-screen bg-muted pt-24">
-      <div className="mx-auto max-w-7xl px-6 lg:px-8 py-12">
-        <div className="flex items-center justify-between mb-8">
+    <div className="min-h-screen bg-muted pt-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="font-serif text-3xl font-medium text-foreground">
+            <h1 className="font-serif text-2xl sm:text-3xl font-medium text-foreground">
               Galerie
             </h1>
-            <p className="mt-2 text-muted-foreground">
+            <p className="mt-1 sm:mt-2 text-sm sm:text-base text-muted-foreground">
               Încărcați și organizați imaginile din galerie
             </p>
           </div>
           <button
             onClick={openNew}
-            className="bg-foreground text-white text-sm font-semibold px-6 py-3 hover:bg-foreground/90 transition-colors"
+            className="self-start sm:self-auto bg-foreground text-white text-sm font-semibold px-5 py-2.5 sm:px-6 sm:py-3 hover:bg-foreground/90 transition-colors"
           >
             + Adaugă imagine
           </button>
@@ -209,8 +209,8 @@ export default function AdminGalleryPage() {
         </div>
 
         {showForm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="bg-white w-full max-w-lg max-h-[90vh] overflow-y-auto p-8 rounded-lg">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4">
+            <div className="bg-white w-full sm:max-w-lg max-h-[95vh] sm:max-h-[90vh] overflow-y-auto p-5 sm:p-8 rounded-t-2xl sm:rounded-lg">
               <h2 className="font-serif text-2xl font-medium text-foreground mb-6">
                 {editing ? "Editează imagine" : "Adaugă imagine nouă"}
               </h2>
@@ -393,7 +393,7 @@ export default function AdminGalleryPage() {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
             {filtered.map((img) => (
               <div
                 key={img.id}
@@ -403,9 +403,10 @@ export default function AdminGalleryPage() {
                 <img
                   src={img.url}
                   alt={img.alt}
-                  className="w-full h-40 object-cover"
+                  className="w-full h-32 sm:h-40 object-cover"
                 />
-                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                {/* Desktop hover overlay */}
+                <div className="hidden sm:flex absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex-col items-center justify-center gap-2">
                   <button
                     onClick={() => openEdit(img)}
                     className="bg-white text-foreground text-xs font-semibold px-4 py-1.5 rounded-full hover:bg-white/90"
@@ -425,13 +426,34 @@ export default function AdminGalleryPage() {
                     Șterge
                   </button>
                 </div>
-                <div className="p-3">
+                <div className="p-2 sm:p-3">
                   <p className="text-xs text-muted-foreground truncate">
                     {img.alt}
                   </p>
                   <span className="text-[10px] text-accent font-medium uppercase tracking-wider">
                     {img.category}
                   </span>
+                  {/* Mobile action buttons */}
+                  <div className="flex gap-2 mt-2 sm:hidden">
+                    <button
+                      onClick={() => openEdit(img)}
+                      className="text-[10px] font-semibold text-accent"
+                    >
+                      Editează
+                    </button>
+                    <button
+                      onClick={() => toggleActive(img)}
+                      className="text-[10px] font-semibold text-muted-foreground"
+                    >
+                      {img.isActive ? "Dezactiv." : "Activ."}
+                    </button>
+                    <button
+                      onClick={() => deleteImage(img.id)}
+                      className="text-[10px] font-semibold text-red-600"
+                    >
+                      Șterge
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

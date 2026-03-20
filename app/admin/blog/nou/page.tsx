@@ -131,18 +131,18 @@ export default function NewBlogPostPage() {
   };
 
   return (
-    <div className="min-h-screen bg-muted pt-24">
-      <div className="mx-auto max-w-4xl px-6 lg:px-8 py-12">
-        <div className="mb-8">
-          <h1 className="font-serif text-3xl font-medium text-foreground">
+    <div className="min-h-screen bg-muted pt-20">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="font-serif text-2xl sm:text-3xl font-medium text-foreground">
             Articol nou
           </h1>
-          <p className="mt-2 text-muted-foreground">
+          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-muted-foreground">
             Creați un articol nou pe blog
           </p>
         </div>
 
-        <div className="bg-white border border-border p-8">
+        <div className="bg-white border border-border p-4 sm:p-8">
           <div className="mb-4 space-y-3">
             <LanguageTabs active={activeLocale} onChange={setActiveLocale} />
             <AutoTranslateButton

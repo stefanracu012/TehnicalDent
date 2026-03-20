@@ -166,28 +166,28 @@ export default function AdminTestimonialsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-muted pt-24">
-      <div className="mx-auto max-w-7xl px-6 lg:px-8 py-12">
-        <div className="flex items-center justify-between mb-12">
+    <div className="min-h-screen bg-muted pt-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 sm:mb-12">
           <div>
-            <h1 className="font-serif text-3xl font-medium text-foreground">
+            <h1 className="font-serif text-2xl sm:text-3xl font-medium text-foreground">
               Testimoniale
             </h1>
-            <p className="mt-2 text-muted-foreground">
-              Administrați testimonialele pacienților
+            <p className="mt-1 sm:mt-2 text-sm sm:text-base text-muted-foreground">
+              Administrează testimonialele pacienților
             </p>
           </div>
           <button
             onClick={openNew}
-            className="bg-foreground text-white text-sm font-semibold px-6 py-3 hover:bg-foreground/90 transition-colors"
+            className="self-start sm:self-auto bg-foreground text-white text-sm font-semibold px-5 py-2.5 sm:px-6 sm:py-3 hover:bg-foreground/90 transition-colors"
           >
             + Adaugă testimonial
           </button>
         </div>
 
         {showForm && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-            <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto p-8 rounded-lg">
+          <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4">
+            <div className="bg-white w-full sm:max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto p-5 sm:p-8 rounded-t-2xl sm:rounded-lg">
               <h2 className="font-serif text-2xl font-medium text-foreground mb-6">
                 {editing ? "Editează testimonial" : "Adaugă testimonial nou"}
               </h2>
@@ -361,28 +361,26 @@ export default function AdminTestimonialsPage() {
             {testimonials.map((t) => (
               <div
                 key={t.id}
-                className={`bg-white border border-border p-6 ${!t.isActive ? "opacity-50" : ""}`}
+                className={`bg-white border border-border p-4 sm:p-6 ${!t.isActive ? "opacity-50" : ""}`}
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-serif text-lg font-medium text-foreground">
-                        {t.name}
-                      </h3>
-                      {t.service && (
-                        <span className="text-xs bg-accent/10 text-accent px-2 py-0.5 rounded-full">
-                          {t.service}
-                        </span>
-                      )}
-                      <span className="text-xs text-muted-foreground">
-                        {formatDate(t.createdAt)}
+                <div>
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+                    <h3 className="font-serif text-base sm:text-lg font-medium text-foreground">
+                      {t.name}
+                    </h3>
+                    {t.service && (
+                      <span className="text-xs bg-accent/10 text-accent px-2 py-0.5 rounded-full">
+                        {t.service}
                       </span>
-                    </div>
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      &ldquo;{t.content}&rdquo;
-                    </p>
+                    )}
+                    <span className="text-xs text-muted-foreground">
+                      {formatDate(t.createdAt)}
+                    </span>
                   </div>
-                  <div className="flex gap-3 ml-6 flex-shrink-0">
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    &ldquo;{t.content}&rdquo;
+                  </p>
+                  <div className="flex gap-3 mt-3 pt-3 border-t border-border">
                     <button
                       onClick={() => openEdit(t)}
                       className="text-xs text-accent hover:text-accent/80 font-semibold"

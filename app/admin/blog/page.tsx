@@ -81,20 +81,20 @@ export default function AdminBlogPage() {
   };
 
   return (
-    <div className="min-h-screen bg-muted pt-24">
-      <div className="mx-auto max-w-7xl px-6 lg:px-8 py-12">
-        <div className="flex items-center justify-between mb-8">
+    <div className="min-h-screen bg-muted pt-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="font-serif text-3xl font-medium text-foreground">
+            <h1 className="font-serif text-2xl sm:text-3xl font-medium text-foreground">
               Blog
             </h1>
-            <p className="mt-2 text-muted-foreground">
+            <p className="mt-1 sm:mt-2 text-sm sm:text-base text-muted-foreground">
               Creați și gestionați articolele de pe blog
             </p>
           </div>
           <Link
             href="/admin/blog/nou"
-            className="bg-foreground text-white text-sm font-semibold px-6 py-3 hover:bg-foreground/90 transition-colors"
+            className="self-start sm:self-auto bg-foreground text-white text-sm font-semibold px-5 py-2.5 sm:px-6 sm:py-3 hover:bg-foreground/90 transition-colors"
           >
             + Articol nou
           </Link>
@@ -156,11 +156,11 @@ export default function AdminBlogPage() {
             {filtered.map((post) => (
               <div
                 key={post.id}
-                className="bg-white border border-border p-6 flex items-start gap-6"
+                className="bg-white border border-border p-4 sm:p-6 flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6"
               >
                 {/* Cover Image Thumbnail */}
                 {post.coverImage && (
-                  <div className="flex-shrink-0 w-32 h-20 bg-muted overflow-hidden">
+                  <div className="flex-shrink-0 w-full sm:w-32 h-40 sm:h-20 bg-muted overflow-hidden rounded sm:rounded-none">
                     <img
                       src={post.coverImage}
                       alt={post.title}
@@ -171,8 +171,8 @@ export default function AdminBlogPage() {
 
                 {/* Content */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-1">
-                    <h3 className="font-serif text-lg font-medium text-foreground truncate">
+                  <div className="flex items-start sm:items-center gap-2 sm:gap-3 mb-1">
+                    <h3 className="font-serif text-base sm:text-lg font-medium text-foreground line-clamp-2 sm:truncate">
                       {post.title}
                     </h3>
                     <span
@@ -188,11 +188,11 @@ export default function AdminBlogPage() {
                   <p className="text-sm text-muted-foreground line-clamp-1 mb-2">
                     {post.excerpt || "Fără descriere"}
                   </p>
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                     <span>{post.category}</span>
-                    <span>•</span>
+                    <span className="hidden sm:inline">•</span>
                     <span>{post.author}</span>
-                    <span>•</span>
+                    <span className="hidden sm:inline">•</span>
                     <span>
                       {post.publishedAt
                         ? `Publicat: ${formatDate(post.publishedAt)}`
@@ -200,7 +200,7 @@ export default function AdminBlogPage() {
                     </span>
                     {post.tags.length > 0 && (
                       <>
-                        <span>•</span>
+                        <span className="hidden sm:inline">•</span>
                         <span>{post.tags.join(", ")}</span>
                       </>
                     )}
@@ -208,7 +208,7 @@ export default function AdminBlogPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex-shrink-0 flex items-center gap-2">
+                <div className="flex-shrink-0 flex items-center gap-2 pt-3 sm:pt-0 border-t sm:border-t-0 border-border">
                   <button
                     onClick={() => togglePublish(post)}
                     className={`text-xs font-semibold px-3 py-1.5 border transition-colors ${

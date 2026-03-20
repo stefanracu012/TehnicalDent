@@ -107,14 +107,19 @@ export default function EditServicePage({
     if (activeLocale === "ro") {
       setFormData((prev) => ({
         ...prev,
-        processSteps: prev.processSteps.map((s, i) => (i === index ? value : s)),
+        processSteps: prev.processSteps.map((s, i) =>
+          i === index ? value : s,
+        ),
       }));
     } else {
       const current = getProcessSteps();
       const updated = current.map((s, i) => (i === index ? value : s));
       setTranslations((prev) => ({
         ...prev,
-        [activeLocale]: { ...(prev[activeLocale] || {}), processSteps: updated },
+        [activeLocale]: {
+          ...(prev[activeLocale] || {}),
+          processSteps: updated,
+        },
       }));
     }
   };
@@ -148,7 +153,10 @@ export default function EditServicePage({
         description: service.description,
         overview: service.overview || "",
         processSteps: service.process
-          ? service.process.split(". ").filter((s: string) => s.trim().length > 0).map((s: string) => s.trim().replace(/\.$/, ""))
+          ? service.process
+              .split(". ")
+              .filter((s: string) => s.trim().length > 0)
+              .map((s: string) => s.trim().replace(/\.$/, ""))
           : [""],
         recovery: service.recovery || "",
         benefits: service.benefits?.length ? service.benefits : [""],
@@ -161,7 +169,9 @@ export default function EditServicePage({
         const loadedTranslations = { ...service.translations };
         for (const loc of Object.keys(loadedTranslations)) {
           if (typeof loadedTranslations[loc].process === "string") {
-            loadedTranslations[loc].processSteps = (loadedTranslations[loc].process as string)
+            loadedTranslations[loc].processSteps = (
+              loadedTranslations[loc].process as string
+            )
               .split(". ")
               .filter((s: string) => s.trim().length > 0)
               .map((s: string) => s.trim().replace(/\.$/, ""));
@@ -205,7 +215,10 @@ export default function EditServicePage({
     }
   };
 
-  const removeArrayItem = (field: "benefits" | "processSteps" | "images", index: number) => {
+  const removeArrayItem = (
+    field: "benefits" | "processSteps" | "images",
+    index: number,
+  ) => {
     if (field === "benefits" || field === "processSteps") {
       setFormData((prev) => ({
         ...prev,
@@ -256,7 +269,9 @@ export default function EditServicePage({
       for (const [loc, fields] of Object.entries(cleanTranslations)) {
         const f = { ...fields };
         if (Array.isArray(f.processSteps)) {
-          f.process = (f.processSteps as string[]).filter((s) => s.trim()).join(". ");
+          f.process = (f.processSteps as string[])
+            .filter((s) => s.trim())
+            .join(". ");
           delete f.processSteps;
         }
         finalTranslations[loc] = f;
@@ -292,7 +307,7 @@ export default function EditServicePage({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-muted pt-24 flex items-center justify-center">
+      <div className="min-h-screen bg-muted pt-20 flex items-center justify-center">
         <div className="text-muted-foreground">Se încarcă...</div>
       </div>
     );
@@ -302,13 +317,13 @@ export default function EditServicePage({
   const processSteps = getProcessSteps();
 
   return (
-    <div className="min-h-screen bg-muted pt-24">
-      <div className="mx-auto max-w-4xl px-6 lg:px-8 py-12">
-        <div className="mb-8">
-          <h1 className="font-serif text-3xl font-medium text-foreground">
+    <div className="min-h-screen bg-muted pt-20">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="font-serif text-2xl sm:text-3xl font-medium text-foreground">
             Editează serviciu
           </h1>
-          <p className="mt-2 text-muted-foreground">
+          <p className="mt-1 sm:mt-2 text-sm sm:text-base text-muted-foreground">
             Modifică informațiile pentru „{formData.title}"
           </p>
         </div>
@@ -356,7 +371,7 @@ export default function EditServicePage({
 
         <form
           onSubmit={handleSubmit}
-          className="bg-white border border-border p-8"
+          className="bg-white border border-border p-4 sm:p-8"
         >
           <div className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

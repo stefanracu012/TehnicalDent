@@ -60,18 +60,18 @@ export default function AdminServicesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-muted pt-24">
-      <div className="mx-auto max-w-7xl px-6 lg:px-8 py-12">
-        <div className="flex items-center justify-between mb-12">
+    <div className="min-h-screen bg-muted pt-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 sm:mb-12">
           <div>
-            <h1 className="font-serif text-3xl font-medium text-foreground">
+            <h1 className="font-serif text-2xl sm:text-3xl font-medium text-foreground">
               Servicii
             </h1>
-            <p className="mt-2 text-muted-foreground">
+            <p className="mt-1 sm:mt-2 text-sm sm:text-base text-muted-foreground">
               Gestionați serviciile afișate pe site
             </p>
           </div>
-          <Button href="/admin/servicii/nou">Adaugă serviciu</Button>
+          <Button href="/admin/servicii/nou" className="self-start sm:self-auto">Adaugă serviciu</Button>
         </div>
 
         {loading ? (
@@ -86,7 +86,9 @@ export default function AdminServicesPage() {
             <Button href="/admin/servicii/nou">Adaugă primul serviciu</Button>
           </div>
         ) : (
-          <div className="bg-white border border-border">
+          <>
+            {/* Desktop table */}
+            <div className="hidden md:block bg-white border border-border">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
@@ -169,6 +171,64 @@ export default function AdminServicesPage() {
               </tbody>
             </table>
           </div>
+
+            {/* Mobile cards */}
+            <div className="md:hidden space-y-3">
+              {services.map((service) => (
+                <div
+                  key={service.id}
+                  className="bg-white border border-border p-4 rounded-lg"
+                >
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <div className="min-w-0">
+                      <p className="font-medium text-foreground truncate">
+                        {service.title}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                        {service.shortDesc}
+                      </p>
+                    </div>
+                    <span
+                      className={`flex-shrink-0 inline-flex px-2 py-0.5 text-xs font-medium rounded ${
+                        service.isActive
+                          ? "bg-green-100 text-green-800"
+                          : "bg-gray-100 text-gray-800"
+                      }`}
+                    >
+                      {service.isActive ? "Activ" : "Inactiv"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground mb-3">
+                    <span>{service.category}</span>
+                    <span>•</span>
+                    <span>Ordine: {service.order}</span>
+                  </div>
+                  <div className="flex gap-3 pt-3 border-t border-border">
+                    <button
+                      onClick={() =>
+                        toggleActive(service.id, service.isActive)
+                      }
+                      className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      {service.isActive ? "Dezactivează" : "Activează"}
+                    </button>
+                    <Link
+                      href={`/admin/servicii/${service.slug}`}
+                      className="text-xs font-semibold text-accent hover:text-accent/80 transition-colors"
+                    >
+                      Editează
+                    </Link>
+                    <button
+                      onClick={() => deleteService(service.id)}
+                      className="text-xs font-semibold text-red-600 hover:text-red-800 transition-colors"
+                    >
+                      Șterge
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>
