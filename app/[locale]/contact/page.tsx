@@ -415,7 +415,7 @@ export default async function ContactPage({
 
       {/* ── MAP ── */}
       <section className="relative">
-        <div className="aspect-[16/7] w-full">
+        <div className="aspect-[3/4] sm:aspect-[16/9] lg:aspect-[16/7] w-full">
           <iframe
             src={MAPS_EMBED}
             width="100%"
@@ -428,7 +428,7 @@ export default async function ContactPage({
           />
         </div>
         {/* Overlay card */}
-        <div className="absolute bottom-6 left-6 lg:bottom-10 lg:left-10 z-10 bg-white border border-border p-6 max-w-xs shadow-xl">
+        <div className="absolute bottom-4 left-4 right-4 sm:right-auto sm:bottom-6 sm:left-6 lg:bottom-10 lg:left-10 z-10 bg-white border border-border p-5 sm:p-6 sm:max-w-xs shadow-xl">
           <h3 className="font-serif text-lg font-medium text-foreground mb-2">
             {t("mapCardTitle")}
           </h3>

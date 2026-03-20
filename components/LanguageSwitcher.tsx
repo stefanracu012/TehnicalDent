@@ -12,7 +12,7 @@ const localeFlags: Record<string, string> = {
   it: "🇮🇹",
 };
 
-export default function LanguageSwitcher() {
+export default function LanguageSwitcher({ dark = false }: { dark?: boolean }) {
   const locale = useLocale();
   const router = useRouter();
   const pathname = usePathname();
@@ -41,17 +41,21 @@ export default function LanguageSwitcher() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="flex items-center gap-1.5 text-sm font-medium text-foreground/80 hover:text-foreground transition-colors cursor-pointer"
+        className={`flex items-center gap-1.5 font-medium transition-colors cursor-pointer ${
+          dark
+            ? "text-xs text-white/70 hover:text-white"
+            : "text-sm text-foreground/80 hover:text-foreground"
+        }`}
         aria-label="Change language"
       >
-        <span className="text-base">{localeFlags[locale]}</span>
-        <span className="hidden sm:inline">{locale.toUpperCase()}</span>
+        <span className={dark ? "text-sm" : "text-base"}>{localeFlags[locale]}</span>
+        <span className={dark ? "inline" : "hidden sm:inline"}>{locale.toUpperCase()}</span>
         <svg
-          className={`w-3.5 h-3.5 transition-transform ${open ? "rotate-180" : ""}`}
+          className={`${dark ? "w-3 h-3" : "w-3.5 h-3.5"} transition-transform ${open ? "rotate-180" : ""}`}
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"
-          strokeWidth={2}
+          strokeWidth={dark ? 2.5 : 2}
         >
           <path
             strokeLinecap="round"

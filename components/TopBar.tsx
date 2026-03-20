@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
 
 export default function TopBar() {
   const [open, setOpen] = useState(false);
@@ -173,6 +174,11 @@ export default function TopBar() {
             </svg>
             Str. Sarmizegetusa 24/1
           </a>
+
+          <span className="text-white/20">|</span>
+
+          {/* Language switcher */}
+          <LanguageSwitcher dark />
         </div>
       </div>
     </div>
