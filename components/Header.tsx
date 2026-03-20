@@ -76,7 +76,11 @@ export default function Header() {
         <div className="flex h-24 items-center justify-between">
           {/* Logo */}
           <div className="flex lg:flex-1">
-            <Link href="/" onClick={handleLogoClick} className="flex items-center gap-3 group">
+            <Link
+              href="/"
+              onClick={handleLogoClick}
+              className="flex items-center gap-3 group"
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/images/logo.svg"
@@ -191,7 +195,9 @@ export default function Header() {
                   key={item.key}
                   href={item.href}
                   className="block py-3 text-base font-medium text-foreground/80 transition-all duration-200 hover:text-foreground hover:pl-2"
-                  style={{ transitionDelay: mobileMenuOpen ? `${i * 50}ms` : "0ms" }}
+                  style={{
+                    transitionDelay: mobileMenuOpen ? `${i * 50}ms` : "0ms",
+                  }}
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {tNav(item.key)}
@@ -213,8 +219,18 @@ export default function Header() {
                 href="mailto:tehnicaldentmd@gmail.com"
                 className="flex items-center gap-3 text-sm text-foreground/70 hover:text-foreground transition-colors"
               >
-                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                <svg
+                  className="w-4 h-4 shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"
+                  />
                 </svg>
                 tehnicaldentmd@gmail.com
               </a>
@@ -224,9 +240,23 @@ export default function Header() {
                 rel="noopener noreferrer"
                 className="flex items-center gap-3 text-sm text-foreground/70 hover:text-foreground transition-colors"
               >
-                <svg className="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                <svg
+                  className="w-4 h-4 shrink-0"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                  />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z"
+                  />
                 </svg>
                 Str. Sarmizegetusa 24/1, Chișinău
               </a>

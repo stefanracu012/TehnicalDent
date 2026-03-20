@@ -287,9 +287,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
                 <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-1">
                   {t("categorie")}
                 </p>
-                <p className="font-medium text-foreground">
-                  {category}
-                </p>
+                <p className="font-medium text-foreground">{category}</p>
               </div>
 
               {/* Related services */}

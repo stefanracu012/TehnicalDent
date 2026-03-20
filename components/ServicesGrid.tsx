@@ -68,19 +68,21 @@ export default function ServicesGrid({ services }: { services: Service[] }) {
         >
           {t("filtrulToate")}
         </button>
-        {Array.from(categoryMap.entries()).map(([originalCat, translatedCat]) => (
-          <button
-            key={originalCat}
-            onClick={() => setActive(originalCat)}
-            className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
-              active === originalCat
-                ? "bg-foreground text-white shadow-sm"
-                : "bg-muted text-muted-foreground hover:bg-border hover:text-foreground"
-            }`}
-          >
-            {translatedCat}
-          </button>
-        ))}
+        {Array.from(categoryMap.entries()).map(
+          ([originalCat, translatedCat]) => (
+            <button
+              key={originalCat}
+              onClick={() => setActive(originalCat)}
+              className={`px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
+                active === originalCat
+                  ? "bg-foreground text-white shadow-sm"
+                  : "bg-muted text-muted-foreground hover:bg-border hover:text-foreground"
+              }`}
+            >
+              {translatedCat}
+            </button>
+          ),
+        )}
       </div>
 
       {/* ── Grid ── */}
