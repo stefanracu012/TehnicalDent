@@ -8,6 +8,7 @@ interface ContactMessage {
   name: string;
   phone: string;
   email?: string;
+  service?: string;
   message: string;
   isRead: boolean;
   createdAt: string;
@@ -118,6 +119,11 @@ export default function AdminMessagesPage() {
                       <span className="w-2 h-2 bg-accent rounded-full flex-shrink-0 mt-2" />
                     )}
                   </div>
+                  {msg.service && (
+                    <p className="text-xs text-accent font-medium mt-1">
+                      {msg.service}
+                    </p>
+                  )}
                   <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
                     {msg.message}
                   </p>
@@ -175,6 +181,17 @@ export default function AdminMessagesPage() {
                       </div>
                     )}
                   </div>
+
+                  {selectedMessage.service && (
+                    <div>
+                      <p className="text-sm font-medium text-muted-foreground">
+                        Serviciu
+                      </p>
+                      <p className="text-foreground">
+                        {selectedMessage.service}
+                      </p>
+                    </div>
+                  )}
 
                   <div className="border-t border-border pt-6">
                     <p className="text-sm font-medium text-muted-foreground mb-2">

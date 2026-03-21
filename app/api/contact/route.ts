@@ -99,6 +99,7 @@ export async function POST(request: Request) {
       name: body.name,
       phone: body.phone,
       email: body.email || undefined,
+      service: body.service || undefined,
       message: body.message,
     });
 

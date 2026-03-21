@@ -70,6 +70,7 @@ model ContactSubmission {
   name      String
   phone     String
   email     String?
+  service   String?
   message   String
   isRead    Boolean  @default(false)
   createdAt DateTime @default(now())

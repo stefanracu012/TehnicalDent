@@ -411,6 +411,7 @@ export async function createContactSubmission(data: {
   name: string;
   phone: string;
   email?: string;
+  service?: string;
   message: string;
 }) {
   try {

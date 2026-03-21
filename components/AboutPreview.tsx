@@ -58,7 +58,7 @@ export default function AboutPreview() {
           </div>
         </div>
 
-        {/* Badge 15+ */}
+        {/* Badge 2+ */}
         <div
           ref={badgeRef}
           style={{
@@ -69,7 +69,7 @@ export default function AboutPreview() {
           className="absolute -bottom-6 -right-6 w-44 h-44 bg-white rounded-2xl shadow-lg p-6 hidden lg:flex flex-col justify-center"
         >
           <p className="font-serif text-5xl font-semibold text-foreground leading-none">
-            15+
+            2+
           </p>
           <p className="mt-3 text-xs leading-snug text-muted-foreground">
             {t("badge")}

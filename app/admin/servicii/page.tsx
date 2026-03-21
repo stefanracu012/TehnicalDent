@@ -71,7 +71,12 @@ export default function AdminServicesPage() {
               Gestionați serviciile afișate pe site
             </p>
           </div>
-          <Button href="/admin/servicii/nou" className="self-start sm:self-auto">Adaugă serviciu</Button>
+          <Button
+            href="/admin/servicii/nou"
+            className="self-start sm:self-auto"
+          >
+            Adaugă serviciu
+          </Button>
         </div>
 
         {loading ? (
@@ -89,88 +94,88 @@ export default function AdminServicesPage() {
           <>
             {/* Desktop table */}
             <div className="hidden md:block bg-white border border-border">
-            <table className="w-full">
-              <thead>
-                <tr className="border-b border-border">
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-foreground">
-                    Titlu
-                  </th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-foreground">
-                    Categorie
-                  </th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-foreground">
-                    Ordine
-                  </th>
-                  <th className="text-left py-4 px-6 text-sm font-semibold text-foreground">
-                    Status
-                  </th>
-                  <th className="text-right py-4 px-6 text-sm font-semibold text-foreground">
-                    Acțiuni
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {services.map((service) => (
-                  <tr
-                    key={service.id}
-                    className="border-b border-border last:border-0"
-                  >
-                    <td className="py-4 px-6">
-                      <div>
-                        <p className="font-medium text-foreground">
-                          {service.title}
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
-                          {service.shortDesc}
-                        </p>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6 text-sm text-muted-foreground">
-                      {service.category}
-                    </td>
-                    <td className="py-4 px-6 text-sm text-muted-foreground">
-                      {service.order}
-                    </td>
-                    <td className="py-4 px-6">
-                      <span
-                        className={`inline-flex px-2 py-1 text-xs font-medium ${
-                          service.isActive
-                            ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
-                        }`}
-                      >
-                        {service.isActive ? "Activ" : "Inactiv"}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <div className="flex justify-end gap-2">
-                        <button
-                          onClick={() =>
-                            toggleActive(service.id, service.isActive)
-                          }
-                          className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                          {service.isActive ? "Dezactivează" : "Activează"}
-                        </button>
-                        <Link
-                          href={`/admin/servicii/${service.slug}`}
-                          className="text-sm text-accent hover:text-accent/80 transition-colors"
-                        >
-                          Editează
-                        </Link>
-                        <button
-                          onClick={() => deleteService(service.id)}
-                          className="text-sm text-red-600 hover:text-red-800 transition-colors"
-                        >
-                          Șterge
-                        </button>
-                      </div>
-                    </td>
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-foreground">
+                      Titlu
+                    </th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-foreground">
+                      Categorie
+                    </th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-foreground">
+                      Ordine
+                    </th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-foreground">
+                      Status
+                    </th>
+                    <th className="text-right py-4 px-6 text-sm font-semibold text-foreground">
+                      Acțiuni
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {services.map((service) => (
+                    <tr
+                      key={service.id}
+                      className="border-b border-border last:border-0"
+                    >
+                      <td className="py-4 px-6">
+                        <div>
+                          <p className="font-medium text-foreground">
+                            {service.title}
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
+                            {service.shortDesc}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6 text-sm text-muted-foreground">
+                        {service.category}
+                      </td>
+                      <td className="py-4 px-6 text-sm text-muted-foreground">
+                        {service.order}
+                      </td>
+                      <td className="py-4 px-6">
+                        <span
+                          className={`inline-flex px-2 py-1 text-xs font-medium ${
+                            service.isActive
+                              ? "bg-green-100 text-green-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
+                          {service.isActive ? "Activ" : "Inactiv"}
+                        </span>
+                      </td>
+                      <td className="py-4 px-6">
+                        <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() =>
+                              toggleActive(service.id, service.isActive)
+                            }
+                            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            {service.isActive ? "Dezactivează" : "Activează"}
+                          </button>
+                          <Link
+                            href={`/admin/servicii/${service.slug}`}
+                            className="text-sm text-accent hover:text-accent/80 transition-colors"
+                          >
+                            Editează
+                          </Link>
+                          <button
+                            onClick={() => deleteService(service.id)}
+                            className="text-sm text-red-600 hover:text-red-800 transition-colors"
+                          >
+                            Șterge
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
             {/* Mobile cards */}
             <div className="md:hidden space-y-3">
@@ -205,9 +210,7 @@ export default function AdminServicesPage() {
                   </div>
                   <div className="flex gap-3 pt-3 border-t border-border">
                     <button
-                      onClick={() =>
-                        toggleActive(service.id, service.isActive)
-                      }
+                      onClick={() => toggleActive(service.id, service.isActive)}
                       className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
                     >
                       {service.isActive ? "Dezactivează" : "Activează"}

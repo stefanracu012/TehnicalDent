@@ -166,9 +166,9 @@ export default async function AboutPage({
             </div>
             <div className="mt-10 grid grid-cols-3 gap-6 pt-8 border-t border-border">
               {[
-                { v: "2008", l: t("statFondare") },
-                { v: "15+", l: t("statExperienta") },
-                { v: "8", l: t("statPacienti") },
+                { v: "2024", l: t("statFondare") },
+                { v: "2+", l: t("statExperienta") },
+                { v: "400+", l: t("statPacienti") },
               ].map((s) => (
                 <div key={s.l}>
                   <p className="font-serif text-3xl font-semibold text-foreground">
@@ -192,7 +192,7 @@ export default async function AboutPage({
             <div className="absolute -bottom-5 -left-5 w-36 h-36 bg-accent rounded-2xl hidden lg:flex items-center justify-center">
               <div className="text-center text-white">
                 <p className="font-serif text-3xl font-bold leading-none">
-                  15+
+                  2+
                 </p>
                 <p className="text-[10px] font-semibold uppercase tracking-widest mt-1 opacity-80">
                   {t("badge")}

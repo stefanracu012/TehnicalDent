@@ -28,7 +28,7 @@ export default function GalleryClient({ images }: Props) {
   const STATS = [
     { value: "6", label: t("statCabinete") },
     { value: "3D", label: t("statTomograf") },
-    { value: "15+", label: t("statAni") },
+    { value: "2+", label: t("statAni") },
     { value: "100%", label: t("statSterilizare") },
   ];
 
