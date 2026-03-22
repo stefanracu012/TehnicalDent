@@ -283,25 +283,31 @@ export default function AdminTestimonialsPage() {
                     Serviciul asociat (opțional)
                   </label>
                   {activeLocale === "ro" ? (
-                    <select
-                      value={formData.service}
-                      onChange={(e) =>
-                        setFormData((p) => ({ ...p, service: e.target.value }))
-                      }
-                      className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none"
-                    >
-                      <option value="">Fără serviciu asociat</option>
-                      <option value="Implantologie">Implantologie</option>
-                      <option value="Ortodonție">Ortodonție</option>
-                      <option value="Estetică dentară">Estetică dentară</option>
-                      <option value="Chirurgie orală">Chirurgie orală</option>
-                      <option value="Protetică dentară">
-                        Protetică dentară
-                      </option>
-                      <option value="Endodonție">Endodonție</option>
-                      <option value="Parodontologie">Parodontologie</option>
-                      <option value="Pedodonție">Pedodonție</option>
-                    </select>
+                    <>
+                      <input
+                        type="text"
+                        list="service-suggestions"
+                        value={formData.service}
+                        onChange={(e) =>
+                          setFormData((p) => ({ ...p, service: e.target.value }))
+                        }
+                        placeholder="Scrie sau alege un serviciu..."
+                        className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none"
+                      />
+                      <datalist id="service-suggestions">
+                        <option value="Implantologie" />
+                        <option value="Ortodonție" />
+                        <option value="Estetică dentară" />
+                        <option value="Chirurgie orală" />
+                        <option value="Protetică dentară" />
+                        <option value="Endodonție" />
+                        <option value="Parodontologie" />
+                        <option value="Pedodonție" />
+                        <option value="Reabilitare orală completă" />
+                        <option value="Stomatologie generală" />
+                        <option value="Pedodonție și stomatologie generală" />
+                      </datalist>
+                    </>
                   ) : (
                     <input
                       type="text"
