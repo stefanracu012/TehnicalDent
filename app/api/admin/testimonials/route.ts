@@ -42,6 +42,7 @@ export async function POST(request: Request) {
       data: {
         name: body.name,
         content: body.content,
+        image: body.image || null,
         service: body.service || null,
         isActive: body.isActive ?? true,
         translations: body.translations || null,

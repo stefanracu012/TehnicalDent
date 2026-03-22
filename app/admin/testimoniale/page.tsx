@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { secureFetch } from "@/lib/csrf-client";
 import LanguageTabs from "@/components/admin/LanguageTabs";
 import AutoTranslateButton from "@/components/admin/AutoTranslateButton";
+import ImageUpload from "@/components/admin/ImageUpload";
 
 type Translations = Record<string, Record<string, string>>;
 
@@ -11,6 +12,7 @@ interface Testimonial {
   id: string;
   name: string;
   content: string;
+  image?: string | null;
   service: string | null;
   isActive: boolean;
   createdAt: string;
@@ -20,6 +22,7 @@ interface Testimonial {
 const emptyTestimonial = {
   name: "",
   content: "",
+  image: "",
   service: "",
   isActive: true,
 };
@@ -83,6 +86,7 @@ export default function AdminTestimonialsPage() {
     setFormData({
       name: t.name,
       content: t.content,
+      image: t.image || "",
       service: t.service || "",
       isActive: t.isActive,
     });
@@ -113,6 +117,7 @@ export default function AdminTestimonialsPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
+          image: formData.image || null,
           service: formData.service || null,
           translations:
             Object.keys(cleanTranslations).length > 0
@@ -229,6 +234,18 @@ export default function AdminTestimonialsPage() {
               </div>
 
               <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Image - RO tab only */}
+                {activeLocale === "ro" && (
+                  <ImageUpload
+                    value={formData.image}
+                    onChange={(url) =>
+                      setFormData((p) => ({ ...p, image: url }))
+                    }
+                    folder="testimonials"
+                    label="Fotografia pacientului (opțional)"
+                  />
+                )}
+
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
                     Numele pacientului *
@@ -363,8 +380,29 @@ export default function AdminTestimonialsPage() {
                 key={t.id}
                 className={`bg-white border border-border p-4 sm:p-6 ${!t.isActive ? "opacity-50" : ""}`}
               >
-                <div>
-                  <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+                <div className="flex gap-4">
+                  {/* Avatar thumbnail */}
+                  <div className="w-12 h-12 flex-shrink-0 overflow-hidden rounded-full bg-muted">
+                    {t.image ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={t.image}
+                        alt={t.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm font-semibold">
+                        {t.name
+                          .split(" ")
+                          .map((n) => n[0])
+                          .slice(0, 2)
+                          .join("")
+                          .toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
                     <h3 className="font-serif text-base sm:text-lg font-medium text-foreground">
                       {t.name}
                     </h3>
@@ -399,6 +437,7 @@ export default function AdminTestimonialsPage() {
                     >
                       Șterge
                     </button>
+                  </div>
                   </div>
                 </div>
               </div>

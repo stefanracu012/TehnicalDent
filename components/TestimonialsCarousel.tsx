@@ -8,6 +8,7 @@ interface Testimonial {
   id: string;
   name: string;
   content: string;
+  image?: string | null;
   service?: string | null;
 }
 
@@ -21,12 +22,6 @@ const AVATAR_COLORS = [
   "bg-stone-700",
   "bg-zinc-800",
   "bg-slate-700",
-];
-
-const AVATAR_PHOTOS = [
-  "/images/testimonials/patient-1.jpg",
-  "/images/testimonials/patient-2.jpg",
-  "/images/testimonials/patient-3.jpg",
 ];
 
 function initials(name: string) {
@@ -156,9 +151,9 @@ export default function TestimonialsCarousel({
           <div className="mt-10 flex items-center gap-4">
             {/* Avatar */}
             <div className="w-14 h-14 flex-shrink-0 overflow-hidden rounded-full ring-2 ring-border">
-              {AVATAR_PHOTOS[current] ? (
+              {item.image ? (
                 <Image
-                  src={AVATAR_PHOTOS[current]}
+                  src={item.image}
                   alt={item.name}
                   width={56}
                   height={56}
@@ -201,9 +196,9 @@ export default function TestimonialsCarousel({
                 <div
                   className={`w-9 h-9 flex-shrink-0 overflow-hidden rounded-full ring-1 ring-border transition-all duration-300 ${i === current ? "scale-100" : "scale-90 group-hover:scale-95"}`}
                 >
-                  {AVATAR_PHOTOS[i] ? (
+                  {item.image ? (
                     <Image
-                      src={AVATAR_PHOTOS[i]}
+                      src={item.image}
                       alt={item.name}
                       width={36}
                       height={36}

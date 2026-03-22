@@ -296,6 +296,7 @@ async function main() {
     {
       name: "Andreea M.",
       content: "Am venit la TechnicalDent pentru un tratament de implant după ce am pierdut un dinte într-un accident. De la prima consultație, echipa m-a făcut să mă simt în siguranță și mi-a explicat fiecare pas al procedurii. Rezultatul a depășit așteptările mele - nimeni nu își dă seama că am un implant. Recomand cu încredere această clinică oricui caută profesionalism și empatie.",
+      image: "/images/testimonials/patient-1.jpg",
       service: "Implantologie dentară",
       isActive: true,
       translations: {
@@ -307,6 +308,7 @@ async function main() {
     {
       name: "Mihai și Ana T.",
       content: "Întreaga noastră familie se tratează la TechnicalDent de peste 5 ani. Copiii noștri, inițial speriați de dentist, acum se bucură să meargă la controale. Atmosfera prietenoasă și răbdarea echipei au făcut diferența. Pentru noi, aceasta nu este doar o clinică stomatologică, ci un loc unde ne simțim cu adevărat îngrijiți.",
+      image: "/images/testimonials/patient-2.jpg",
       service: "Pedodonție și stomatologie generală",
       isActive: true,
       translations: {
@@ -318,6 +320,7 @@ async function main() {
     {
       name: "Constantin D.",
       content: "La 62 de ani, credeam că zâmbetul meu nu mai poate fi recuperat. Aveam dinți lipsa și cei rămași erau într-o stare precară. Echipa TechnicalDent mi-a propus un plan de tratament complex, realizat etapizat pe parcursul a 8 luni. Astăzi am un zâmbet complet, funcțional și estetic. Recunoștința mea este imensă.",
+      image: "/images/testimonials/patient-3.jpg",
       service: "Reabilitare orală completă",
       isActive: true,
       translations: {
@@ -329,6 +332,7 @@ async function main() {
     {
       name: "Ioana L.",
       content: "Am purtat aparat dentar timp de 18 luni și rezultatele sunt extraordinare. Dr. Popa mi-a explicat tot procesul, mi-a răspuns la toate întrebările și m-a încurajat în momentele mai dificile. Acum am zâmbetul pe care l-am visat întotdeauna și încrederea de a-l arăta lumii.",
+      image: null,
       service: "Ortodonție",
       isActive: true,
       translations: {
