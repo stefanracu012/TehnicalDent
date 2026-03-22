@@ -6,6 +6,10 @@ import ImageUpload from "@/components/admin/ImageUpload";
 import { secureFetch } from "@/lib/csrf-client";
 import LanguageTabs from "@/components/admin/LanguageTabs";
 import AutoTranslateButton from "@/components/admin/AutoTranslateButton";
+import SectionBuilder, {
+  type BlogSection,
+  createEmptySection,
+} from "@/components/admin/SectionBuilder";
 
 type Translations = Record<string, Record<string, string>>;
 
@@ -45,6 +49,9 @@ export default function NewBlogPostPage() {
     author: "TechnicalDent",
     isPublished: false,
   });
+  const [sections, setSections] = useState<BlogSection[]>([
+    createEmptySection(),
+  ]);
 
   const handleTitleChange = (title: string) => {
     setFormData((p) => ({
@@ -83,11 +90,20 @@ export default function NewBlogPostPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.title || !formData.content) {
-      alert("Titlul și conținutul sunt obligatorii");
+    const hasContent = sections.some(
+      (s) => s.title || s.text || s.imageUrl || s.youtubeUrl,
+    );
+    if (!formData.title || !hasContent) {
+      alert("Titlul și cel puțin o secțiune cu conținut sunt obligatorii");
       return;
     }
     setSaving(true);
+
+    // Auto-generate content from sections for SEO / read time / backward compat
+    const autoContent = sections
+      .map((s) => [s.title, s.text].filter(Boolean).join("\n\n"))
+      .filter(Boolean)
+      .join("\n\n");
 
     try {
       const cleanTranslations: Translations = {};
@@ -104,6 +120,8 @@ export default function NewBlogPostPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
+          content: autoContent || formData.content,
+          sections,
           tags: formData.tags
             ? formData.tags
                 .split(",")
@@ -146,8 +164,27 @@ export default function NewBlogPostPage() {
           <div className="mb-4 space-y-3">
             <LanguageTabs active={activeLocale} onChange={setActiveLocale} />
             <AutoTranslateButton
-              formData={formData as unknown as Record<string, unknown>}
-              translatableFields={["title", "excerpt", "content"]}
+              formData={{
+                ...(formData as unknown as Record<string, unknown>),
+                ...sections.reduce(
+                  (acc, s, i) => ({
+                    ...acc,
+                    ...(s.title ? { [`section_${i}_title`]: s.title } : {}),
+                    ...(s.text ? { [`section_${i}_text`]: s.text } : {}),
+                  }),
+                  {} as Record<string, string>,
+                ),
+              }}
+              translatableFields={[
+                "title",
+                "excerpt",
+                ...sections.flatMap((s, i) => {
+                  const fields: string[] = [];
+                  if (s.title) fields.push(`section_${i}_title`);
+                  if (s.text) fields.push(`section_${i}_text`);
+                  return fields;
+                }),
+              ]}
               onTranslationsReady={setTranslations}
             />
             {activeLocale !== "ro" && (
@@ -245,24 +282,68 @@ export default function NewBlogPostPage() {
               />
             </div>
 
-            {/* Content */}
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Conținut * (Markdown suportat)
-              </label>
-              <textarea
-                required={activeLocale === "ro"}
-                value={getField("content")}
-                onChange={(e) => setField("content", e.target.value)}
-                rows={20}
-                placeholder={
-                  activeLocale !== "ro"
-                    ? "Traduceți conținutul articolului..."
-                    : `Scrieți conținutul articolului aici...\n\nPuteți folosi Markdown:\n# Titlu\n## Subtitlu\n**text bold**\n*text italic*\n- listă\n1. listă numerotată`
-                }
-                className="w-full border border-border px-4 py-3 font-mono text-sm focus:border-foreground focus:outline-none resize-vertical"
-              />
-            </div>
+            {/* Content — Section Builder (RO) or Section Translations (other locales) */}
+            {activeLocale === "ro" ? (
+              <SectionBuilder sections={sections} onChange={setSections} />
+            ) : (
+              <div className="space-y-4">
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  Traducere secțiuni
+                </label>
+                {sections.map((section, i) => (
+                  <div
+                    key={section.id}
+                    className="border border-border rounded-lg p-4 bg-muted/20"
+                  >
+                    <p className="text-xs font-semibold text-muted-foreground mb-3">
+                      Secțiunea {i + 1}
+                    </p>
+                    {section.title && (
+                      <div className="mb-3">
+                        <label className="block text-xs text-muted-foreground mb-1">
+                          Titlu
+                        </label>
+                        <input
+                          type="text"
+                          value={getField(`section_${i}_title`)}
+                          onChange={(e) =>
+                            setField(`section_${i}_title`, e.target.value)
+                          }
+                          placeholder={section.title}
+                          className="w-full border border-border px-3 py-2 text-sm focus:border-foreground focus:outline-none"
+                        />
+                      </div>
+                    )}
+                    {section.text && (
+                      <div>
+                        <label className="block text-xs text-muted-foreground mb-1">
+                          Text
+                        </label>
+                        <textarea
+                          value={getField(`section_${i}_text`)}
+                          onChange={(e) =>
+                            setField(`section_${i}_text`, e.target.value)
+                          }
+                          rows={3}
+                          placeholder={section.text}
+                          className="w-full border border-border px-3 py-2 text-sm focus:border-foreground focus:outline-none resize-vertical"
+                        />
+                      </div>
+                    )}
+                    {!section.title && !section.text && (
+                      <p className="text-xs text-muted-foreground italic">
+                        Secțiune doar cu imagine/video — nu necesită traducere
+                      </p>
+                    )}
+                  </div>
+                ))}
+                {sections.filter((s) => s.title || s.text).length === 0 && (
+                  <p className="text-sm text-muted-foreground py-4 text-center">
+                    Nu există secțiuni cu text de tradus.
+                  </p>
+                )}
+              </div>
+            )}
 
             {/* Category + Author + Tags + Publish - RO only */}
             {activeLocale === "ro" && (

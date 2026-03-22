@@ -11,6 +11,13 @@ import {
 import { getAlternates, getKeywords } from "@/lib/seo";
 import { ArticleSchema, BreadcrumbSchema } from "@/components/JsonLd";
 
+function getYouTubeId(url: string): string | null {
+  const match = url.match(
+    /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
+  );
+  return match ? match[1] : null;
+}
+
 interface Props {
   params: Promise<{ slug: string; locale: string }>;
 }
@@ -189,16 +196,88 @@ export default async function BlogPostPage({ params }: Props) {
             </div>
           </div>
 
-          {/* Content paragraphs */}
-          <div className="mt-12 space-y-6">
-            {post.content.map((paragraph, i) => (
-              <p
-                key={i}
-                className="text-base leading-[1.85] text-foreground/85"
-              >
-                {paragraph}
-              </p>
-            ))}
+          {/* Content — Sections or fallback paragraphs */}
+          <div className="mt-12 space-y-8">
+            {post.sections && post.sections.length > 0
+              ? post.sections.map((section, i) => {
+                  const ytId = section.youtubeUrl
+                    ? getYouTubeId(section.youtubeUrl)
+                    : null;
+
+                  return (
+                    <div key={section.id || i} className="space-y-5">
+                      {/* Section heading */}
+                      {section.title && (
+                        <h2 className="font-serif text-2xl sm:text-3xl font-medium text-foreground mt-10 first:mt-0">
+                          {section.title}
+                        </h2>
+                      )}
+
+                      {/* Section text */}
+                      {section.text && (
+                        <div className="space-y-4">
+                          {section.text
+                            .split(/\n\n+/)
+                            .map((p) => p.trim())
+                            .filter(Boolean)
+                            .map((p, j) => (
+                              <p
+                                key={j}
+                                className="text-base leading-[1.85] text-foreground/85"
+                              >
+                                {p}
+                              </p>
+                            ))}
+                        </div>
+                      )}
+
+                      {/* Section image */}
+                      {section.imageUrl && (
+                        <figure className="my-6">
+                          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl">
+                            <Image
+                              src={section.imageUrl}
+                              alt={
+                                section.imageAlt ||
+                                section.title ||
+                                "Imagine articol"
+                              }
+                              fill
+                              className="object-cover"
+                              sizes="(max-width: 768px) 100vw, 768px"
+                            />
+                          </div>
+                          {section.imageAlt && (
+                            <figcaption className="mt-3 text-center text-xs text-muted-foreground italic">
+                              {section.imageAlt}
+                            </figcaption>
+                          )}
+                        </figure>
+                      )}
+
+                      {/* Section YouTube video */}
+                      {ytId && (
+                        <div className="my-6 relative aspect-video w-full overflow-hidden rounded-xl bg-black shadow-lg">
+                          <iframe
+                            src={`https://www.youtube-nocookie.com/embed/${ytId}`}
+                            title={section.title || "Video"}
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                            className="absolute inset-0 w-full h-full"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              : post.content.map((paragraph, i) => (
+                  <p
+                    key={i}
+                    className="text-base leading-[1.85] text-foreground/85"
+                  >
+                    {paragraph}
+                  </p>
+                ))}
           </div>
 
           {/* Tags */}

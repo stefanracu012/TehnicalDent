@@ -1,11 +1,21 @@
 import prisma from "./prisma";
 import { localizeBlogPost, type TranslationsMap } from "./localize";
 
+export interface BlogSection {
+  id: string;
+  title?: string;
+  text?: string;
+  imageUrl?: string;
+  imageAlt?: string;
+  youtubeUrl?: string;
+}
+
 export interface BlogPost {
   slug: string;
   title: string;
   excerpt: string;
   content: string[];
+  sections?: BlogSection[];
   category: string;
   image: string;
   readTime: number;
@@ -240,6 +250,7 @@ function dbPostToBlogPost(dbPost: {
   title: string;
   excerpt: string;
   content: string;
+  sections?: unknown;
   coverImage: string;
   category: string;
   tags: string[];
@@ -255,11 +266,27 @@ function dbPostToBlogPost(dbPost: {
     .map((p) => p.trim())
     .filter(Boolean);
 
+  // Handle sections with per-locale translations
+  let localizedSections: BlogSection[] | undefined;
+  const rawSections = dbPost.sections as BlogSection[] | null;
+  if (rawSections && Array.isArray(rawSections) && rawSections.length > 0) {
+    const translations = dbPost.translations as Record<string, Record<string, string>> | null;
+    localizedSections = rawSections.map((s, i) => {
+      if (!locale || locale === "ro" || !translations?.[locale]) return s;
+      return {
+        ...s,
+        title: translations[locale][`section_${i}_title`] || s.title,
+        text: translations[locale][`section_${i}_text`] || s.text,
+      };
+    });
+  }
+
   return {
     slug: post.slug as string,
     title: post.title as string,
     excerpt: post.excerpt as string,
     content: paragraphs.length > 0 ? paragraphs : [post.content as string],
+    sections: localizedSections,
     category: post.category as string,
     image: (post.coverImage as string) || "/images/gallery/clinic-1.jpg",
     readTime: estimateReadTime(post.content as string),

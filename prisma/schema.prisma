@@ -91,6 +91,7 @@ model BlogPost {
   title        String
   excerpt      String
   content      String
+  sections     Json?
   coverImage   String
   category     String
   tags         String[]

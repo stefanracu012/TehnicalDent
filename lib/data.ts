@@ -55,12 +55,22 @@ export interface GalleryImage {
   translations?: TranslationsJson;
 }
 
+export interface BlogSection {
+  id: string;
+  title?: string;
+  text?: string;
+  imageUrl?: string;
+  imageAlt?: string;
+  youtubeUrl?: string;
+}
+
 export interface BlogPost {
   id: string;
   slug: string;
   title: string;
   excerpt: string;
   content: string;
+  sections?: BlogSection[] | null;
   coverImage: string;
   category: string;
   tags: string[];

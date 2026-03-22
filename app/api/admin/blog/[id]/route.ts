@@ -41,7 +41,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
         { status: 400 },
       );
     }
-    const body = sanitizeObject(rawBody, ["content"]);
+    const body = sanitizeObject(rawBody, ["content", "sections"]);
 
     // If publishing for the first time, set publishedAt
     if (body.isPublished === true) {

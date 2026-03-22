@@ -29,9 +29,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const body = sanitizeObject(rawBody, ["content"]);
+    const body = sanitizeObject(rawBody, ["content", "sections"]);
 
-    if (!body.title || !body.content || !body.slug) {
+    if (!body.title || (!body.content && (!body.sections || !Array.isArray(body.sections) || body.sections.length === 0)) || !body.slug) {
       return NextResponse.json(
         { error: "Titlul, slug-ul și conținutul sunt obligatorii." },
         { status: 400 },
@@ -55,6 +55,7 @@ export async function POST(request: Request) {
         title: body.title,
         excerpt: body.excerpt || "",
         content: body.content,
+        sections: body.sections || null,
         coverImage: body.coverImage || "",
         category: body.category || "General",
         tags: body.tags || [],
