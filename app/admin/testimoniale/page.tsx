@@ -403,41 +403,41 @@ export default function AdminTestimonialsPage() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
-                    <h3 className="font-serif text-base sm:text-lg font-medium text-foreground">
-                      {t.name}
-                    </h3>
-                    {t.service && (
-                      <span className="text-xs bg-accent/10 text-accent px-2 py-0.5 rounded-full">
-                        {t.service}
+                      <h3 className="font-serif text-base sm:text-lg font-medium text-foreground">
+                        {t.name}
+                      </h3>
+                      {t.service && (
+                        <span className="text-xs bg-accent/10 text-accent px-2 py-0.5 rounded-full">
+                          {t.service}
+                        </span>
+                      )}
+                      <span className="text-xs text-muted-foreground">
+                        {formatDate(t.createdAt)}
                       </span>
-                    )}
-                    <span className="text-xs text-muted-foreground">
-                      {formatDate(t.createdAt)}
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground leading-relaxed">
-                    &ldquo;{t.content}&rdquo;
-                  </p>
-                  <div className="flex gap-3 mt-3 pt-3 border-t border-border">
-                    <button
-                      onClick={() => openEdit(t)}
-                      className="text-xs text-accent hover:text-accent/80 font-semibold"
-                    >
-                      Editează
-                    </button>
-                    <button
-                      onClick={() => toggleActive(t)}
-                      className="text-xs text-muted-foreground hover:text-foreground font-semibold"
-                    >
-                      {t.isActive ? "Dezactivează" : "Activează"}
-                    </button>
-                    <button
-                      onClick={() => deleteTestimonial(t.id)}
-                      className="text-xs text-red-600 hover:text-red-800 font-semibold"
-                    >
-                      Șterge
-                    </button>
-                  </div>
+                    </div>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      &ldquo;{t.content}&rdquo;
+                    </p>
+                    <div className="flex gap-3 mt-3 pt-3 border-t border-border">
+                      <button
+                        onClick={() => openEdit(t)}
+                        className="text-xs text-accent hover:text-accent/80 font-semibold"
+                      >
+                        Editează
+                      </button>
+                      <button
+                        onClick={() => toggleActive(t)}
+                        className="text-xs text-muted-foreground hover:text-foreground font-semibold"
+                      >
+                        {t.isActive ? "Dezactivează" : "Activează"}
+                      </button>
+                      <button
+                        onClick={() => deleteTestimonial(t.id)}
+                        className="text-xs text-red-600 hover:text-red-800 font-semibold"
+                      >
+                        Șterge
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
