@@ -206,7 +206,9 @@
     "programeazaConsultatie": "Записаться на консультацию",
     "filtrulToate": "Все",
     "programeaza": "Записаться",
-    "veziDetalii": "Подробнее →"
+    "veziDetalii": "Подробнее \u2192",
+    "deLa": "от",
+    "pretPromotional": "Акционная цена"
   },
   "ServiceDetail": {
     "serviciuNegasit": "Услуга не найдена",
@@ -222,6 +224,10 @@
     "sidebarDesc": "Специалист доступен для бесплатной оценки",
     "programeazaAcum": "Записаться сейчас",
     "categorie": "Категория",
+    "pret": "Цена услуги",
+    "deLa": "от",
+    "pretRedus": "Со скидкой",
+    "pretVechi": "Стандартная цена",
     "serviciiSimilare": "Похожие услуги",
     "toateServiciile": "Все услуги"
   },

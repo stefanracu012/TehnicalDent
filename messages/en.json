@@ -206,7 +206,9 @@
     "programeazaConsultatie": "Schedule consultation",
     "filtrulToate": "All",
     "programeaza": "Book",
-    "veziDetalii": "View details →"
+    "veziDetalii": "View details \u2192",
+    "deLa": "from",
+    "pretPromotional": "Promotional price"
   },
   "ServiceDetail": {
     "serviciuNegasit": "Service not found",
@@ -222,6 +224,10 @@
     "sidebarDesc": "Specialist available for free evaluation",
     "programeazaAcum": "Book now",
     "categorie": "Category",
+    "pret": "Service price",
+    "deLa": "from",
+    "pretRedus": "Discounted price",
+    "pretVechi": "Standard price",
     "serviciiSimilare": "Similar services",
     "toateServiciile": "All services"
   },

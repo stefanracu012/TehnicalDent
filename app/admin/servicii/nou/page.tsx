@@ -27,6 +27,8 @@ export default function NewServicePage() {
     benefits: [""],
     images: [""],
     category: "",
+    price: "" as string | number,
+    discountPrice: "" as string | number,
     order: 0,
     isActive: true,
   });
@@ -222,6 +224,11 @@ export default function NewServicePage() {
           process: formData.processSteps.filter((s) => s.trim()).join(". "),
           benefits: formData.benefits.filter((b) => b.trim()),
           images: formData.images.filter((i) => i.trim()),
+          price: formData.price !== "" ? Number(formData.price) : null,
+          discountPrice:
+            formData.discountPrice !== ""
+              ? Number(formData.discountPrice)
+              : null,
           translations:
             Object.keys(finalTranslations).length > 0
               ? finalTranslations
@@ -388,6 +395,52 @@ export default function NewServicePage() {
                 />
               </div>
             </div>
+
+            {activeLocale === "ro" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Preț (MDL)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.price}
+                    onChange={(e) =>
+                      setFormData((p) => ({ ...p, price: e.target.value }))
+                    }
+                    placeholder="ex: 4500"
+                    className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Opțional — lăsați gol dacă nu doriți afișare preț
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Preț redus (MDL)
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={formData.discountPrice}
+                    onChange={(e) =>
+                      setFormData((p) => ({
+                        ...p,
+                        discountPrice: e.target.value,
+                      }))
+                    }
+                    placeholder="ex: 3800"
+                    className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Opțional — prețul cu reducere (dacă există promoție)
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-medium text-foreground mb-2">

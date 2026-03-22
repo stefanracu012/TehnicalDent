@@ -73,6 +73,8 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
   const recovery = s.recovery as string;
   const benefits = (Array.isArray(s.benefits) ? s.benefits : []) as string[];
   const category = s.category as string;
+  const price = (service.price as number | null) ?? null;
+  const discountPrice = (service.discountPrice as number | null) ?? null;
 
   return (
     <>
@@ -343,6 +345,39 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
                 </p>
                 <p className="font-medium text-foreground">{category}</p>
               </div>
+
+              {/* Price card */}
+              {price != null && (
+                <div className="rounded-2xl border border-border bg-white px-6 py-5 space-y-2">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">
+                    {t("pret")}
+                  </p>
+                  {discountPrice != null ? (
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground line-through">
+                          {price.toLocaleString()} MDL
+                        </span>
+                        <span className="text-[10px] font-semibold uppercase tracking-wider bg-accent/10 text-accent px-2 py-0.5 rounded-full">
+                          {t("pretRedus")}
+                        </span>
+                      </div>
+                      <p className="text-2xl font-bold text-accent">
+                        {discountPrice.toLocaleString()} MDL
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {t("deLa")} {discountPrice.toLocaleString()} MDL
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-2xl font-bold text-foreground">
+                        {t("deLa")} {price.toLocaleString()} MDL
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Related services */}
               {relatedServices.length > 0 && (

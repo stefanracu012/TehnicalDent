@@ -76,6 +76,8 @@ export async function POST(request: Request) {
         benefits: body.benefits || [],
         images: body.images || [],
         category: body.category,
+        price: body.price != null && body.price !== "" ? parseFloat(body.price) : null,
+        discountPrice: body.discountPrice != null && body.discountPrice !== "" ? parseFloat(body.discountPrice) : null,
         order: body.order || 0,
         isActive: body.isActive ?? true,
         translations: body.translations || null,

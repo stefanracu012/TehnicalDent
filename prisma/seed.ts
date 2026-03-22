@@ -32,6 +32,8 @@ async function main() {
       ],
       images: ["/images/services/implantologie-1.jpg", "/images/services/implantologie-2.jpg"],
       category: "Chirurgie",
+      price: 4500,
+      discountPrice: 3800,
       order: 1,
       isActive: true,
       translations: {
@@ -78,6 +80,8 @@ async function main() {
       benefits: ["Zâmbet estetic și armonios", "Îmbunătățirea funcției masticatorii", "Prevenirea uzurii premature a dinților", "Facilitarea igienei orale", "Corectarea problemelor de vorbire"],
       images: ["/images/services/ortodontie-1.jpg", "/images/services/ortodontie-2.jpg"],
       category: "Ortodonție",
+      price: 3500,
+      discountPrice: null,
       order: 2,
       isActive: true,
       translations: {
@@ -97,6 +101,8 @@ async function main() {
       benefits: ["Zâmbet mai alb și mai luminos", "Corectarea formei și dimensiunii dinților", "Rezultate naturale și de lungă durată", "Creșterea încrederii în sine", "Proceduri minim invazive"],
       images: ["/images/services/estetica-1.jpg", "/images/services/estetica-2.jpg"],
       category: "Estetică",
+      price: 2500,
+      discountPrice: 2000,
       order: 3,
       isActive: true,
       translations: {
@@ -116,6 +122,8 @@ async function main() {
       benefits: ["Tehnici minim invazive", "Recuperare rapidă", "Anestezie eficientă", "Monitorizare post-operatorie", "Experiență în cazuri complexe"],
       images: ["/images/services/chirurgie-1.jpg", "/images/services/chirurgie-2.jpg"],
       category: "Chirurgie",
+      price: 1800,
+      discountPrice: null,
       order: 4,
       isActive: true,
       translations: {
@@ -135,6 +143,8 @@ async function main() {
       benefits: ["Aspect natural și estetic", "Materiale biocompatibile", "Durabilitate îndelungată", "Funcționalitate completă", "Tehnologie digitală de precizie"],
       images: ["/images/services/protetica-1.jpg", "/images/services/protetica-2.jpg"],
       category: "Protetică",
+      price: 3000,
+      discountPrice: 2500,
       order: 5,
       isActive: true,
       translations: {
@@ -154,6 +164,8 @@ async function main() {
       benefits: ["Salvarea dintelui natural", "Eliminarea infecției și durerii", "Procedură nedureroasă", "Tehnologie de ultimă generație", "Rata mare de succes"],
       images: ["/images/services/endodontie-1.jpg", "/images/services/endodontie-2.jpg"],
       category: "Tratamente",
+      price: 1500,
+      discountPrice: null,
       order: 6,
       isActive: true,
       translations: {
@@ -173,6 +185,8 @@ async function main() {
       benefits: ["Stoparea progresiei bolii", "Reducerea inflamației și sângerării", "Prevenirea pierderii dinților", "Îmbunătățirea sănătății orale generale", "Tratamente personalizate"],
       images: ["/images/services/parodontologie-1.jpg", "/images/services/parodontologie-2.jpg"],
       category: "Tratamente",
+      price: 1200,
+      discountPrice: 950,
       order: 7,
       isActive: true,
       translations: {
@@ -192,6 +206,8 @@ async function main() {
       benefits: ["Mediu prietenos pentru copii", "Prevenție și educație", "Tratamente fără durere", "Creare de obiceiuri sănătoase", "Experiențe pozitive la dentist"],
       images: ["/images/services/pedodontie-1.jpg", "/images/services/pedodontie-2.jpg"],
       category: "Specialități",
+      price: 800,
+      discountPrice: null,
       order: 8,
       isActive: true,
       translations: {

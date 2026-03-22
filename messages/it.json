@@ -206,7 +206,9 @@
     "programeazaConsultatie": "Prenota consulenza",
     "filtrulToate": "Tutti",
     "programeaza": "Prenota",
-    "veziDetalii": "Vedi dettagli →"
+    "veziDetalii": "Vedi dettagli \u2192",
+    "deLa": "da",
+    "pretPromotional": "Prezzo promozionale"
   },
   "ServiceDetail": {
     "serviciuNegasit": "Servizio non trovato",
@@ -222,6 +224,10 @@
     "sidebarDesc": "Specialista disponibile per valutazione gratuita",
     "programeazaAcum": "Prenota ora",
     "categorie": "Categoria",
+    "pret": "Prezzo del servizio",
+    "deLa": "da",
+    "pretRedus": "Prezzo scontato",
+    "pretVechi": "Prezzo standard",
     "serviciiSimilare": "Servizi simili",
     "toateServiciile": "Tutti i servizi"
   },

@@ -18,6 +18,8 @@ export interface Service {
   benefits: string[];
   images: string[];
   category: string;
+  price?: number | null;
+  discountPrice?: number | null;
   order: number;
   isActive: boolean;
   translations?: TranslationsJson;

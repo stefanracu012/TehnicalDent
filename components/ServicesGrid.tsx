@@ -11,6 +11,8 @@ interface Service {
   shortDesc: string;
   images: string[];
   category: string;
+  price?: number | null;
+  discountPrice?: number | null;
 }
 
 export default function ServicesGrid({ services }: { services: Service[] }) {
@@ -122,6 +124,26 @@ export default function ServicesGrid({ services }: { services: Service[] }) {
               <h3 className="font-serif text-lg font-medium text-white leading-snug">
                 {service.title}
               </h3>
+
+              {/* Price badge — always visible if price exists */}
+              {service.price != null && (
+                <div className="flex items-center gap-2 mt-2">
+                  {service.discountPrice != null ? (
+                    <>
+                      <span className="text-white/50 text-xs line-through">
+                        {service.price} MDL
+                      </span>
+                      <span className="bg-accent text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                        {service.discountPrice} MDL
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-white text-sm font-semibold">
+                      {t("deLa")} {service.price} MDL
+                    </span>
+                  )}
+                </div>
+              )}
 
               {/* Revealed on hover */}
               <div className="overflow-hidden max-h-0 group-hover:max-h-[160px] transition-all duration-500 ease-out">

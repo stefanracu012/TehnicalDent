@@ -206,7 +206,9 @@
     "programeazaConsultatie": "Programează consultație",
     "filtrulToate": "Toate",
     "programeaza": "Programează",
-    "veziDetalii": "Vezi detalii →"
+    "veziDetalii": "Vezi detalii \u2192",
+    "deLa": "de la",
+    "pretPromotional": "Pre\u021b promo\u021bional"
   },
   "ServiceDetail": {
     "serviciuNegasit": "Serviciu negăsit",
@@ -222,6 +224,10 @@
     "sidebarDesc": "Specialist disponibil pentru evaluare gratuită",
     "programeazaAcum": "Programează acum",
     "categorie": "Categorie",
+    "pret": "Pre\u021b serviciu",
+    "deLa": "de la",
+    "pretRedus": "Pre\u021b redus",
+    "pretVechi": "Pre\u021b standard",
     "serviciiSimilare": "Servicii similare",
     "toateServiciile": "Toate serviciile"
   },

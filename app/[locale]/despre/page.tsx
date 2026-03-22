@@ -191,9 +191,7 @@ export default async function AboutPage({
             </div>
             <div className="absolute -bottom-5 -left-5 w-36 h-36 bg-accent rounded-2xl hidden lg:flex items-center justify-center">
               <div className="text-center text-white">
-                <p className="font-serif text-3xl font-bold leading-none">
-                  2+
-                </p>
+                <p className="font-serif text-3xl font-bold leading-none">2+</p>
                 <p className="text-[10px] font-semibold uppercase tracking-widest mt-1 opacity-80">
                   {t("badge")}
                 </p>

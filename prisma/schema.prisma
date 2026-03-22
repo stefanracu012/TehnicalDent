@@ -22,6 +22,8 @@ model Service {
   benefits     String[]
   images       String[]
   category     String
+  price        Float?
+  discountPrice Float?
   order        Int      @default(0)
   isActive     Boolean  @default(true)
   translations Json?
