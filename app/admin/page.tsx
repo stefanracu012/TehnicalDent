@@ -37,6 +37,11 @@ const adminLinks = [
     description: "Vezi mesajele primite prin formularul de contact",
     href: "/admin/mesaje",
   },
+  {
+    title: "Setări",
+    description: "Modificați imaginea Hero și alte setări ale site-ului",
+    href: "/admin/setari",
+  },
 ];
 
 export default function AdminDashboard() {

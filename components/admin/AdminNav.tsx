@@ -13,6 +13,7 @@ const navLinks = [
   { href: "/admin/galerie", label: "Galerie" },
   { href: "/admin/blog", label: "Blog" },
   { href: "/admin/mesaje", label: "Mesaje" },
+  { href: "/admin/setari", label: "Setări" },
 ];
 
 export default function AdminNav() {

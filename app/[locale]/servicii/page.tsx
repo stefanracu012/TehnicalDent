@@ -1,7 +1,7 @@
 import { Link } from "@/i18n/navigation";
 import Button from "@/components/Button";
 import ServicesGrid from "@/components/ServicesGrid";
-import { getServices } from "@/lib/data";
+import { getServices, getSetting } from "@/lib/data";
 import { localizeService } from "@/lib/localize";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import Image from "next/image";
@@ -33,6 +33,7 @@ export default async function ServicesPage({
   const t = await getTranslations("Services");
   const tNav = await getTranslations("Nav");
   const services = (await getServices()).map((s) => localizeService(s, locale));
+  const heroImage = await getSetting("heroImage") || "/images/hero-dentist.jpg";
 
   return (
     <>
@@ -40,7 +41,7 @@ export default async function ServicesPage({
       <section className="relative min-h-[50vh] flex items-end pb-16 pt-[11rem]">
         <div className="absolute inset-0 overflow-hidden">
           <Image
-            src="/images/hero-dentist.jpg"
+            src={heroImage}
             alt="Clinică stomatologică TechnicalDent"
             fill
             priority

@@ -470,3 +470,34 @@ export async function getBlogPostBySlug(
     return null;
   }
 }
+
+// ─── SITE SETTINGS ──────────────────────────────────────────────
+export async function getSetting(key: string): Promise<string | null> {
+  try {
+    const setting = await prisma.siteSettings.findUnique({ where: { key } });
+    return setting?.value ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function setSetting(key: string, value: string, description?: string): Promise<void> {
+  try {
+    await prisma.siteSettings.upsert({
+      where: { key },
+      update: { value },
+      create: { key, value, description },
+    });
+  } catch (error) {
+    console.log("Failed to save setting:", error);
+  }
+}
+
+export async function getAllSettings(): Promise<Record<string, string>> {
+  try {
+    const settings = await prisma.siteSettings.findMany();
+    return Object.fromEntries(settings.map((s) => [s.key, s.value]));
+  } catch {
+    return {};
+  }
+}
