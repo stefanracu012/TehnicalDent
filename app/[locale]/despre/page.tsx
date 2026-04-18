@@ -34,6 +34,10 @@ export default async function AboutPage({
   );
   const aboutStoryImage =
     (await getSetting("aboutStoryImage")) || "/images/about-story.jpg";
+  const facilityImage1 =
+    (await getSetting("facilityImage1")) || "/images/facility-1.jpg";
+  const facilityImage2 =
+    (await getSetting("facilityImage2")) || "/images/facility-2.jpg";
 
   const values = [
     {
@@ -289,7 +293,7 @@ export default async function AboutPage({
             <div className="grid grid-cols-2 gap-4">
               <div className="aspect-[3/4] overflow-hidden rounded-2xl relative">
                 <Image
-                  src="/images/facility-1.jpg"
+                  src={facilityImage1}
                   alt={t("cabinetConsultatie")}
                   fill
                   sizes="(max-width: 1024px) 50vw, 25vw"
@@ -298,7 +302,7 @@ export default async function AboutPage({
               </div>
               <div className="aspect-[3/4] overflow-hidden rounded-2xl mt-8 relative">
                 <Image
-                  src="/images/facility-2.jpg"
+                  src={facilityImage2}
                   alt={t("echipamentModern")}
                   fill
                   sizes="(max-width: 1024px) 50vw, 25vw"

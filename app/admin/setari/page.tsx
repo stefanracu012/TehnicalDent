@@ -28,6 +28,20 @@ const SETTINGS_CONFIG = [
     folder: "gallery",
     default: "/images/gallery/clinic-2.jpg",
   },
+  {
+    key: "facilityImage1",
+    label: "Imagine Spațiul Nostru #1 (Despre)",
+    description: "Prima imagine din secțiunea \"Spațiul nostru\" de pe pagina Despre (stânga)",
+    folder: "facility",
+    default: "/images/facility-1.jpg",
+  },
+  {
+    key: "facilityImage2",
+    label: "Imagine Spațiul Nostru #2 (Despre)",
+    description: "A doua imagine din secțiunea \"Spațiul nostru\" de pe pagina Despre (dreapta)",
+    folder: "facility",
+    default: "/images/facility-2.jpg",
+  },
 ];
 
 export default function SettingsPage() {
