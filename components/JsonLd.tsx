@@ -41,7 +41,7 @@ export function DentistSchema({ locale }: { locale: string }) {
     alternateName: names[locale] || names.ro,
     description: descriptions[locale] || descriptions.ro,
     url: "https://tehnicaldent.com",
-    logo: "https://tehnicaldent.com/images/logo.svg",
+    logo: "https://tehnicaldent.com/images/logo.png",
     image: "https://tehnicaldent.com/images/hero-dentist.jpg",
     telephone: "+37379950008",
     email: "tehnicaldentmd@gmail.com",
@@ -161,7 +161,7 @@ export function ArticleSchema({
       name: "TechnicalDent",
       logo: {
         "@type": "ImageObject",
-        url: "https://tehnicaldent.com/images/logo.svg",
+        url: "https://tehnicaldent.com/images/logo.png",
       },
     },
     ...(image ? { image } : {}),

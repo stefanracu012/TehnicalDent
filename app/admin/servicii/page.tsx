@@ -128,16 +128,27 @@ export default function AdminServicesPage() {
                         <div className="flex gap-1.5">
                           {service.images?.length > 0 ? (
                             service.images.slice(0, 3).map((img, i) => (
-                              <div key={i} className="w-12 h-12 rounded border border-border overflow-hidden bg-muted flex-shrink-0">
+                              <div
+                                key={i}
+                                className="w-12 h-12 rounded border border-border overflow-hidden bg-muted flex-shrink-0"
+                              >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={img} alt="" className="w-full h-full object-cover" />
+                                <img
+                                  src={img}
+                                  alt=""
+                                  className="w-full h-full object-cover"
+                                />
                               </div>
                             ))
                           ) : (
-                            <div className="w-12 h-12 rounded border border-dashed border-border bg-muted flex items-center justify-center text-muted-foreground text-xs">—</div>
+                            <div className="w-12 h-12 rounded border border-dashed border-border bg-muted flex items-center justify-center text-muted-foreground text-xs">
+                              —
+                            </div>
                           )}
                           {service.images?.length > 3 && (
-                            <div className="w-12 h-12 rounded border border-border bg-muted flex items-center justify-center text-xs text-muted-foreground">+{service.images.length - 3}</div>
+                            <div className="w-12 h-12 rounded border border-border bg-muted flex items-center justify-center text-xs text-muted-foreground">
+                              +{service.images.length - 3}
+                            </div>
                           )}
                         </div>
                       </td>
@@ -208,9 +219,16 @@ export default function AdminServicesPage() {
                   {service.images?.length > 0 && (
                     <div className="flex gap-1.5 mb-3 overflow-x-auto">
                       {service.images.slice(0, 5).map((img, i) => (
-                        <div key={i} className="w-16 h-16 rounded border border-border overflow-hidden bg-muted flex-shrink-0">
+                        <div
+                          key={i}
+                          className="w-16 h-16 rounded border border-border overflow-hidden bg-muted flex-shrink-0"
+                        >
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={img} alt="" className="w-full h-full object-cover" />
+                          <img
+                            src={img}
+                            alt=""
+                            className="w-full h-full object-cover"
+                          />
                         </div>
                       ))}
                     </div>

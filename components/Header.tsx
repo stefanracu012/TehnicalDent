@@ -83,7 +83,7 @@ export default function Header() {
               className="flex items-center gap-3 group"
             >
               <Image
-                src="/images/logo.svg"
+                src="/images/logo.png"
                 alt="Tehnical Dent logo"
                 width={80}
                 height={80}

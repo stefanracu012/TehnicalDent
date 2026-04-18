@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 
@@ -32,8 +33,15 @@ export default function Footer() {
           <div className="lg:col-span-4">
             <Link
               href="/"
-              className="inline-block font-serif text-2xl font-medium tracking-tight"
+              className="inline-flex items-center gap-3 font-serif text-2xl font-medium tracking-tight"
             >
+              <Image
+                src="/images/logo.png"
+                alt="Tehnical Dent logo"
+                width={50}
+                height={50}
+                className="h-12 w-auto brightness-0 invert"
+              />
               TehnicalDent
             </Link>
             <p className="mt-5 text-sm leading-relaxed text-white/60 max-w-xs">
