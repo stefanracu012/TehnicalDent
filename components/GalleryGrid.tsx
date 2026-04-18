@@ -182,7 +182,6 @@ export default function GalleryGrid({
     <>
       <div className={colClass} style={{ columnGap: "1rem" }}>
         {images.map((image, index) => {
-          const aspectClass = ASPECT_PATTERNS[index % ASPECT_PATTERNS.length];
           return (
             <div
               key={index}
@@ -190,7 +189,7 @@ export default function GalleryGrid({
                 cardRefs.current[index] = el;
               }}
               data-delay={String((index % (columns * 2)) * 80)}
-              className={`group relative overflow-hidden cursor-pointer bg-muted mb-4 break-inside-avoid ${aspectClass}`}
+              className="group relative overflow-hidden cursor-pointer bg-muted mb-4 break-inside-avoid"
               style={{
                 opacity: 0,
                 transform: "translateY(24px) scale(0.98)",
@@ -199,12 +198,12 @@ export default function GalleryGrid({
               }}
               onClick={() => openLightbox(index)}
             >
-              <Image
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
                 src={image.url}
                 alt={image.alt}
-                fill
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                className="object-cover transition-transform duration-700 group-hover:scale-[1.04]"
+                className="w-full h-auto block transition-transform duration-700 group-hover:scale-[1.04]"
+                loading="lazy"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-400" />
               {image.category && (
