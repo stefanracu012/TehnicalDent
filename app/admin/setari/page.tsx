@@ -12,6 +12,13 @@ const SETTINGS_CONFIG = [
     folder: "hero",
     default: "/images/hero-dentist.jpg",
   },
+  {
+    key: "aboutStoryImage",
+    label: "Imagine Povestea Noastră (Despre)",
+    description: "Imaginea din secțiunea \"Povestea noastră\" de pe pagina Despre noi",
+    folder: "about",
+    default: "/images/about-story.jpg",
+  },
 ];
 
 export default function SettingsPage() {

@@ -2,7 +2,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import Image from "next/image";
 import Button from "@/components/Button";
-import { getTeamMembers } from "@/lib/data";
+import { getTeamMembers, getSetting } from "@/lib/data";
 import { localizeTeamMember } from "@/lib/localize";
 import { getAlternates } from "@/lib/seo";
 
@@ -32,6 +32,7 @@ export default async function AboutPage({
   const teamMembers = (await getTeamMembers()).map((m) =>
     localizeTeamMember(m, locale),
   );
+  const aboutStoryImage = await getSetting("aboutStoryImage") || "/images/about-story.jpg";
 
   const values = [
     {
@@ -118,7 +119,7 @@ export default async function AboutPage({
       <section className="relative min-h-[55vh] flex items-end pb-16 pt-[11rem]">
         <div className="absolute inset-0 overflow-hidden">
           <Image
-            src="/images/about-story.jpg"
+            src={aboutStoryImage}
             alt="Clinică TechnicalDent"
             fill
             priority
@@ -182,7 +183,7 @@ export default async function AboutPage({
           <div className="relative">
             <div className="aspect-[4/5] overflow-hidden rounded-2xl shadow-xl relative">
               <Image
-                src="/images/about-story.jpg"
+                src={aboutStoryImage}
                 alt={t("clinicaImgAlt")}
                 fill
                 sizes="(max-width: 1024px) 100vw, 50vw"
