@@ -13,6 +13,7 @@ interface Service {
   category: string;
   isActive: boolean;
   order: number;
+  images: string[];
 }
 
 export default function AdminServicesPage() {
@@ -98,6 +99,9 @@ export default function AdminServicesPage() {
                 <thead>
                   <tr className="border-b border-border">
                     <th className="text-left py-4 px-6 text-sm font-semibold text-foreground">
+                      Imagine
+                    </th>
+                    <th className="text-left py-4 px-6 text-sm font-semibold text-foreground">
                       Titlu
                     </th>
                     <th className="text-left py-4 px-6 text-sm font-semibold text-foreground">
@@ -120,6 +124,23 @@ export default function AdminServicesPage() {
                       key={service.id}
                       className="border-b border-border last:border-0"
                     >
+                      <td className="py-4 px-6">
+                        <div className="flex gap-1.5">
+                          {service.images?.length > 0 ? (
+                            service.images.slice(0, 3).map((img, i) => (
+                              <div key={i} className="w-12 h-12 rounded border border-border overflow-hidden bg-muted flex-shrink-0">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img src={img} alt="" className="w-full h-full object-cover" />
+                              </div>
+                            ))
+                          ) : (
+                            <div className="w-12 h-12 rounded border border-dashed border-border bg-muted flex items-center justify-center text-muted-foreground text-xs">—</div>
+                          )}
+                          {service.images?.length > 3 && (
+                            <div className="w-12 h-12 rounded border border-border bg-muted flex items-center justify-center text-xs text-muted-foreground">+{service.images.length - 3}</div>
+                          )}
+                        </div>
+                      </td>
                       <td className="py-4 px-6">
                         <div>
                           <p className="font-medium text-foreground">
@@ -184,6 +205,16 @@ export default function AdminServicesPage() {
                   key={service.id}
                   className="bg-white border border-border p-4 rounded-lg"
                 >
+                  {service.images?.length > 0 && (
+                    <div className="flex gap-1.5 mb-3 overflow-x-auto">
+                      {service.images.slice(0, 5).map((img, i) => (
+                        <div key={i} className="w-16 h-16 rounded border border-border overflow-hidden bg-muted flex-shrink-0">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={img} alt="" className="w-full h-full object-cover" />
+                        </div>
+                      ))}
+                    </div>
+                  )}
                   <div className="flex items-start justify-between gap-3 mb-2">
                     <div className="min-w-0">
                       <p className="font-medium text-foreground truncate">
