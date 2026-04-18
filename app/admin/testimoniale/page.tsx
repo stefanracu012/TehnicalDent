@@ -289,7 +289,10 @@ export default function AdminTestimonialsPage() {
                         list="service-suggestions"
                         value={formData.service}
                         onChange={(e) =>
-                          setFormData((p) => ({ ...p, service: e.target.value }))
+                          setFormData((p) => ({
+                            ...p,
+                            service: e.target.value,
+                          }))
                         }
                         placeholder="Scrie sau alege un serviciu..."
                         className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none"

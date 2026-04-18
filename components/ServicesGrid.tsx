@@ -105,7 +105,7 @@ export default function ServicesGrid({ services }: { services: Service[] }) {
           >
             {/* Image */}
             <Image
-              src={`/images/services/${service.slug}.jpg`}
+              src={service.images?.[0] || `/images/services/${service.slug}.jpg`}
               alt={service.title}
               fill
               sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"

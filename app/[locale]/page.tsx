@@ -5,8 +5,8 @@ import SectionHeader from "@/components/SectionHeader";
 import ServiceBentoGrid from "@/components/ServiceBentoGrid";
 import TestimonialsCarousel from "@/components/TestimonialsCarousel";
 import GalleryPreview from "@/components/GalleryPreview";
-import { getServices, getTestimonials } from "@/lib/data";
-import { localizeService, localizeTestimonial } from "@/lib/localize";
+import { getServices, getTestimonials, getGalleryImages } from "@/lib/data";
+import { localizeService, localizeTestimonial, localizeGalleryImage } from "@/lib/localize";
 import AboutPreview from "@/components/AboutPreview";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
@@ -21,6 +21,9 @@ export default async function HomePage({
   const services = (await getServices()).map((s) => localizeService(s, locale));
   const testimonials = (await getTestimonials()).map((t) =>
     localizeTestimonial(t, locale),
+  );
+  const galleryImages = (await getGalleryImages()).map((g) =>
+    localizeGalleryImage(g, locale),
   );
   const t = await getTranslations("Home");
 
@@ -98,7 +101,7 @@ export default async function HomePage({
 
       {/* Gallery Preview */}
       <Section>
-        <GalleryPreview />
+        <GalleryPreview images={galleryImages} />
       </Section>
 
       {/* Testimonials */}
