@@ -64,6 +64,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
     .map((sv) => localizeService(sv, locale));
 
   const heroImage = service.images?.[0] as string || `/images/services/${service.slug}.jpg`;
+  const sectionImages = (service.images as string[] | undefined) ?? [];
 
   // Localized content from DB translations
   const title = s.title as string;
@@ -195,6 +196,17 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
               <p className="text-muted-foreground leading-relaxed text-lg pl-12">
                 {overview}
               </p>
+              {sectionImages[1] && (
+                <div className="relative mt-6 ml-12 rounded-2xl overflow-hidden h-[280px] sm:h-[340px]">
+                  <Image
+                    src={sectionImages[1]}
+                    alt={`${title} — ${t("prezentareTitle")}`}
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 60vw"
+                    className="object-cover"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Benefits */}
@@ -239,6 +251,17 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
                   </div>
                 ))}
               </div>
+              {sectionImages[2] && (
+                <div className="relative mt-6 ml-12 rounded-2xl overflow-hidden h-[280px] sm:h-[340px]">
+                  <Image
+                    src={sectionImages[2]}
+                    alt={`${title} — ${t("beneficiiTitle")}`}
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 60vw"
+                    className="object-cover"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Process — numbered steps */}
@@ -278,6 +301,17 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
                     </div>
                   ))}
               </div>
+              {sectionImages[3] && (
+                <div className="relative mt-6 ml-12 rounded-2xl overflow-hidden h-[280px] sm:h-[340px]">
+                  <Image
+                    src={sectionImages[3]}
+                    alt={`${title} — ${t("procesTitle")}`}
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 60vw"
+                    className="object-cover"
+                  />
+                </div>
+              )}
             </div>
 
             {/* Recovery */}
@@ -293,6 +327,17 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
               <p className="text-muted-foreground leading-relaxed pl-12">
                 {recovery}
               </p>
+              {sectionImages[4] && (
+                <div className="relative mt-6 ml-12 rounded-2xl overflow-hidden h-[280px] sm:h-[340px]">
+                  <Image
+                    src={sectionImages[4]}
+                    alt={`${title} — ${t("recuperareTitle")}`}
+                    fill
+                    sizes="(max-width: 1024px) 100vw, 60vw"
+                    className="object-cover"
+                  />
+                </div>
+              )}
             </div>
           </div>
 
