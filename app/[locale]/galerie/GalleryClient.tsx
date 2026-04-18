@@ -405,8 +405,8 @@ export default function GalleryClient({ images }: Props) {
             <div className="grid grid-cols-2 gap-3 h-[500px]">
               <div className="relative overflow-hidden">
                 <Image
-                  src="/images/gallery/clinic-3.jpg"
-                  alt="Echipament stomatologic"
+                  src={images[2]?.url || "/images/gallery/clinic-3.jpg"}
+                  alt={images[2]?.alt || "Echipament stomatologic"}
                   fill
                   sizes="(max-width: 1024px) 50vw, 25vw"
                   className="object-cover hover:scale-105 transition-transform duration-700"
@@ -415,8 +415,8 @@ export default function GalleryClient({ images }: Props) {
               <div className="grid grid-rows-2 gap-3">
                 <div className="relative overflow-hidden">
                   <Image
-                    src="/images/gallery/clinic-5.jpg"
-                    alt="Cabinet de chirurgie"
+                    src={images[4]?.url || "/images/gallery/clinic-5.jpg"}
+                    alt={images[4]?.alt || "Cabinet de chirurgie"}
                     fill
                     sizes="(max-width: 1024px) 25vw, 12.5vw"
                     className="object-cover hover:scale-105 transition-transform duration-700"
@@ -424,8 +424,8 @@ export default function GalleryClient({ images }: Props) {
                 </div>
                 <div className="relative overflow-hidden">
                   <Image
-                    src="/images/gallery/clinic-6.jpg"
-                    alt="Zonă sterilizare"
+                    src={images[5]?.url || "/images/gallery/clinic-6.jpg"}
+                    alt={images[5]?.alt || "Zonă sterilizare"}
                     fill
                     sizes="(max-width: 1024px) 25vw, 12.5vw"
                     className="object-cover hover:scale-105 transition-transform duration-700"
@@ -465,7 +465,7 @@ export default function GalleryClient({ images }: Props) {
       <section className="relative overflow-hidden">
         <div className="absolute inset-0">
           <Image
-            src="/images/gallery/clinic-2.jpg"
+            src={images[1]?.url || "/images/gallery/clinic-2.jpg"}
             alt="Cabinet TechnicalDent"
             fill
             sizes="100vw"
