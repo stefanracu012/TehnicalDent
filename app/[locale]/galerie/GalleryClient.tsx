@@ -14,9 +14,10 @@ interface GalleryImage {
 
 interface Props {
   images: GalleryImage[];
+  ctaImage?: string;
 }
 
-export default function GalleryClient({ images }: Props) {
+export default function GalleryClient({ images, ctaImage }: Props) {
   const t = useTranslations("Gallery");
   const tNav = useTranslations("Nav");
 
@@ -465,7 +466,7 @@ export default function GalleryClient({ images }: Props) {
       <section className="relative overflow-hidden">
         <div className="absolute inset-0">
           <Image
-            src={images[1]?.url || "/images/gallery/clinic-2.jpg"}
+            src={ctaImage || images[1]?.url || "/images/gallery/clinic-2.jpg"}
             alt="Cabinet TechnicalDent"
             fill
             sizes="100vw"

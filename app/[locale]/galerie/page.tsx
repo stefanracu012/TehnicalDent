@@ -1,5 +1,5 @@
 ﻿import GalleryClient from "./GalleryClient";
-import { getGalleryImages } from "@/lib/data";
+import { getGalleryImages, getSetting } from "@/lib/data";
 import { localizeGalleryImage } from "@/lib/localize";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getAlternates } from "@/lib/seo";
@@ -29,5 +29,6 @@ export default async function GalleryPage({
   const images = (await getGalleryImages()).map((img) =>
     localizeGalleryImage(img, locale),
   );
-  return <GalleryClient images={images} />;
+  const ctaImage = (await getSetting("galleryCTAImage")) || undefined;
+  return <GalleryClient images={images} ctaImage={ctaImage} />;
 }

@@ -63,7 +63,8 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
     .slice(0, 3)
     .map((sv) => localizeService(sv, locale));
 
-  const heroImage = service.images?.[0] as string || `/images/services/${service.slug}.jpg`;
+  const heroImage =
+    (service.images?.[0] as string) || `/images/services/${service.slug}.jpg`;
   const sectionImages = (service.images as string[] | undefined) ?? [];
 
   // Localized content from DB translations
@@ -439,7 +440,10 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
                       >
                         <div className="relative w-14 h-12 flex-shrink-0 overflow-hidden rounded-lg bg-muted">
                           <Image
-                            src={related.images?.[0] as string || `/images/services/${related.slug}.jpg`}
+                            src={
+                              (related.images?.[0] as string) ||
+                              `/images/services/${related.slug}.jpg`
+                            }
                             alt={related.title}
                             fill
                             sizes="56px"

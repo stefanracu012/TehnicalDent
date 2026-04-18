@@ -33,7 +33,8 @@ export default async function ServicesPage({
   const t = await getTranslations("Services");
   const tNav = await getTranslations("Nav");
   const services = (await getServices()).map((s) => localizeService(s, locale));
-  const heroImage = await getSetting("heroImage") || "/images/hero-dentist.jpg";
+  const heroImage =
+    (await getSetting("heroImage")) || "/images/hero-dentist.jpg";
 
   return (
     <>

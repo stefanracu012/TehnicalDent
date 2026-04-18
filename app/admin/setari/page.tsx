@@ -15,9 +15,18 @@ const SETTINGS_CONFIG = [
   {
     key: "aboutStoryImage",
     label: "Imagine Povestea Noastră (Despre)",
-    description: "Imaginea din secțiunea \"Povestea noastră\" de pe pagina Despre noi",
+    description:
+      'Imaginea din secțiunea "Povestea noastră" de pe pagina Despre noi',
     folder: "about",
     default: "/images/about-story.jpg",
+  },
+  {
+    key: "galleryCTAImage",
+    label: 'Imagine CTA Galerie ("Vă așteptăm")',
+    description:
+      'Imaginea de fundal din secțiunea "Doriți să vizitați clinica?" de pe pagina Galerie',
+    folder: "gallery",
+    default: "/images/gallery/clinic-2.jpg",
   },
 ];
 
@@ -35,7 +44,11 @@ export default function SettingsPage() {
       });
   }, []);
 
-  const saveSetting = async (key: string, value: string, description?: string) => {
+  const saveSetting = async (
+    key: string,
+    value: string,
+    description?: string,
+  ) => {
     setSaving(key);
     try {
       await secureFetch("/api/admin/settings", {
@@ -73,7 +86,10 @@ export default function SettingsPage() {
 
         <div className="space-y-8">
           {SETTINGS_CONFIG.map((config) => (
-            <div key={config.key} className="bg-white border border-border p-6 sm:p-8">
+            <div
+              key={config.key}
+              className="bg-white border border-border p-6 sm:p-8"
+            >
               <h2 className="font-serif text-lg font-medium text-foreground mb-1">
                 {config.label}
               </h2>
@@ -83,7 +99,9 @@ export default function SettingsPage() {
 
               <ImageUpload
                 value={settings[config.key] || config.default}
-                onChange={(url) => saveSetting(config.key, url, config.description)}
+                onChange={(url) =>
+                  saveSetting(config.key, url, config.description)
+                }
                 folder={config.folder}
                 label="Schimbă imaginea"
               />
@@ -92,14 +110,21 @@ export default function SettingsPage() {
                 <p className="mt-3 text-sm text-accent">Se salvează...</p>
               )}
 
-              {settings[config.key] && settings[config.key] !== config.default && (
-                <button
-                  onClick={() => saveSetting(config.key, config.default, config.description)}
-                  className="mt-4 text-sm text-muted-foreground hover:text-foreground underline transition-colors"
-                >
-                  Resetează la imaginea implicită
-                </button>
-              )}
+              {settings[config.key] &&
+                settings[config.key] !== config.default && (
+                  <button
+                    onClick={() =>
+                      saveSetting(
+                        config.key,
+                        config.default,
+                        config.description,
+                      )
+                    }
+                    className="mt-4 text-sm text-muted-foreground hover:text-foreground underline transition-colors"
+                  >
+                    Resetează la imaginea implicită
+                  </button>
+                )}
             </div>
           ))}
         </div>

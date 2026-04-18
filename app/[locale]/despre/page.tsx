@@ -32,7 +32,8 @@ export default async function AboutPage({
   const teamMembers = (await getTeamMembers()).map((m) =>
     localizeTeamMember(m, locale),
   );
-  const aboutStoryImage = await getSetting("aboutStoryImage") || "/images/about-story.jpg";
+  const aboutStoryImage =
+    (await getSetting("aboutStoryImage")) || "/images/about-story.jpg";
 
   const values = [
     {

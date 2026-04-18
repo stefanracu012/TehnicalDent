@@ -7,9 +7,16 @@ import { useTranslations } from "next-intl";
 import GallerySlideshow from "@/components/GallerySlideshow";
 
 const SPAN_PATTERN = [
-  "large", "normal", "normal", "wide",
-  "normal", "normal", "normal", "normal",
-  "wide", "wide",
+  "large",
+  "normal",
+  "normal",
+  "wide",
+  "normal",
+  "normal",
+  "normal",
+  "normal",
+  "wide",
+  "wide",
 ];
 
 interface GalleryItem {
@@ -24,14 +31,15 @@ interface GalleryPreviewProps {
 }
 
 export default function GalleryPreview({ images }: GalleryPreviewProps) {
-  const GALLERY_ITEMS: GalleryItem[] = images && images.length > 0
-    ? images.slice(0, 10).map((img, i) => ({
-        src: img.url,
-        alt: img.alt,
-        label: img.category,
-        span: SPAN_PATTERN[i] ?? "normal",
-      }))
-    : FALLBACK_ITEMS;
+  const GALLERY_ITEMS: GalleryItem[] =
+    images && images.length > 0
+      ? images.slice(0, 10).map((img, i) => ({
+          src: img.url,
+          alt: img.alt,
+          label: img.category,
+          span: SPAN_PATTERN[i] ?? "normal",
+        }))
+      : FALLBACK_ITEMS;
 
   const t = useTranslations("GalleryPreview");
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -475,14 +483,64 @@ function GalleryCard({
 }
 
 const FALLBACK_ITEMS: GalleryItem[] = [
-  { src: "/images/gallery/clinic-1.jpg", alt: "Recepție clinică stomatologică", label: "Recepție", span: "large" },
-  { src: "/images/gallery/clinic-2.jpg", alt: "Cabinet de consultație modern", label: "Cabinet", span: "normal" },
-  { src: "/images/gallery/clinic-3.jpg", alt: "Echipament stomatologic", label: "Echipament", span: "normal" },
-  { src: "/images/gallery/clinic-4.jpg", alt: "Sala de așteptare confortabilă", label: "Așteptare", span: "wide" },
-  { src: "/images/gallery/clinic-5.jpg", alt: "Cabinet de chirurgie", label: "Chirurgie", span: "normal" },
-  { src: "/images/gallery/clinic-6.jpg", alt: "Zonă sterilizare", label: "Sterilizare", span: "normal" },
-  { src: "/images/gallery/clinic-8.jpg", alt: "Cabinet stomatologie pediatrică", label: "Pediatrie", span: "normal" },
-  { src: "/images/gallery/clinic-9.jpg", alt: "Unitate dentară digitală", label: "Digital", span: "normal" },
-  { src: "/images/gallery/clinic-10.jpg", alt: "Masă de lucru sterilizare", label: "Sterilizare", span: "wide" },
-  { src: "/images/gallery/result-1.jpg", alt: "Rezultat tratament estetic", label: "Rezultat", span: "wide" },
+  {
+    src: "/images/gallery/clinic-1.jpg",
+    alt: "Recepție clinică stomatologică",
+    label: "Recepție",
+    span: "large",
+  },
+  {
+    src: "/images/gallery/clinic-2.jpg",
+    alt: "Cabinet de consultație modern",
+    label: "Cabinet",
+    span: "normal",
+  },
+  {
+    src: "/images/gallery/clinic-3.jpg",
+    alt: "Echipament stomatologic",
+    label: "Echipament",
+    span: "normal",
+  },
+  {
+    src: "/images/gallery/clinic-4.jpg",
+    alt: "Sala de așteptare confortabilă",
+    label: "Așteptare",
+    span: "wide",
+  },
+  {
+    src: "/images/gallery/clinic-5.jpg",
+    alt: "Cabinet de chirurgie",
+    label: "Chirurgie",
+    span: "normal",
+  },
+  {
+    src: "/images/gallery/clinic-6.jpg",
+    alt: "Zonă sterilizare",
+    label: "Sterilizare",
+    span: "normal",
+  },
+  {
+    src: "/images/gallery/clinic-8.jpg",
+    alt: "Cabinet stomatologie pediatrică",
+    label: "Pediatrie",
+    span: "normal",
+  },
+  {
+    src: "/images/gallery/clinic-9.jpg",
+    alt: "Unitate dentară digitală",
+    label: "Digital",
+    span: "normal",
+  },
+  {
+    src: "/images/gallery/clinic-10.jpg",
+    alt: "Masă de lucru sterilizare",
+    label: "Sterilizare",
+    span: "wide",
+  },
+  {
+    src: "/images/gallery/result-1.jpg",
+    alt: "Rezultat tratament estetic",
+    label: "Rezultat",
+    span: "wide",
+  },
 ];
