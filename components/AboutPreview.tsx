@@ -5,7 +5,28 @@ import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
 
-export default function AboutPreview() {
+export interface AboutPreviewOverrides {
+  image?: string;
+  years?: string;
+  badge?: string;
+  subtitle?: string;
+  title?: string;
+  p1?: string;
+  p2?: string;
+  stat1Value?: string;
+  stat1Label?: string;
+  stat2Value?: string;
+  stat2Label?: string;
+  stat3Value?: string;
+  stat3Label?: string;
+  link?: string;
+}
+
+export default function AboutPreview({
+  overrides = {},
+}: {
+  overrides?: AboutPreviewOverrides;
+}) {
   const t = useTranslations("AboutPreview");
   const imgRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
@@ -47,7 +68,7 @@ export default function AboutPreview() {
         >
           <div className="aspect-[4/3] relative overflow-hidden rounded-xl shadow-xl">
             <Image
-              src="/images/about-clinic.jpg"
+              src={overrides.image || "/images/about-clinic.jpg"}
               alt={t("imgAlt")}
               fill
               sizes="(max-width: 1024px) 100vw, 50vw"
@@ -69,10 +90,10 @@ export default function AboutPreview() {
           className="absolute -bottom-6 -right-6 w-44 h-44 bg-white rounded-2xl shadow-lg p-6 hidden lg:flex flex-col justify-center"
         >
           <p className="font-serif text-5xl font-semibold text-foreground leading-none">
-            2+
+            {overrides.years || "2+"}
           </p>
           <p className="mt-3 text-xs leading-snug text-muted-foreground">
-            {t("badge")}
+            {overrides.badge || t("badge")}
           </p>
         </div>
       </div>
@@ -87,22 +108,31 @@ export default function AboutPreview() {
         }}
       >
         <p className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground mb-4">
-          {t("subtitle")}
+          {overrides.subtitle || t("subtitle")}
         </p>
         <h2 className="font-serif text-3xl font-medium tracking-tight text-foreground sm:text-4xl">
-          {t("title")}
+          {overrides.title || t("title")}
         </h2>
         <div className="mt-6 space-y-4 text-muted-foreground leading-relaxed">
-          <p>{t("p1")}</p>
-          <p>{t("p2")}</p>
+          <p>{overrides.p1 || t("p1")}</p>
+          <p>{overrides.p2 || t("p2")}</p>
         </div>
 
         {/* Stats row */}
         <div className="mt-8 flex gap-8">
           {[
-            { value: t("stat1Value"), label: t("stat1Label") },
-            { value: t("stat2Value"), label: t("stat2Label") },
-            { value: t("stat3Value"), label: t("stat3Label") },
+            {
+              value: overrides.stat1Value || t("stat1Value"),
+              label: overrides.stat1Label || t("stat1Label"),
+            },
+            {
+              value: overrides.stat2Value || t("stat2Value"),
+              label: overrides.stat2Label || t("stat2Label"),
+            },
+            {
+              value: overrides.stat3Value || t("stat3Value"),
+              label: overrides.stat3Label || t("stat3Label"),
+            },
           ].map((stat) => (
             <div key={stat.label}>
               <p className="font-serif text-2xl font-semibold text-foreground">
@@ -117,7 +147,7 @@ export default function AboutPreview() {
           href="/despre"
           className="mt-8 inline-flex items-center gap-2 text-sm font-semibold text-foreground group"
         >
-          {t("link")}
+          {overrides.link || t("link")}
           <span className="inline-block transition-transform duration-200 group-hover:translate-x-1">
             →
           </span>

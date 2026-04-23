@@ -10,6 +10,7 @@ import {
   getTestimonials,
   getGalleryImages,
   getSetting,
+  getAllSettings,
 } from "@/lib/data";
 import {
   localizeService,
@@ -36,6 +37,23 @@ export default async function HomePage({
   );
   const heroImage =
     (await getSetting("heroImage")) || "/images/hero-dentist.jpg";
+  const allSettings = await getAllSettings();
+  const aboutOverrides = {
+    image: allSettings["aboutPreviewImage"] || undefined,
+    years: allSettings["aboutPreviewYears"] || undefined,
+    badge: allSettings["aboutPreviewBadge"] || undefined,
+    subtitle: allSettings["aboutPreviewSubtitle"] || undefined,
+    title: allSettings["aboutPreviewTitle"] || undefined,
+    p1: allSettings["aboutPreviewP1"] || undefined,
+    p2: allSettings["aboutPreviewP2"] || undefined,
+    stat1Value: allSettings["aboutPreviewStat1Value"] || undefined,
+    stat1Label: allSettings["aboutPreviewStat1Label"] || undefined,
+    stat2Value: allSettings["aboutPreviewStat2Value"] || undefined,
+    stat2Label: allSettings["aboutPreviewStat2Label"] || undefined,
+    stat3Value: allSettings["aboutPreviewStat3Value"] || undefined,
+    stat3Label: allSettings["aboutPreviewStat3Label"] || undefined,
+    link: allSettings["aboutPreviewLink"] || undefined,
+  };
   const t = await getTranslations("Home");
 
   return (
@@ -107,7 +125,7 @@ export default async function HomePage({
 
       {/* About Preview */}
       <Section background="muted">
-        <AboutPreview />
+        <AboutPreview overrides={aboutOverrides} />
       </Section>
 
       {/* Gallery Preview */}
