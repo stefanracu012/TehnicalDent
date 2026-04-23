@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
@@ -23,7 +23,7 @@ export interface AboutPreviewOverrides {
 }
 
 export default function AboutPreview({
-  overrides = {},
+  overrides: initialOverrides = {},
 }: {
   overrides?: AboutPreviewOverrides;
 }) {
@@ -31,6 +31,32 @@ export default function AboutPreview({
   const imgRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const badgeRef = useRef<HTMLDivElement>(null);
+  const [overrides, setOverrides] = useState<AboutPreviewOverrides>(initialOverrides);
+
+  // Fetch fresh settings client-side to always reflect latest admin changes
+  useEffect(() => {
+    fetch("/api/public/settings")
+      .then((r) => r.json())
+      .then((data: Record<string, string>) => {
+        setOverrides({
+          image: data["aboutPreviewImage"] || undefined,
+          years: data["aboutPreviewYears"] || undefined,
+          badge: data["aboutPreviewBadge"] || undefined,
+          subtitle: data["aboutPreviewSubtitle"] || undefined,
+          title: data["aboutPreviewTitle"] || undefined,
+          p1: data["aboutPreviewP1"] || undefined,
+          p2: data["aboutPreviewP2"] || undefined,
+          stat1Value: data["aboutPreviewStat1Value"] || undefined,
+          stat1Label: data["aboutPreviewStat1Label"] || undefined,
+          stat2Value: data["aboutPreviewStat2Value"] || undefined,
+          stat2Label: data["aboutPreviewStat2Label"] || undefined,
+          stat3Value: data["aboutPreviewStat3Value"] || undefined,
+          stat3Label: data["aboutPreviewStat3Label"] || undefined,
+          link: data["aboutPreviewLink"] || undefined,
+        });
+      })
+      .catch(() => {/* keep initial overrides on error */});
+  }, []);
 
   useEffect(() => {
     const els = [imgRef.current, textRef.current, badgeRef.current].filter(
