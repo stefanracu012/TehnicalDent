@@ -24,8 +24,10 @@ export interface AboutPreviewOverrides {
 
 export default function AboutPreview({
   overrides: initialOverrides = {},
+  noFetch = false,
 }: {
   overrides?: AboutPreviewOverrides;
+  noFetch?: boolean;
 }) {
   const t = useTranslations("AboutPreview");
   const imgRef = useRef<HTMLDivElement>(null);
@@ -33,8 +35,15 @@ export default function AboutPreview({
   const badgeRef = useRef<HTMLDivElement>(null);
   const [overrides, setOverrides] = useState<AboutPreviewOverrides>(initialOverrides);
 
+  // When used in admin (noFetch=true), sync state from props as they change live
+  useEffect(() => {
+    if (noFetch) setOverrides(initialOverrides);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [noFetch, JSON.stringify(initialOverrides)]);
+
   // Fetch fresh settings client-side to always reflect latest admin changes
   useEffect(() => {
+    if (noFetch) return;
     fetch("/api/public/settings")
       .then((r) => r.json())
       .then((data: Record<string, string>) => {
@@ -56,7 +65,7 @@ export default function AboutPreview({
         });
       })
       .catch(() => {/* keep initial overrides on error */});
-  }, []);
+  }, [noFetch]);
 
   useEffect(() => {
     const els = [imgRef.current, textRef.current, badgeRef.current].filter(

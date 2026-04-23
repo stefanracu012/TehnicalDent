@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { secureFetch } from "@/lib/csrf-client";
 import ImageUpload from "@/components/admin/ImageUpload";
+import AboutPreview from "@/components/AboutPreview";
 
 const SETTINGS_CONFIG = [
   {
@@ -325,38 +326,29 @@ export default function SettingsPage() {
           </p>
         </div>
 
-        {/* Visual layout hint */}
-        <div className="mb-6 border border-dashed border-border bg-white p-5 text-xs text-muted-foreground">
-          <p className="font-semibold text-foreground mb-3 text-sm">Previzualizare structură secțiune</p>
-          <div className="grid grid-cols-2 gap-4">
-            {/* Left col - image */}
-            <div className="bg-muted rounded-lg p-4 flex flex-col items-center justify-center gap-2 min-h-[120px]">
-              <div className="w-full h-16 bg-border/60 rounded flex items-center justify-center text-[11px] font-medium text-muted-foreground">
-                📷 Imaginea secțiunii
-              </div>
-              <div className="w-24 h-16 bg-white rounded shadow-sm border border-border flex flex-col items-center justify-center self-end -mt-6 -mr-2 ml-auto">
-                <span className="font-bold text-lg text-foreground">2+</span>
-                <span className="text-[10px] text-muted-foreground text-center leading-tight px-1">Ani de experiență</span>
-              </div>
-            </div>
-            {/* Right col - text */}
-            <div className="space-y-1.5">
-              <div className="h-2 w-12 bg-muted-foreground/30 rounded" title="Subtitlu" />
-              <div className="h-3 w-full bg-foreground/20 rounded" title="Titlu" />
-              <div className="h-2 w-full bg-muted-foreground/20 rounded" title="Paragraf 1" />
-              <div className="h-2 w-5/6 bg-muted-foreground/20 rounded" />
-              <div className="h-2 w-full bg-muted-foreground/20 rounded mt-1" title="Paragraf 2" />
-              <div className="h-2 w-4/6 bg-muted-foreground/20 rounded" />
-              <div className="flex gap-3 mt-2">
-                {["Stat 1", "Stat 2", "Stat 3"].map((s) => (
-                  <div key={s} className="flex-1 space-y-1">
-                    <div className="h-3 w-8 bg-foreground/25 rounded" />
-                    <div className="h-2 w-full bg-muted-foreground/20 rounded" />
-                  </div>
-                ))}
-              </div>
-              <div className="h-2 w-24 bg-foreground/30 rounded mt-1" title="Link" />
-            </div>
+        {/* Live preview — identical to homepage */}
+        <div className="mb-6">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-3">Previzualizare live</p>
+          <div className="bg-white border border-border px-6 py-10 overflow-hidden">
+            <AboutPreview
+              noFetch
+              overrides={{
+                image: settings["aboutPreviewImage"] || undefined,
+                years: settings["aboutPreviewYears"] || undefined,
+                badge: settings["aboutPreviewBadge"] || undefined,
+                subtitle: settings["aboutPreviewSubtitle"] || undefined,
+                title: settings["aboutPreviewTitle"] || undefined,
+                p1: settings["aboutPreviewP1"] || undefined,
+                p2: settings["aboutPreviewP2"] || undefined,
+                stat1Value: settings["aboutPreviewStat1Value"] || undefined,
+                stat1Label: settings["aboutPreviewStat1Label"] || undefined,
+                stat2Value: settings["aboutPreviewStat2Value"] || undefined,
+                stat2Label: settings["aboutPreviewStat2Label"] || undefined,
+                stat3Value: settings["aboutPreviewStat3Value"] || undefined,
+                stat3Label: settings["aboutPreviewStat3Label"] || undefined,
+                link: settings["aboutPreviewLink"] || undefined,
+              }}
+            />
           </div>
         </div>
 
