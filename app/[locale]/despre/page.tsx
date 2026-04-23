@@ -2,7 +2,7 @@
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import Image from "next/image";
 import Button from "@/components/Button";
-import { getTeamMembers, getSetting } from "@/lib/data";
+import { getTeamMembers, getSetting, getAllSettings } from "@/lib/data";
 import { localizeTeamMember } from "@/lib/localize";
 import { getAlternates } from "@/lib/seo";
 
@@ -38,6 +38,10 @@ export default async function AboutPage({
     (await getSetting("facilityImage1")) || "/images/facility-1.jpg";
   const facilityImage2 =
     (await getSetting("facilityImage2")) || "/images/facility-2.jpg";
+
+  const allSettings = await getAllSettings();
+  const s = (key: string, fallback: string) =>
+    allSettings[key]?.trim() || fallback;
 
   const values = [
     {
@@ -160,21 +164,30 @@ export default async function AboutPage({
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-4">
-              {t("storySubtitle")}
+              {s("aboutStorySubtitle", t("storySubtitle"))}
             </p>
             <h2 className="font-serif text-3xl sm:text-4xl font-medium text-foreground tracking-tight">
-              {t("storyTitle")}
+              {s("aboutStoryTitle", t("storyTitle"))}
             </h2>
             <div className="mt-6 space-y-4 text-muted-foreground leading-relaxed">
-              <p>{t("storyP1")}</p>
-              <p>{t("storyP2")}</p>
-              <p>{t("storyP3")}</p>
+              <p>{s("aboutStoryP1", t("storyP1"))}</p>
+              <p>{s("aboutStoryP2", t("storyP2"))}</p>
+              <p>{s("aboutStoryP3", t("storyP3"))}</p>
             </div>
             <div className="mt-10 grid grid-cols-3 gap-6 pt-8 border-t border-border">
               {[
-                { v: "2024", l: t("statFondare") },
-                { v: "2+", l: t("statExperienta") },
-                { v: "400+", l: t("statPacienti") },
+                {
+                  v: s("aboutStoryStat1Value", "2024"),
+                  l: s("aboutStoryStat1Label", t("statFondare")),
+                },
+                {
+                  v: s("aboutStoryStat2Value", "2+"),
+                  l: s("aboutStoryStat2Label", t("statExperienta")),
+                },
+                {
+                  v: s("aboutStoryStat3Value", "400+"),
+                  l: s("aboutStoryStat3Label", t("statPacienti")),
+                },
               ].map((s) => (
                 <div key={s.l}>
                   <p className="font-serif text-3xl font-semibold text-foreground">

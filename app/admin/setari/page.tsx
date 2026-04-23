@@ -54,6 +54,78 @@ const SETTINGS_CONFIG = [
   },
 ];
 
+const STORY_TEXT_FIELDS = [
+  {
+    key: "aboutStorySubtitle",
+    label: "Subtitlu secțiune",
+    defaultValue: "Povestea noastră",
+    multiline: false,
+  },
+  {
+    key: "aboutStoryTitle",
+    label: "Titlu principal",
+    defaultValue: "Peste 2 ani de excelență în stomatologie",
+    multiline: false,
+  },
+  {
+    key: "aboutStoryP1",
+    label: "Paragraf 1",
+    defaultValue:
+      "TechnicalDent a luat naștere în 2024 din dorința de a crea un spațiu în care medicina dentară de înaltă calitate să întâlnească grija autentică pentru pacient. Fondatorul nostru a pus bazele unei clinici unde fiecare tratament este realizat cu precizie, fiecare pacient este ascultat și fiecare zâmbet contează.",
+    multiline: true,
+  },
+  {
+    key: "aboutStoryP2",
+    label: "Paragraf 2",
+    defaultValue:
+      "De-a lungul anilor, am investit constant în tehnologie de ultimă generație și în formarea continuă a echipei noastre. Am adus în Chișinău tehnici și echipamente care anterior erau disponibile doar în clinicile din Europa de Vest.",
+    multiline: true,
+  },
+  {
+    key: "aboutStoryP3",
+    label: "Paragraf 3",
+    defaultValue:
+      "Astăzi, TechnicalDent este recunoscută ca una dintre clinicile de referință din Moldova, cu mii de pacienți mulțumiți și o reputație construită pe rezultate concrete și relații de încredere.",
+    multiline: true,
+  },
+  {
+    key: "aboutStoryStat1Value",
+    label: "Stat 1 — Valoare (ex: 2024)",
+    defaultValue: "2024",
+    multiline: false,
+  },
+  {
+    key: "aboutStoryStat1Label",
+    label: "Stat 1 — Etichetă (ex: An fondare)",
+    defaultValue: "An fondare",
+    multiline: false,
+  },
+  {
+    key: "aboutStoryStat2Value",
+    label: "Stat 2 — Valoare (ex: 2+)",
+    defaultValue: "2+",
+    multiline: false,
+  },
+  {
+    key: "aboutStoryStat2Label",
+    label: "Stat 2 — Etichetă (ex: Ani experiență)",
+    defaultValue: "Ani experiență",
+    multiline: false,
+  },
+  {
+    key: "aboutStoryStat3Value",
+    label: "Stat 3 — Valoare (ex: 400+)",
+    defaultValue: "400+",
+    multiline: false,
+  },
+  {
+    key: "aboutStoryStat3Label",
+    label: "Stat 3 — Etichetă (ex: Pacienți)",
+    defaultValue: "Pacienți",
+    multiline: false,
+  },
+];
+
 const ABOUT_TEXT_FIELDS = [
   {
     key: "aboutPreviewYears",
@@ -224,6 +296,9 @@ export default function SettingsPage() {
         ABOUT_TEXT_FIELDS.forEach((f) => {
           if (!data[f.key]) defaults[f.key] = f.defaultValue;
         });
+        STORY_TEXT_FIELDS.forEach((f) => {
+          if (!data[f.key]) defaults[f.key] = f.defaultValue;
+        });
         setSettings({ ...defaults, ...data });
         setLoaded(true);
       });
@@ -318,6 +393,86 @@ export default function SettingsPage() {
                     Resetează la imaginea implicită
                   </button>
                 )}
+
+              {/* ── Story text fields — shown only for aboutStoryImage ── */}
+              {config.key === "aboutStoryImage" && (
+                <div className="mt-8 pt-8 border-t border-border">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-5">
+                    Texte secțiune „Povestea noastră"
+                  </p>
+
+                  {/* Subtitlu + Titlu */}
+                  <div className="space-y-5 mb-6">
+                    {STORY_TEXT_FIELDS.filter((f) =>
+                      ["aboutStorySubtitle", "aboutStoryTitle"].includes(f.key),
+                    ).map((field) => (
+                      <AboutTextField
+                        key={field.key}
+                        field={field}
+                        settings={settings}
+                        setSettings={setSettings}
+                        saving={saving}
+                        saved={saved}
+                        saveSetting={saveSetting}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Paragrafe */}
+                  <div className="space-y-5 mb-6">
+                    {STORY_TEXT_FIELDS.filter((f) =>
+                      [
+                        "aboutStoryP1",
+                        "aboutStoryP2",
+                        "aboutStoryP3",
+                      ].includes(f.key),
+                    ).map((field) => (
+                      <AboutTextField
+                        key={field.key}
+                        field={field}
+                        settings={settings}
+                        setSettings={setSettings}
+                        saving={saving}
+                        saved={saved}
+                        saveSetting={saveSetting}
+                      />
+                    ))}
+                  </div>
+
+                  {/* Statistici */}
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-3">
+                    Cele 3 statistici
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                    {[1, 2, 3].map((n) => (
+                      <div
+                        key={n}
+                        className="border border-dashed border-border p-4 space-y-4"
+                      >
+                        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                          Statistică {n}
+                        </p>
+                        {STORY_TEXT_FIELDS.filter(
+                          (f) =>
+                            f.key === `aboutStoryStat${n}Value` ||
+                            f.key === `aboutStoryStat${n}Label`,
+                        ).map((field) => (
+                          <AboutTextField
+                            key={field.key}
+                            field={field}
+                            settings={settings}
+                            setSettings={setSettings}
+                            saving={saving}
+                            saved={saved}
+                            saveSetting={saveSetting}
+                            compact
+                          />
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -353,7 +508,7 @@ export default function SettingsPage() {
               stat2Label={settings["aboutPreviewStat2Label"] || undefined}
               stat3Value={settings["aboutPreviewStat3Value"] || undefined}
               stat3Label={settings["aboutPreviewStat3Label"] || undefined}
-                link={settings["aboutPreviewLink"] || undefined}
+              link={settings["aboutPreviewLink"] || undefined}
             />
           </div>
         </div>

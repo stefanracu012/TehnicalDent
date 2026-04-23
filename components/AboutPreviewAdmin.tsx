@@ -40,7 +40,9 @@ export interface AboutPreviewAdminProps {
 
 export default function AboutPreviewAdmin(props: AboutPreviewAdminProps) {
   const v = (key: keyof typeof DEFAULTS) =>
-    (props[key] && props[key]!.trim() !== "" ? props[key] : DEFAULTS[key]) as string;
+    (props[key] && props[key]!.trim() !== ""
+      ? props[key]
+      : DEFAULTS[key]) as string;
 
   const stats = [
     { value: v("stat1Value"), label: v("stat1Label") },
