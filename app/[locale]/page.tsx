@@ -2,6 +2,8 @@ import Image from "next/image";
 import Button from "@/components/Button";
 import Section from "@/components/Section";
 import SectionHeader from "@/components/SectionHeader";
+
+export const dynamic = "force-dynamic";
 import ServiceBentoGrid from "@/components/ServiceBentoGrid";
 import TestimonialsCarousel from "@/components/TestimonialsCarousel";
 import GalleryPreview from "@/components/GalleryPreview";
