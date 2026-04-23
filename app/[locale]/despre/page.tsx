@@ -41,7 +41,7 @@ export default async function AboutPage({
 
   const allSettings = await getAllSettings();
   const s = (key: string, fallback: string) =>
-    allSettings[key]?.trim() || fallback;
+    (allSettings[key + "_" + locale] || allSettings[key])?.trim() || fallback;
 
   const values = [
     {

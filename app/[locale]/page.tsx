@@ -40,23 +40,24 @@ export default async function HomePage({
   const heroImage =
     (await getSetting("heroImage")) || "/images/hero-dentist.jpg";
   const allSettings = await getAllSettings();
-  const heroTitle = allSettings["heroTitle"]?.trim() || null;
-  const heroDescription = allSettings["heroDescription"]?.trim() || null;
+  const heroTitle       = (allSettings["heroTitle_" + locale] || allSettings["heroTitle"])?.trim()       || null;
+  const heroDescription = (allSettings["heroDescription_" + locale] || allSettings["heroDescription"])?.trim() || null;
+  const ls = (key: string) => allSettings[key + "_" + locale] || allSettings[key] || undefined;
   const aboutOverrides = {
-    image: allSettings["aboutPreviewImage"] || undefined,
-    years: allSettings["aboutPreviewYears"] || undefined,
-    badge: allSettings["aboutPreviewBadge"] || undefined,
-    subtitle: allSettings["aboutPreviewSubtitle"] || undefined,
-    title: allSettings["aboutPreviewTitle"] || undefined,
-    p1: allSettings["aboutPreviewP1"] || undefined,
-    p2: allSettings["aboutPreviewP2"] || undefined,
-    stat1Value: allSettings["aboutPreviewStat1Value"] || undefined,
-    stat1Label: allSettings["aboutPreviewStat1Label"] || undefined,
-    stat2Value: allSettings["aboutPreviewStat2Value"] || undefined,
-    stat2Label: allSettings["aboutPreviewStat2Label"] || undefined,
-    stat3Value: allSettings["aboutPreviewStat3Value"] || undefined,
-    stat3Label: allSettings["aboutPreviewStat3Label"] || undefined,
-    link: allSettings["aboutPreviewLink"] || undefined,
+    image:      allSettings["aboutPreviewImage"] || undefined,
+    years:      ls("aboutPreviewYears"),
+    badge:      ls("aboutPreviewBadge"),
+    subtitle:   ls("aboutPreviewSubtitle"),
+    title:      ls("aboutPreviewTitle"),
+    p1:         ls("aboutPreviewP1"),
+    p2:         ls("aboutPreviewP2"),
+    stat1Value: ls("aboutPreviewStat1Value"),
+    stat1Label: ls("aboutPreviewStat1Label"),
+    stat2Value: ls("aboutPreviewStat2Value"),
+    stat2Label: ls("aboutPreviewStat2Label"),
+    stat3Value: ls("aboutPreviewStat3Value"),
+    stat3Label: ls("aboutPreviewStat3Label"),
+    link:       ls("aboutPreviewLink"),
   };
   const t = await getTranslations("Home");
 

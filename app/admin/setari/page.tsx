@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect } from "react";
 import { secureFetch } from "@/lib/csrf-client";
@@ -226,6 +226,15 @@ const ABOUT_TEXT_FIELDS = [
   },
 ];
 
+// ── Supported locales ───────────────────────────────────────────
+const LOCALES = [
+  { code: "ro", label: "RO", flag: "🇷🇴" },
+  { code: "en", label: "EN", flag: "🇬🇧" },
+  { code: "it", label: "IT", flag: "🇮🇹" },
+  { code: "ru", label: "RU", flag: "🇷🇺" },
+] as const;
+type LocaleCode = (typeof LOCALES)[number]["code"];
+
 // ── Reusable field component ──────────────────────────────────────
 function AboutTextField({
   field,
@@ -235,6 +244,7 @@ function AboutTextField({
   saved,
   saveSetting,
   compact = false,
+  keySuffix = "",
 }: {
   field: (typeof ABOUT_TEXT_FIELDS)[0];
   settings: Record<string, string>;
@@ -243,7 +253,9 @@ function AboutTextField({
   saved: string | null;
   saveSetting: (key: string, value: string) => void;
   compact?: boolean;
+  keySuffix?: string;
 }) {
+  const effectiveKey = field.key + (keySuffix ?? "");
   return (
     <div>
       <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
@@ -252,9 +264,9 @@ function AboutTextField({
       {field.multiline ? (
         <textarea
           rows={compact ? 2 : 3}
-          value={settings[field.key] ?? ""}
+          value={settings[effectiveKey] ?? ""}
           onChange={(e) =>
-            setSettings((prev) => ({ ...prev, [field.key]: e.target.value }))
+            setSettings((prev) => ({ ...prev, [effectiveKey]: e.target.value }))
           }
           placeholder={field.defaultValue}
           className="w-full border border-border px-3 py-2.5 text-sm focus:border-foreground focus:outline-none resize-vertical bg-muted/30"
@@ -262,9 +274,9 @@ function AboutTextField({
       ) : (
         <input
           type="text"
-          value={settings[field.key] ?? ""}
+          value={settings[effectiveKey] ?? ""}
           onChange={(e) =>
-            setSettings((prev) => ({ ...prev, [field.key]: e.target.value }))
+            setSettings((prev) => ({ ...prev, [effectiveKey]: e.target.value }))
           }
           placeholder={field.defaultValue}
           className="w-full border border-border px-3 py-2.5 text-sm focus:border-foreground focus:outline-none bg-muted/30"
@@ -272,20 +284,20 @@ function AboutTextField({
       )}
       <div className="mt-2 flex items-center gap-3">
         <button
-          onClick={() => saveSetting(field.key, settings[field.key] ?? "")}
-          disabled={saving === field.key}
+          onClick={() => saveSetting(effectiveKey, settings[effectiveKey] ?? "")}
+          disabled={saving === effectiveKey}
           className="text-xs font-semibold bg-foreground text-white px-3 py-1.5 hover:bg-foreground/90 transition-colors disabled:opacity-50"
         >
-          {saving === field.key ? "Se salvează..." : "Salvează"}
+          {saving === effectiveKey ? "Se salvează..." : "Salvează"}
         </button>
-        {saved === field.key && (
+        {saved === effectiveKey && (
           <span className="text-xs text-green-600 font-medium">✓ Salvat</span>
         )}
-        {settings[field.key] && (
+        {settings[effectiveKey] && (
           <button
             onClick={() => {
-              setSettings((prev) => ({ ...prev, [field.key]: "" }));
-              saveSetting(field.key, "");
+              setSettings((prev) => ({ ...prev, [effectiveKey]: "" }));
+              saveSetting(effectiveKey, "");
             }}
             className="text-xs text-muted-foreground hover:text-foreground underline transition-colors"
           >
@@ -302,6 +314,7 @@ export default function SettingsPage() {
   const [saving, setSaving] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
+  const [activeLang, setActiveLang] = useState<LocaleCode>("ro");
 
   useEffect(() => {
     secureFetch("/api/admin/settings")
@@ -416,19 +429,37 @@ export default function SettingsPage() {
               {/* ── Hero text fields — shown only for heroImage ── */}
               {config.key === "heroImage" && (
                 <div className="mt-8 pt-8 border-t border-border">
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-5">
-                    Texte secțiune Hero
-                  </p>
+                  <div className="flex items-center justify-between mb-5">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+                      Texte secțiune Hero
+                    </p>
+                    <div className="flex gap-1">
+                      {LOCALES.map((l) => (
+                        <button key={l.code} onClick={() => setActiveLang(l.code)}
+                          className={`px-2.5 py-1 text-xs font-semibold rounded transition-colors ${
+                            activeLang === l.code ? "bg-foreground text-white" : "bg-muted text-muted-foreground hover:bg-border"
+                          }`}>
+                          {l.flag} {l.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {activeLang !== "ro" && (
+                    <p className="text-xs text-accent bg-accent-light border border-accent/20 rounded px-3 py-2 mb-5">
+                      Câmpurile goale vor folosi traducerile implicite din fișierele de limbă.
+                    </p>
+                  )}
                   <div className="space-y-5">
                     {HERO_TEXT_FIELDS.map((field) => (
                       <AboutTextField
-                        key={field.key}
+                        key={field.key + activeLang}
                         field={field}
                         settings={settings}
                         setSettings={setSettings}
                         saving={saving}
                         saved={saved}
                         saveSetting={saveSetting}
+                        keySuffix={activeLang === "ro" ? "" : "_" + activeLang}
                       />
                     ))}
                   </div>
@@ -462,11 +493,9 @@ export default function SettingsPage() {
                   {/* Paragrafe */}
                   <div className="space-y-5 mb-6">
                     {STORY_TEXT_FIELDS.filter((f) =>
-                      [
-                        "aboutStoryP1",
-                        "aboutStoryP2",
-                        "aboutStoryP3",
-                      ].includes(f.key),
+                      ["aboutStoryP1", "aboutStoryP2", "aboutStoryP3"].includes(
+                        f.key,
+                      ),
                     ).map((field) => (
                       <AboutTextField
                         key={field.key}
@@ -520,13 +549,30 @@ export default function SettingsPage() {
 
         {/* ── ABOUT PREVIEW TEXTS SECTION ── */}
         <div className="mt-12 mb-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-1">
-            Texte — Secțiunea „Despre noi" (Homepage)
-          </p>
-          <p className="text-sm text-muted-foreground">
-            Modificați textele afișate în secțiunea „Despre noi" de pe pagina
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+              Texte — Secțiunea „Despre noi” (Homepage)
+            </p>
+            <div className="flex gap-1">
+              {LOCALES.map((l) => (
+                <button key={l.code} onClick={() => setActiveLang(l.code)}
+                  className={`px-2.5 py-1 text-xs font-semibold rounded transition-colors ${
+                    activeLang === l.code ? "bg-foreground text-white" : "bg-muted text-muted-foreground hover:bg-border"
+                  }`}>
+                  {l.flag} {l.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <p className="text-sm text-muted-foreground mt-1">
+            Modificați textele afișate în secțiunea „Despre noi” de pe pagina
             principală. Lăsați un câmp gol pentru a folosi textul implicit.
           </p>
+          {activeLang !== "ro" && (
+            <p className="mt-2 text-xs text-accent bg-accent-light border border-accent/20 rounded px-3 py-2">
+              Câmpurile goale vor folosi traducerile implicite din fișierele de limbă.
+            </p>
+          )}
         </div>
 
         {/* Live preview — identical to homepage */}
@@ -572,13 +618,14 @@ export default function SettingsPage() {
               ["aboutPreviewYears", "aboutPreviewBadge"].includes(f.key),
             ).map((field) => (
               <AboutTextField
-                key={field.key}
+                key={field.key + activeLang}
                 field={field}
                 settings={settings}
                 setSettings={setSettings}
                 saving={saving}
                 saved={saved}
                 saveSetting={saveSetting}
+                keySuffix={activeLang === "ro" ? "" : "_" + activeLang}
               />
             ))}
           </div>
@@ -604,13 +651,14 @@ export default function SettingsPage() {
               ].includes(f.key),
             ).map((field) => (
               <AboutTextField
-                key={field.key}
+                key={field.key + activeLang}
                 field={field}
                 settings={settings}
                 setSettings={setSettings}
                 saving={saving}
                 saved={saved}
                 saveSetting={saveSetting}
+                keySuffix={activeLang === "ro" ? "" : "_" + activeLang}
               />
             ))}
           </div>
@@ -644,7 +692,7 @@ export default function SettingsPage() {
                     f.key === `aboutPreviewStat${n}Label`,
                 ).map((field) => (
                   <AboutTextField
-                    key={field.key}
+                    key={field.key + activeLang}
                     field={field}
                     settings={settings}
                     setSettings={setSettings}
@@ -652,6 +700,7 @@ export default function SettingsPage() {
                     saved={saved}
                     saveSetting={saveSetting}
                     compact
+                    keySuffix={activeLang === "ro" ? "" : "_" + activeLang}
                   />
                 ))}
               </div>
@@ -672,13 +721,14 @@ export default function SettingsPage() {
           {ABOUT_TEXT_FIELDS.filter((f) => f.key === "aboutPreviewLink").map(
             (field) => (
               <AboutTextField
-                key={field.key}
+                key={field.key + activeLang}
                 field={field}
                 settings={settings}
                 setSettings={setSettings}
                 saving={saving}
                 saved={saved}
                 saveSetting={saveSetting}
+                keySuffix={activeLang === "ro" ? "" : "_" + activeLang}
               />
             ),
           )}
