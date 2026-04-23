@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { secureFetch } from "@/lib/csrf-client";
 import ImageUpload from "@/components/admin/ImageUpload";
-import AboutPreview from "@/components/AboutPreview";
+import AboutPreviewAdmin from "@/components/AboutPreviewAdmin";
 
 const SETTINGS_CONFIG = [
   {
@@ -83,13 +83,15 @@ const ABOUT_TEXT_FIELDS = [
   {
     key: "aboutPreviewP1",
     label: "Paragraf 1",
-    defaultValue: "TechnicalDent este mai mult decât o clinică stomatologică – este un loc unde tehnologia avansată întâlnește grija autentică pentru pacient. Cu o echipă de specialiști dedicați și echipamente de ultimă generație, oferim tratamente personalizate pentru fiecare nevoie.",
+    defaultValue:
+      "TechnicalDent este mai mult decât o clinică stomatologică – este un loc unde tehnologia avansată întâlnește grija autentică pentru pacient. Cu o echipă de specialiști dedicați și echipamente de ultimă generație, oferim tratamente personalizate pentru fiecare nevoie.",
     multiline: true,
   },
   {
     key: "aboutPreviewP2",
     label: "Paragraf 2",
-    defaultValue: "Echipa noastră de medici specialiști aduce împreună decenii de experiență și o pasiune comună pentru excelență. De la consultații detaliate la proceduri complexe, fiecare pas este ghidat de angajamentul nostru față de rezultatele perfecte.",
+    defaultValue:
+      "Echipa noastră de medici specialiști aduce împreună decenii de experiență și o pasiune comună pentru excelență. De la consultații detaliate la proceduri complexe, fiecare pas este ghidat de angajamentul nostru față de rezultatele perfecte.",
     multiline: true,
   },
   {
@@ -337,24 +339,21 @@ export default function SettingsPage() {
             Previzualizare live
           </p>
           <div className="bg-white border border-border px-6 py-10 overflow-hidden">
-            <AboutPreview
-              noFetch
-              overrides={{
-                image: settings["aboutPreviewImage"] || undefined,
-                years: settings["aboutPreviewYears"] || undefined,
-                badge: settings["aboutPreviewBadge"] || undefined,
-                subtitle: settings["aboutPreviewSubtitle"] || undefined,
-                title: settings["aboutPreviewTitle"] || undefined,
-                p1: settings["aboutPreviewP1"] || undefined,
-                p2: settings["aboutPreviewP2"] || undefined,
-                stat1Value: settings["aboutPreviewStat1Value"] || undefined,
-                stat1Label: settings["aboutPreviewStat1Label"] || undefined,
-                stat2Value: settings["aboutPreviewStat2Value"] || undefined,
-                stat2Label: settings["aboutPreviewStat2Label"] || undefined,
-                stat3Value: settings["aboutPreviewStat3Value"] || undefined,
-                stat3Label: settings["aboutPreviewStat3Label"] || undefined,
-                link: settings["aboutPreviewLink"] || undefined,
-              }}
+            <AboutPreviewAdmin
+              image={settings["aboutPreviewImage"] || undefined}
+              years={settings["aboutPreviewYears"] || undefined}
+              badge={settings["aboutPreviewBadge"] || undefined}
+              subtitle={settings["aboutPreviewSubtitle"] || undefined}
+              title={settings["aboutPreviewTitle"] || undefined}
+              p1={settings["aboutPreviewP1"] || undefined}
+              p2={settings["aboutPreviewP2"] || undefined}
+              stat1Value={settings["aboutPreviewStat1Value"] || undefined}
+              stat1Label={settings["aboutPreviewStat1Label"] || undefined}
+              stat2Value={settings["aboutPreviewStat2Value"] || undefined}
+              stat2Label={settings["aboutPreviewStat2Label"] || undefined}
+              stat3Value={settings["aboutPreviewStat3Value"] || undefined}
+              stat3Label={settings["aboutPreviewStat3Label"] || undefined}
+                link={settings["aboutPreviewLink"] || undefined}
             />
           </div>
         </div>
