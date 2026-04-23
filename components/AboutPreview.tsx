@@ -33,12 +33,13 @@ export default function AboutPreview({
   const imgRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const badgeRef = useRef<HTMLDivElement>(null);
-  const [overrides, setOverrides] = useState<AboutPreviewOverrides>(initialOverrides);
+  const [overrides, setOverrides] =
+    useState<AboutPreviewOverrides>(initialOverrides);
 
   // When used in admin (noFetch=true), sync state from props as they change live
   useEffect(() => {
     if (noFetch) setOverrides(initialOverrides);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [noFetch, JSON.stringify(initialOverrides)]);
 
   // Fetch fresh settings client-side to always reflect latest admin changes
@@ -64,7 +65,9 @@ export default function AboutPreview({
           link: data["aboutPreviewLink"] || undefined,
         });
       })
-      .catch(() => {/* keep initial overrides on error */});
+      .catch(() => {
+        /* keep initial overrides on error */
+      });
   }, [noFetch]);
 
   useEffect(() => {

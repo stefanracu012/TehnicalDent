@@ -58,80 +58,80 @@ const ABOUT_TEXT_FIELDS = [
   {
     key: "aboutPreviewYears",
     label: 'Număr Ani (ex: "2+")',
-    placeholder: "2+",
+    defaultValue: "2+",
     multiline: false,
   },
   {
     key: "aboutPreviewBadge",
     label: "Text Badge (sub numărul de ani)",
-    placeholder: "Ani de experiență în stomatologie",
+    defaultValue: "Ani de experiență în stomatologie",
     multiline: false,
   },
   {
     key: "aboutPreviewSubtitle",
     label: "Subtitlu secțiune",
-    placeholder: "Despre noi",
+    defaultValue: "Despre noi",
     multiline: false,
   },
   {
     key: "aboutPreviewTitle",
     label: "Titlu principal",
-    placeholder:
+    defaultValue:
       "O clinică dedicată sănătății și frumuseții zâmbetului dumneavoastră",
     multiline: false,
   },
   {
     key: "aboutPreviewP1",
     label: "Paragraf 1",
-    placeholder: "TechnicalDent este mai mult decât o clinică stomatologică...",
+    defaultValue: "TechnicalDent este mai mult decât o clinică stomatologică – este un loc unde tehnologia avansată întâlnește grija autentică pentru pacient. Cu o echipă de specialiști dedicați și echipamente de ultimă generație, oferim tratamente personalizate pentru fiecare nevoie.",
     multiline: true,
   },
   {
     key: "aboutPreviewP2",
     label: "Paragraf 2",
-    placeholder: "Echipa noastră de medici specialiști...",
+    defaultValue: "Echipa noastră de medici specialiști aduce împreună decenii de experiență și o pasiune comună pentru excelență. De la consultații detaliate la proceduri complexe, fiecare pas este ghidat de angajamentul nostru față de rezultatele perfecte.",
     multiline: true,
   },
   {
     key: "aboutPreviewStat1Value",
     label: 'Statistică 1 — Valoare (ex: "Modern")',
-    placeholder: "Modern",
+    defaultValue: "Modern",
     multiline: false,
   },
   {
     key: "aboutPreviewStat1Label",
     label: "Statistică 1 — Descriere",
-    placeholder: "Echipamente de ultimă generație",
+    defaultValue: "Echipamente de ultimă generație",
     multiline: false,
   },
   {
     key: "aboutPreviewStat2Value",
     label: 'Statistică 2 — Valoare (ex: "Complet")',
-    placeholder: "Complet",
+    defaultValue: "Complet",
     multiline: false,
   },
   {
     key: "aboutPreviewStat2Label",
     label: "Statistică 2 — Descriere",
-    placeholder: "Toate specialitățile sub un acoperiș",
+    defaultValue: "Toate specialitățile sub un acoperiș",
     multiline: false,
   },
   {
     key: "aboutPreviewStat3Value",
     label: 'Statistică 3 — Valoare (ex: "Personal")',
-    placeholder: "Personal",
+    defaultValue: "Personal",
     multiline: false,
   },
   {
     key: "aboutPreviewStat3Label",
     label: "Statistică 3 — Descriere",
-    placeholder: "Plan de tratament individualizat",
+    defaultValue: "Plan de tratament individualizat",
     multiline: false,
   },
   {
     key: "aboutPreviewLink",
     label: 'Text link "Află mai multe"',
-    placeholder: "Află mai multe despre noi",
+    defaultValue: "Află mai multe despre noi",
     multiline: false,
   },
 ];
@@ -166,7 +166,7 @@ function AboutTextField({
           onChange={(e) =>
             setSettings((prev) => ({ ...prev, [field.key]: e.target.value }))
           }
-          placeholder={field.placeholder}
+          placeholder={field.defaultValue}
           className="w-full border border-border px-3 py-2.5 text-sm focus:border-foreground focus:outline-none resize-vertical bg-muted/30"
         />
       ) : (
@@ -176,7 +176,7 @@ function AboutTextField({
           onChange={(e) =>
             setSettings((prev) => ({ ...prev, [field.key]: e.target.value }))
           }
-          placeholder={field.placeholder}
+          placeholder={field.defaultValue}
           className="w-full border border-border px-3 py-2.5 text-sm focus:border-foreground focus:outline-none bg-muted/30"
         />
       )}
@@ -217,7 +217,12 @@ export default function SettingsPage() {
     secureFetch("/api/admin/settings")
       .then((r) => r.json())
       .then((data) => {
-        setSettings(data);
+        // Pre-fill any missing about text fields with their default values
+        const defaults: Record<string, string> = {};
+        ABOUT_TEXT_FIELDS.forEach((f) => {
+          if (!data[f.key]) defaults[f.key] = f.defaultValue;
+        });
+        setSettings({ ...defaults, ...data });
         setLoaded(true);
       });
   }, []);
@@ -328,7 +333,9 @@ export default function SettingsPage() {
 
         {/* Live preview — identical to homepage */}
         <div className="mb-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-3">Previzualizare live</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-3">
+            Previzualizare live
+          </p>
           <div className="bg-white border border-border px-6 py-10 overflow-hidden">
             <AboutPreview
               noFetch
@@ -355,12 +362,29 @@ export default function SettingsPage() {
         {/* Group 1: Badge */}
         <div className="bg-white border border-border p-6 sm:p-8 mb-4">
           <div className="flex items-center gap-2 mb-5">
-            <span className="w-6 h-6 rounded-full bg-foreground text-white text-xs font-bold flex items-center justify-center flex-shrink-0">1</span>
-            <h3 className="font-serif text-base font-medium text-foreground">Insigna cu ani de experiență <span className="text-xs font-normal text-muted-foreground">(colțul imaginii)</span></h3>
+            <span className="w-6 h-6 rounded-full bg-foreground text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+              1
+            </span>
+            <h3 className="font-serif text-base font-medium text-foreground">
+              Insigna cu ani de experiență{" "}
+              <span className="text-xs font-normal text-muted-foreground">
+                (colțul imaginii)
+              </span>
+            </h3>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            {ABOUT_TEXT_FIELDS.filter(f => ["aboutPreviewYears","aboutPreviewBadge"].includes(f.key)).map((field) => (
-              <AboutTextField key={field.key} field={field} settings={settings} setSettings={setSettings} saving={saving} saved={saved} saveSetting={saveSetting} />
+            {ABOUT_TEXT_FIELDS.filter((f) =>
+              ["aboutPreviewYears", "aboutPreviewBadge"].includes(f.key),
+            ).map((field) => (
+              <AboutTextField
+                key={field.key}
+                field={field}
+                settings={settings}
+                setSettings={setSettings}
+                saving={saving}
+                saved={saved}
+                saveSetting={saveSetting}
+              />
             ))}
           </div>
         </div>
@@ -368,12 +392,31 @@ export default function SettingsPage() {
         {/* Group 2: Titlu & Texte */}
         <div className="bg-white border border-border p-6 sm:p-8 mb-4">
           <div className="flex items-center gap-2 mb-5">
-            <span className="w-6 h-6 rounded-full bg-foreground text-white text-xs font-bold flex items-center justify-center flex-shrink-0">2</span>
-            <h3 className="font-serif text-base font-medium text-foreground">Titlu și paragrafele de text</h3>
+            <span className="w-6 h-6 rounded-full bg-foreground text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+              2
+            </span>
+            <h3 className="font-serif text-base font-medium text-foreground">
+              Titlu și paragrafele de text
+            </h3>
           </div>
           <div className="space-y-5">
-            {ABOUT_TEXT_FIELDS.filter(f => ["aboutPreviewSubtitle","aboutPreviewTitle","aboutPreviewP1","aboutPreviewP2"].includes(f.key)).map((field) => (
-              <AboutTextField key={field.key} field={field} settings={settings} setSettings={setSettings} saving={saving} saved={saved} saveSetting={saveSetting} />
+            {ABOUT_TEXT_FIELDS.filter((f) =>
+              [
+                "aboutPreviewSubtitle",
+                "aboutPreviewTitle",
+                "aboutPreviewP1",
+                "aboutPreviewP2",
+              ].includes(f.key),
+            ).map((field) => (
+              <AboutTextField
+                key={field.key}
+                field={field}
+                settings={settings}
+                setSettings={setSettings}
+                saving={saving}
+                saved={saved}
+                saveSetting={saveSetting}
+              />
             ))}
           </div>
         </div>
@@ -381,15 +424,40 @@ export default function SettingsPage() {
         {/* Group 3: Statistici */}
         <div className="bg-white border border-border p-6 sm:p-8 mb-4">
           <div className="flex items-center gap-2 mb-5">
-            <span className="w-6 h-6 rounded-full bg-foreground text-white text-xs font-bold flex items-center justify-center flex-shrink-0">3</span>
-            <h3 className="font-serif text-base font-medium text-foreground">Cele 3 statistici <span className="text-xs font-normal text-muted-foreground">(Modern / Complet / Personal)</span></h3>
+            <span className="w-6 h-6 rounded-full bg-foreground text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+              3
+            </span>
+            <h3 className="font-serif text-base font-medium text-foreground">
+              Cele 3 statistici{" "}
+              <span className="text-xs font-normal text-muted-foreground">
+                (Modern / Complet / Personal)
+              </span>
+            </h3>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {[1,2,3].map((n) => (
-              <div key={n} className="border border-dashed border-border p-4 space-y-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Statistică {n}</p>
-                {ABOUT_TEXT_FIELDS.filter(f => f.key === `aboutPreviewStat${n}Value` || f.key === `aboutPreviewStat${n}Label`).map((field) => (
-                  <AboutTextField key={field.key} field={field} settings={settings} setSettings={setSettings} saving={saving} saved={saved} saveSetting={saveSetting} compact />
+            {[1, 2, 3].map((n) => (
+              <div
+                key={n}
+                className="border border-dashed border-border p-4 space-y-4"
+              >
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Statistică {n}
+                </p>
+                {ABOUT_TEXT_FIELDS.filter(
+                  (f) =>
+                    f.key === `aboutPreviewStat${n}Value` ||
+                    f.key === `aboutPreviewStat${n}Label`,
+                ).map((field) => (
+                  <AboutTextField
+                    key={field.key}
+                    field={field}
+                    settings={settings}
+                    setSettings={setSettings}
+                    saving={saving}
+                    saved={saved}
+                    saveSetting={saveSetting}
+                    compact
+                  />
                 ))}
               </div>
             ))}
@@ -399,12 +467,26 @@ export default function SettingsPage() {
         {/* Group 4: Link */}
         <div className="bg-white border border-border p-6 sm:p-8">
           <div className="flex items-center gap-2 mb-5">
-            <span className="w-6 h-6 rounded-full bg-foreground text-white text-xs font-bold flex items-center justify-center flex-shrink-0">4</span>
-            <h3 className="font-serif text-base font-medium text-foreground">Link „Află mai multe"</h3>
+            <span className="w-6 h-6 rounded-full bg-foreground text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
+              4
+            </span>
+            <h3 className="font-serif text-base font-medium text-foreground">
+              Link „Află mai multe"
+            </h3>
           </div>
-          {ABOUT_TEXT_FIELDS.filter(f => f.key === "aboutPreviewLink").map((field) => (
-            <AboutTextField key={field.key} field={field} settings={settings} setSettings={setSettings} saving={saving} saved={saved} saveSetting={saveSetting} />
-          ))}
+          {ABOUT_TEXT_FIELDS.filter((f) => f.key === "aboutPreviewLink").map(
+            (field) => (
+              <AboutTextField
+                key={field.key}
+                field={field}
+                settings={settings}
+                setSettings={setSettings}
+                saving={saving}
+                saved={saved}
+                saveSetting={saveSetting}
+              />
+            ),
+          )}
         </div>
       </div>
     </div>
