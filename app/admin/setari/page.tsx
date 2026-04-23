@@ -54,6 +54,22 @@ const SETTINGS_CONFIG = [
   },
 ];
 
+const HERO_TEXT_FIELDS = [
+  {
+    key: "heroTitle",
+    label: "Titlu Hero",
+    defaultValue: "Excelență în medicina dentară modernă",
+    multiline: false,
+  },
+  {
+    key: "heroDescription",
+    label: "Descriere Hero (paragraf sub titlu)",
+    defaultValue:
+      "La TechnicalDent, combinăm experiența medicală de înaltă clasă cu tehnologia de ultimă generație pentru a vă oferi tratamente stomatologice personalizate. Fiecare pacient beneficiază de atenție individualizată și un plan de tratament adaptat nevoilor sale specifice, într-un mediu confortabil și primitor.",
+    multiline: true,
+  },
+];
+
 const STORY_TEXT_FIELDS = [
   {
     key: "aboutStorySubtitle",
@@ -299,6 +315,9 @@ export default function SettingsPage() {
         STORY_TEXT_FIELDS.forEach((f) => {
           if (!data[f.key]) defaults[f.key] = f.defaultValue;
         });
+        HERO_TEXT_FIELDS.forEach((f) => {
+          if (!data[f.key]) defaults[f.key] = f.defaultValue;
+        });
         setSettings({ ...defaults, ...data });
         setLoaded(true);
       });
@@ -393,6 +412,28 @@ export default function SettingsPage() {
                     Resetează la imaginea implicită
                   </button>
                 )}
+
+              {/* ── Hero text fields — shown only for heroImage ── */}
+              {config.key === "heroImage" && (
+                <div className="mt-8 pt-8 border-t border-border">
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-5">
+                    Texte secțiune Hero
+                  </p>
+                  <div className="space-y-5">
+                    {HERO_TEXT_FIELDS.map((field) => (
+                      <AboutTextField
+                        key={field.key}
+                        field={field}
+                        settings={settings}
+                        setSettings={setSettings}
+                        saving={saving}
+                        saved={saved}
+                        saveSetting={saveSetting}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* ── Story text fields — shown only for aboutStoryImage ── */}
               {config.key === "aboutStoryImage" && (

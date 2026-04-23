@@ -40,6 +40,8 @@ export default async function HomePage({
   const heroImage =
     (await getSetting("heroImage")) || "/images/hero-dentist.jpg";
   const allSettings = await getAllSettings();
+  const heroTitle = allSettings["heroTitle"]?.trim() || null;
+  const heroDescription = allSettings["heroDescription"]?.trim() || null;
   const aboutOverrides = {
     image: allSettings["aboutPreviewImage"] || undefined,
     years: allSettings["aboutPreviewYears"] || undefined,
@@ -79,10 +81,10 @@ export default async function HomePage({
         <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8 py-20">
           <div className="max-w-2xl animate-fade-in-up">
             <h1 className="font-serif text-4xl font-medium tracking-tight text-white sm:text-5xl lg:text-6xl">
-              {t("heroTitle")}
+              {heroTitle ?? t("heroTitle")}
             </h1>
             <p className="mt-8 text-lg leading-relaxed text-white/90">
-              {t("heroDescription")}
+              {heroDescription ?? t("heroDescription")}
             </p>
             <div className="mt-10 flex flex-col sm:flex-row gap-4">
               <Button href="/contact#formular" size="lg">
