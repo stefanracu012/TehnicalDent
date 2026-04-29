@@ -24,11 +24,15 @@ model Service {
   category     String
   price        Float?
   discountPrice Float?
+  duration     Int      @default(30) // minutes — used for booking module
+  bookable     Boolean  @default(true) // whether this service can be selected for appointments
   order        Int      @default(0)
   isActive     Boolean  @default(true)
   translations Json?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  appointments Appointment[]
 }
 
 model TeamMember {
@@ -102,4 +106,99 @@ model BlogPost {
   publishedAt DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+}
+
+// =============================================
+// Booking module: Patients, Appointments, Notifications
+// =============================================
+
+model Patient {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  phone     String
+  email     String?
+  notes     String?  // medical notes / observations
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  appointments Appointment[]
+
+  @@index([phone])
+  @@index([name])
+}
+
+enum AppointmentStatus {
+  pending
+  confirmed
+  cancelled
+  completed
+  noshow
+}
+
+model Appointment {
+  id          String            @id @default(auto()) @map("_id") @db.ObjectId
+  patientId   String            @db.ObjectId
+  serviceId   String            @db.ObjectId
+  dateTime    DateTime
+  duration    Int               // minutes — snapshot of service duration at booking time
+  status      AppointmentStatus @default(pending)
+  notes       String?
+  // Public confirm/cancel link token (signed) — stored hash for security
+  confirmToken String?
+  remindedAt   DateTime?         // last reminder timestamp (debounce)
+  recallSent   Boolean           @default(false) // 6-month recall sent?
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  patient       Patient        @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  service       Service        @relation(fields: [serviceId], references: [id])
+  notifications Notification[]
+
+  @@index([dateTime])
+  @@index([status])
+  @@index([patientId])
+  @@index([serviceId])
+}
+
+enum NotificationType {
+  created            // sent on creation (admin + client)
+  reminder_24h
+  reminder_2h
+  recall_6m
+  cancelled
+  confirmed
+  error
+}
+
+enum NotificationChannel {
+  telegram
+  viber
+  email
+  sms
+}
+
+enum NotificationStatus {
+  queued
+  sent
+  failed
+}
+
+model Notification {
+  id            String              @id @default(auto()) @map("_id") @db.ObjectId
+  appointmentId String?             @db.ObjectId
+  type          NotificationType
+  channel       NotificationChannel
+  status        NotificationStatus  @default(queued)
+  recipient     String              // phone, chat id or email
+  payload       String              // message body (for log/debug)
+  attempts      Int                 @default(0)
+  error         String?
+  sentAt        DateTime?
+  createdAt     DateTime            @default(now())
+
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+
+  @@index([appointmentId])
+  @@index([status])
+  @@index([type])
 }

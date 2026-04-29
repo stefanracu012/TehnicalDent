@@ -40,24 +40,30 @@ export default async function HomePage({
   const heroImage =
     (await getSetting("heroImage")) || "/images/hero-dentist.jpg";
   const allSettings = await getAllSettings();
-  const heroTitle       = (allSettings["heroTitle_" + locale] || allSettings["heroTitle"])?.trim()       || null;
-  const heroDescription = (allSettings["heroDescription_" + locale] || allSettings["heroDescription"])?.trim() || null;
-  const ls = (key: string) => allSettings[key + "_" + locale] || allSettings[key] || undefined;
+  const heroTitle =
+    (allSettings["heroTitle_" + locale] || allSettings["heroTitle"])?.trim() ||
+    null;
+  const heroDescription =
+    (
+      allSettings["heroDescription_" + locale] || allSettings["heroDescription"]
+    )?.trim() || null;
+  const ls = (key: string) =>
+    allSettings[key + "_" + locale] || allSettings[key] || undefined;
   const aboutOverrides = {
-    image:      allSettings["aboutPreviewImage"] || undefined,
-    years:      ls("aboutPreviewYears"),
-    badge:      ls("aboutPreviewBadge"),
-    subtitle:   ls("aboutPreviewSubtitle"),
-    title:      ls("aboutPreviewTitle"),
-    p1:         ls("aboutPreviewP1"),
-    p2:         ls("aboutPreviewP2"),
+    image: allSettings["aboutPreviewImage"] || undefined,
+    years: ls("aboutPreviewYears"),
+    badge: ls("aboutPreviewBadge"),
+    subtitle: ls("aboutPreviewSubtitle"),
+    title: ls("aboutPreviewTitle"),
+    p1: ls("aboutPreviewP1"),
+    p2: ls("aboutPreviewP2"),
     stat1Value: ls("aboutPreviewStat1Value"),
     stat1Label: ls("aboutPreviewStat1Label"),
     stat2Value: ls("aboutPreviewStat2Value"),
     stat2Label: ls("aboutPreviewStat2Label"),
     stat3Value: ls("aboutPreviewStat3Value"),
     stat3Label: ls("aboutPreviewStat3Label"),
-    link:       ls("aboutPreviewLink"),
+    link: ls("aboutPreviewLink"),
   };
   const t = await getTranslations("Home");
 

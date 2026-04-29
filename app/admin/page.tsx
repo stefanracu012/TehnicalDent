@@ -8,6 +8,16 @@ export const metadata: Metadata = {
 
 const adminLinks = [
   {
+    title: "Programări",
+    description: "Calendar, statusuri, confirmări și notificări pacienți",
+    href: "/admin/programari",
+  },
+  {
+    title: "Pacienți",
+    description: "Baza de date a pacienților și istoricul programărilor",
+    href: "/admin/pacienti",
+  },
+  {
     title: "Servicii",
     description: "Adaugă, editează sau șterge serviciile clinicii",
     href: "/admin/servicii",

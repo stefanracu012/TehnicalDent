@@ -284,7 +284,9 @@ function AboutTextField({
       )}
       <div className="mt-2 flex items-center gap-3">
         <button
-          onClick={() => saveSetting(effectiveKey, settings[effectiveKey] ?? "")}
+          onClick={() =>
+            saveSetting(effectiveKey, settings[effectiveKey] ?? "")
+          }
           disabled={saving === effectiveKey}
           className="text-xs font-semibold bg-foreground text-white px-3 py-1.5 hover:bg-foreground/90 transition-colors disabled:opacity-50"
         >
@@ -435,10 +437,15 @@ export default function SettingsPage() {
                     </p>
                     <div className="flex gap-1">
                       {LOCALES.map((l) => (
-                        <button key={l.code} onClick={() => setActiveLang(l.code)}
+                        <button
+                          key={l.code}
+                          onClick={() => setActiveLang(l.code)}
                           className={`px-2.5 py-1 text-xs font-semibold rounded transition-colors ${
-                            activeLang === l.code ? "bg-foreground text-white" : "bg-muted text-muted-foreground hover:bg-border"
-                          }`}>
+                            activeLang === l.code
+                              ? "bg-foreground text-white"
+                              : "bg-muted text-muted-foreground hover:bg-border"
+                          }`}
+                        >
                           {l.flag} {l.label}
                         </button>
                       ))}
@@ -446,7 +453,8 @@ export default function SettingsPage() {
                   </div>
                   {activeLang !== "ro" && (
                     <p className="text-xs text-accent bg-accent-light border border-accent/20 rounded px-3 py-2 mb-5">
-                      Câmpurile goale vor folosi traducerile implicite din fișierele de limbă.
+                      Câmpurile goale vor folosi traducerile implicite din
+                      fișierele de limbă.
                     </p>
                   )}
                   <div className="space-y-5">
@@ -555,10 +563,15 @@ export default function SettingsPage() {
             </p>
             <div className="flex gap-1">
               {LOCALES.map((l) => (
-                <button key={l.code} onClick={() => setActiveLang(l.code)}
+                <button
+                  key={l.code}
+                  onClick={() => setActiveLang(l.code)}
                   className={`px-2.5 py-1 text-xs font-semibold rounded transition-colors ${
-                    activeLang === l.code ? "bg-foreground text-white" : "bg-muted text-muted-foreground hover:bg-border"
-                  }`}>
+                    activeLang === l.code
+                      ? "bg-foreground text-white"
+                      : "bg-muted text-muted-foreground hover:bg-border"
+                  }`}
+                >
                   {l.flag} {l.label}
                 </button>
               ))}
@@ -570,7 +583,8 @@ export default function SettingsPage() {
           </p>
           {activeLang !== "ro" && (
             <p className="mt-2 text-xs text-accent bg-accent-light border border-accent/20 rounded px-3 py-2">
-              Câmpurile goale vor folosi traducerile implicite din fișierele de limbă.
+              Câmpurile goale vor folosi traducerile implicite din fișierele de
+              limbă.
             </p>
           )}
         </div>

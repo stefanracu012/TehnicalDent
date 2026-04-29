@@ -23,6 +23,8 @@ interface ServiceForm {
   category: string;
   price: string | number;
   discountPrice: string | number;
+  duration: number;
+  bookable: boolean;
   order: number;
   isActive: boolean;
 }
@@ -53,6 +55,8 @@ export default function EditServicePage({
     category: "",
     price: "",
     discountPrice: "",
+    duration: 30,
+    bookable: true,
     order: 0,
     isActive: true,
   });
@@ -168,6 +172,8 @@ export default function EditServicePage({
         category: service.category,
         price: service.price ?? "",
         discountPrice: service.discountPrice ?? "",
+        duration: service.duration ?? 30,
+        bookable: service.bookable ?? true,
         order: service.order,
         isActive: service.isActive,
       });
@@ -509,6 +515,49 @@ export default function EditServicePage({
                   <p className="text-xs text-muted-foreground mt-1">
                     Opțional — prețul cu reducere (dacă există promoție)
                   </p>
+                </div>
+              </div>
+            )}
+
+            {activeLocale === "ro" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    Durată programare (minute)
+                  </label>
+                  <input
+                    type="number"
+                    min={5}
+                    step={5}
+                    value={formData.duration}
+                    onChange={(e) =>
+                      setFormData((p) => ({
+                        ...p,
+                        duration: parseInt(e.target.value) || 30,
+                      }))
+                    }
+                    className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Folosit pentru calcul interval în calendarul de programări
+                  </p>
+                </div>
+                <div className="flex items-end">
+                  <label className="flex items-center gap-3 px-4 py-3 border border-border w-full cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={formData.bookable}
+                      onChange={(e) =>
+                        setFormData((p) => ({
+                          ...p,
+                          bookable: e.target.checked,
+                        }))
+                      }
+                    />
+                    <span className="text-sm">
+                      Disponibil pentru programări online
+                    </span>
+                  </label>
                 </div>
               </div>
             )}
