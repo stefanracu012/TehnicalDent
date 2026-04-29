@@ -98,19 +98,15 @@ function parsePacientComma(rest: string): {
 
 async function cmdServicii(): Promise<string> {
   const services = await prisma.service.findMany({
-    where: {
-      isActive: { not: false },
-      bookable: { not: false },
-    },
     orderBy: { title: "asc" },
-    select: { slug: true, title: true, duration: true },
-    take: 50,
+    select: { slug: true, title: true },
+    take: 80,
   });
-  if (!services.length) return "Niciun serviciu activ.";
+  if (!services.length) return "Niciun serviciu găsit în baza de date.";
   return (
     `<b>Servicii (${services.length})</b>\n` +
     services
-      .map((s) => `• <code>${s.slug}</code> — ${s.title} (${(s as { duration?: number }).duration ?? 30} min)`)
+      .map((s) => `• <code>${s.slug}</code> — ${s.title}`)
       .join("\n")
   );
 }
