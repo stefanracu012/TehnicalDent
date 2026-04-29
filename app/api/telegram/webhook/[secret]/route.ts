@@ -53,10 +53,12 @@ const HELP = `<b>Comenzi disponibile</b>
 /servicii — listă servicii (cu slug + durată)
 /pacienti [text] — caută pacienți după nume sau telefon
 
-<b>Pacient nou</b> (fără separator, detectare automată):
-<code>/pacient_nou Nume Prenume telefon email?</code>
-Ex: <code>/pacient_nou Ion Popescu 0712345678 ion@mail.com</code>
-Ex: <code>/pacient_nou Maria Ionescu +40723456789</code>
+<b>Pacient nou</b> (virgulă între câmpuri, telefon SAU email obligatoriu):
+<code>/pacient_nou Nume Prenume, telefon, email</code>
+<code>/pacient_nou Nume Prenume, telefon</code>
+<code>/pacient_nou Nume Prenume, email</code>
+Ex: <code>/pacient_nou Ion Popescu, 0712345678, ion@mail.com</code>
+Ex: <code>/pacient_nou Maria Ionescu, 0723456789</code>
 
 <b>Programare nouă</b> (cu virgulă):
 <code>/programare_noua telefon, slug_serviciu, YYYY-MM-DD HH:MM, durată_min?</code>
@@ -73,31 +75,23 @@ function splitComma(rest: string): string[] {
   return rest.split(",").map((s) => s.trim()).filter(Boolean);
 }
 
-// Smart parser for /pacient_nou — detects phone and email by pattern
-function smartParsePacient(rest: string): {
+// Parse /pacient_nou: first token = name, rest = phone/email in any order
+function parsePacientComma(rest: string): {
   name: string;
   phone: string;
   email: string;
 } {
-  const tokens = rest.trim().split(/\s+/);
+  const parts = splitComma(rest);
+  const name = parts[0] || "";
   const phonePat = /^[+]?[\d\s\-().]{7,20}$/;
   const emailPat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
   let phone = "";
   let email = "";
-  const nameParts: string[] = [];
-
-  for (const t of tokens) {
-    if (!email && emailPat.test(t)) {
-      email = t;
-    } else if (!phone && phonePat.test(t)) {
-      phone = t;
-    } else {
-      nameParts.push(t);
-    }
+  for (const p of parts.slice(1)) {
+    if (!email && emailPat.test(p)) email = p;
+    else if (!phone && phonePat.test(p)) phone = p;
   }
-
-  return { name: nameParts.join(" "), phone, email };
+  return { name, phone, email };
 }
 
 // ---------- Command handlers ----------
@@ -147,21 +141,33 @@ async function cmdPacienti(query: string): Promise<string> {
 }
 
 async function cmdPacientNou(rest: string): Promise<string> {
-  const { name, phone: phoneRaw, email } = smartParsePacient(rest);
+  const { name, phone: phoneRaw, email } = parsePacientComma(rest);
 
   if (!name || name.length < 2)
     return (
-      "❌ Nu am putut detecta numele.\n" +
-      "Format: <code>/pacient_nou Ion Popescu 0712345678 ion@mail.com</code>"
+      "❌ Lipsește numele.\n" +
+      "Format: <code>/pacient_nou Nume, telefon, email</code>\n" +
+      "Ex: <code>/pacient_nou Ion Popescu, 0712345678</code>"
     );
-  if (!isValidPhone(phoneRaw))
+  if (!phoneRaw && !email)
     return (
-      "❌ Nu am putut detecta telefonul (7-15 cifre).\n" +
-      "Ex: <code>/pacient_nou Ion Popescu 0712345678</code>"
+      "❌ Trebuie cel puțin telefon sau email.\n" +
+      "Ex: <code>/pacient_nou Ion Popescu, 0712345678</code>\n" +
+      "Ex: <code>/pacient_nou Ion Popescu, ion@mail.com</code>"
+    );
+  if (phoneRaw && !isValidPhone(phoneRaw))
+    return (
+      "❌ Telefon invalid (7-15 cifre).\n" +
+      "Ex: <code>/pacient_nou Ion Popescu, 0712345678</code>"
     );
 
-  const phone = normalizePhone(phoneRaw);
-  const existing = await prisma.patient.findFirst({ where: { phone } });
+  const phone = phoneRaw ? normalizePhone(phoneRaw) : null;
+  // dedup: check by phone (if provided) or email
+  const orClause = [
+    ...(phone ? [{ phone }] : []),
+    ...(email ? [{ email: email.trim() }] : []),
+  ];
+  const existing = await prisma.patient.findFirst({ where: { OR: orClause } });
   if (existing) {
     return `⚠️ Există deja: <b>${existing.name}</b> — <code>${existing.phone}</code>${existing.email ? ` · ${existing.email}` : ""}`;
   }
@@ -169,14 +175,14 @@ async function cmdPacientNou(rest: string): Promise<string> {
   const p = await prisma.patient.create({
     data: {
       name: name.trim(),
-      phone,
+      phone: phone ?? "",
       email: email ? email.trim() : null,
     },
   });
   return (
     `✅ <b>Pacient creat</b>\n` +
-    `👤 ${p.name}\n` +
-    `📞 <code>${p.phone}</code>` +
+    `👤 ${p.name}` +
+    (p.phone ? `\n📞 <code>${p.phone}</code>` : "") +
     (p.email ? `\n📧 ${p.email}` : "")
   );
 }
