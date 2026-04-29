@@ -20,23 +20,13 @@ export default function PublicAppointmentPage({
   const { id } = use(params);
   const search = useSearchParams();
   const token = search.get("token") || "";
+  const urlAction = search.get("action"); // "confirm" | "cancel" from email links
 
   const [appt, setAppt] = useState<ApptInfo | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<"confirmed" | "cancelled" | null>(null);
-
-  useEffect(() => {
-    fetch(`/api/public/appointments/${id}?token=${encodeURIComponent(token)}`)
-      .then(async (r) => {
-        const data = await r.json();
-        if (!r.ok) throw new Error(data.error || "Eroare");
-        setAppt(data);
-      })
-      .catch((e) => setError(e.message))
-      .finally(() => setLoading(false));
-  }, [id, token]);
 
   const submit = async (action: "confirm" | "cancel") => {
     setSubmitting(true);
@@ -56,6 +46,28 @@ export default function PublicAppointmentPage({
       setSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    fetch(`/api/public/appointments/${id}?token=${encodeURIComponent(token)}`)
+      .then(async (r) => {
+        const data = await r.json();
+        if (!r.ok) throw new Error(data.error || "Eroare");
+        setAppt(data);
+        // Auto-execute action when coming from an email button.
+        if (urlAction === "confirm" || urlAction === "cancel") {
+          if (data.status === "confirmed" && urlAction === "confirm") {
+            setDone("confirmed");
+          } else if (data.status === "cancelled" && urlAction === "cancel") {
+            setDone("cancelled");
+          } else if (data.status !== "completed" && data.status !== "noshow") {
+            submit(urlAction);
+          }
+        }
+      })
+      .catch((e) => setError(e.message))
+      .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, token]);
 
   const formatDate = (iso: string) =>
     new Date(iso).toLocaleString("ro-RO", {

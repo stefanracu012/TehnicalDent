@@ -1,5 +1,5 @@
 // =============================================
-// Notifications — Telegram (admin) + WhatsApp (client)
+// Notifications — Telegram (admin) + WhatsApp + Email (client)
 // Generic queue/sender used by appointment triggers
 // and by the cron endpoint.
 // =============================================
@@ -24,6 +24,10 @@ const TELEGRAM_CHAT_ID =
 // WhatsApp Business Cloud API (Meta)
 const WA_TOKEN = process.env.WHATSAPP_TOKEN || "";
 const WA_PHONE_ID = process.env.WHATSAPP_PHONE_ID || "";
+
+// Email (Resend) — https://resend.com
+const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
+const EMAIL_FROM = process.env.EMAIL_FROM || "TechnicalDent <noreply@tehnicaldent.md>";
 
 const MAX_ATTEMPTS = 3;
 
@@ -83,6 +87,40 @@ async function sendWhatsAppRaw(phone: string, text: string): Promise<void> {
   }
 }
 
+/**
+ * Sends an HTML email via Resend (https://resend.com).
+ * The payload format we use is JSON: { subject, html, text }.
+ */
+interface EmailPayload {
+  subject: string;
+  html: string;
+  text: string;
+}
+
+async function sendEmailRaw(to: string, payload: EmailPayload): Promise<void> {
+  if (!RESEND_API_KEY) {
+    throw new Error("Email not configured (RESEND_API_KEY)");
+  }
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${RESEND_API_KEY}`,
+    },
+    body: JSON.stringify({
+      from: EMAIL_FROM,
+      to: [to],
+      subject: payload.subject,
+      html: payload.html,
+      text: payload.text,
+    }),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Resend API ${res.status}: ${body.slice(0, 300)}`);
+  }
+}
+
 // ---- Queue + retry ----
 
 export interface QueueParams {
@@ -122,6 +160,15 @@ async function tryDispatch(notificationId: string): Promise<void> {
       await sendTelegramRaw(notif.payload);
     } else if (notif.channel === "whatsapp") {
       await sendWhatsAppRaw(notif.recipient, notif.payload);
+    } else if (notif.channel === "email") {
+      // payload is JSON: { subject, html, text }
+      let parsed: EmailPayload;
+      try {
+        parsed = JSON.parse(notif.payload) as EmailPayload;
+      } catch {
+        throw new Error("Invalid email payload JSON");
+      }
+      await sendEmailRaw(notif.recipient, parsed);
     } else {
       throw new Error(`Channel ${notif.channel} not implemented`);
     }
@@ -176,6 +223,88 @@ function clientLine(a: AppointmentFull): string {
   ].join("\n");
 }
 
+/**
+ * Builds an HTML email with optional confirm/cancel buttons.
+ * Buttons link to the public page with ?action=... so the page auto-executes.
+ */
+function buildEmailHtml(
+  a: AppointmentFull,
+  opts: {
+    title: string;
+    intro: string;
+    showActions?: boolean;
+    footer?: string;
+  },
+): { subject: string; html: string; text: string } {
+  const baseUrl = buildConfirmUrl(a.id); // includes ?token=...
+  const confirmUrl = `${baseUrl}&action=confirm`;
+  const cancelUrl = `${baseUrl}&action=cancel`;
+  const when = formatDateTimeRo(a.dateTime);
+
+  const actionsHtml = opts.showActions
+    ? `
+      <table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px auto 8px;">
+        <tr>
+          <td style="padding:0 6px;">
+            <a href="${confirmUrl}" style="display:inline-block;padding:12px 22px;background:#16a34a;color:#fff;text-decoration:none;font-weight:600;border-radius:6px;font-family:Arial,sans-serif;font-size:14px;">✓ Confirmă</a>
+          </td>
+          <td style="padding:0 6px;">
+            <a href="${cancelUrl}" style="display:inline-block;padding:12px 22px;background:#dc2626;color:#fff;text-decoration:none;font-weight:600;border-radius:6px;font-family:Arial,sans-serif;font-size:14px;">✕ Anulează</a>
+          </td>
+        </tr>
+      </table>
+      <p style="text-align:center;font-size:12px;color:#6b7280;margin:8px 0 0;">
+        sau accesează: <a href="${baseUrl}" style="color:#3b82f6;">${baseUrl}</a>
+      </p>`
+    : "";
+
+  const html = `<!doctype html>
+<html><body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:32px 16px;">
+    <tr><td align="center">
+      <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+        <tr><td style="padding:24px 28px;border-bottom:1px solid #e5e7eb;background:#0f172a;color:#fff;">
+          <h1 style="margin:0;font-size:20px;font-weight:600;">TechnicalDent</h1>
+        </td></tr>
+        <tr><td style="padding:28px;">
+          <h2 style="margin:0 0 12px;font-size:18px;color:#0f172a;">${opts.title}</h2>
+          <p style="margin:0 0 18px;color:#374151;font-size:14px;line-height:1.5;">${opts.intro}</p>
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;">
+            <tr><td style="padding:14px 16px;border-bottom:1px solid #e5e7eb;">
+              <div style="font-size:11px;text-transform:uppercase;color:#6b7280;letter-spacing:.05em;">Pacient</div>
+              <div style="font-size:14px;color:#0f172a;font-weight:600;margin-top:2px;">${a.patient.name}</div>
+            </td></tr>
+            <tr><td style="padding:14px 16px;border-bottom:1px solid #e5e7eb;">
+              <div style="font-size:11px;text-transform:uppercase;color:#6b7280;letter-spacing:.05em;">Serviciu</div>
+              <div style="font-size:14px;color:#0f172a;font-weight:600;margin-top:2px;">${a.service.title}</div>
+            </td></tr>
+            <tr><td style="padding:14px 16px;">
+              <div style="font-size:11px;text-transform:uppercase;color:#6b7280;letter-spacing:.05em;">Data şi ora</div>
+              <div style="font-size:14px;color:#0f172a;font-weight:600;margin-top:2px;">${when}</div>
+            </td></tr>
+          </table>
+          ${actionsHtml}
+          ${opts.footer ? `<p style="margin:20px 0 0;color:#6b7280;font-size:13px;line-height:1.5;">${opts.footer}</p>` : ""}
+        </td></tr>
+        <tr><td style="padding:16px 28px;background:#f9fafb;border-top:1px solid #e5e7eb;text-align:center;font-size:12px;color:#6b7280;">
+          TechnicalDent · Acest mesaj este automat, nu răspundeţi.
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+
+  const text =
+    `${opts.title}\n\n${opts.intro}\n\n` +
+    `Pacient: ${a.patient.name}\nServiciu: ${a.service.title}\nData: ${when}\n` +
+    (opts.showActions
+      ? `\nConfirmă: ${confirmUrl}\nAnulează: ${cancelUrl}\n`
+      : "") +
+    (opts.footer ? `\n${opts.footer}\n` : "");
+
+  return { subject: opts.title, html, text };
+}
+
 export async function notifyCreated(a: AppointmentFull) {
   // Admin: Telegram
   await queueAndSend({
@@ -202,7 +331,22 @@ export async function notifyCreated(a: AppointmentFull) {
         `Vă rugăm să confirmați sau să anulați aici:\n${url}`,
     });
   }
-}
+  // Client: Email with confirm/cancel buttons
+  if (a.patient.email) {
+    const email = buildEmailHtml(a, {
+      title: "Programare nouă — confirmaţi, vă rugăm",
+      intro: `Bună ziua, ${a.patient.name}! Vă rugăm să confirmaţi sau să anulaţi programarea de mai jos.`,
+      showActions: true,
+      footer: "Pentru orice nelămurire, ne puteţi contacta telefonic.",
+    });
+    await queueAndSend({
+      type: "created",
+      channel: "email",
+      recipient: a.patient.email,
+      appointmentId: a.id,
+      payload: JSON.stringify(email),
+    });
+  }}
 
 export async function notifyConfirmed(a: AppointmentFull) {
   await queueAndSend({
@@ -212,6 +356,22 @@ export async function notifyConfirmed(a: AppointmentFull) {
     appointmentId: a.id,
     payload: `✅ <b>Programare confirmată</b>\n${clientLine(a)}\n📞 ${a.patient.phone}`,
   });
+
+  if (a.patient.email) {
+    const email = buildEmailHtml(a, {
+      title: "Programare confirmată",
+      intro: `Vă mulţumim, ${a.patient.name}! Programarea dvs. a fost confirmată.`,
+      showActions: false,
+      footer: "Dacă nu vă mai puteţi prezenta, vă rugăm să ne contactaţi din timp.",
+    });
+    await queueAndSend({
+      type: "confirmed",
+      channel: "email",
+      recipient: a.patient.email,
+      appointmentId: a.id,
+      payload: JSON.stringify(email),
+    });
+  }
 }
 
 export async function notifyCancelled(a: AppointmentFull, reason?: string) {
@@ -236,36 +396,88 @@ export async function notifyCancelled(a: AppointmentFull, reason?: string) {
         `Vă rugăm să ne contactați pentru reprogramare.`,
     });
   }
-}
+  if (a.patient.email) {
+    const email = buildEmailHtml(a, {
+      title: "Programare anulată",
+      intro: `Programarea dvs. de mai jos a fost anulată${reason ? ` (${reason})` : ""}.`,
+      showActions: false,
+      footer: "Pentru reprogramare, ne puteţi contacta telefonic.",
+    });
+    await queueAndSend({
+      type: "cancelled",
+      channel: "email",
+      recipient: a.patient.email,
+      appointmentId: a.id,
+      payload: JSON.stringify(email),
+    });
+  }}
 
 export async function notifyReminder(a: AppointmentFull, kind: "24h" | "2h") {
   const type: NotificationType = kind === "24h" ? "reminder_24h" : "reminder_2h";
-  if (!a.patient.phone) return;
+  if (!a.patient.phone && !a.patient.email) return;
 
-  const lead = kind === "24h" ? "Vă reamintim că mâine aveți programare" : "Vă reamintim că peste 2 ore aveți programare";
-  await queueAndSend({
-    type,
-    channel: "whatsapp",
-    recipient: a.patient.phone,
-    appointmentId: a.id,
-    payload:
-      `${lead} la TechnicalDent:\n${clientLine(a)}\n\n` +
-      `Pentru anulare: ${buildConfirmUrl(a.id)}`,
-  });
+  const lead = kind === "24h" ? "Vă reamintim că mâine aveţi programare" : "Vă reamintim că peste 2 ore aveţi programare";
+
+  if (a.patient.phone) {
+    await queueAndSend({
+      type,
+      channel: "whatsapp",
+      recipient: a.patient.phone,
+      appointmentId: a.id,
+      payload:
+        `${lead} la TechnicalDent:\n${clientLine(a)}\n\n` +
+        `Pentru anulare: ${buildConfirmUrl(a.id)}`,
+    });
+  }
+
+  if (a.patient.email) {
+    const email = buildEmailHtml(a, {
+      title: kind === "24h" ? "Reamintire — programare mâine" : "Reamintire — programare peste 2 ore",
+      intro: `${lead} la TechnicalDent.`,
+      showActions: true,
+      footer: "Dacă nu vă mai puteţi prezenta, anulaţi programarea folosind butonul de mai sus.",
+    });
+    await queueAndSend({
+      type,
+      channel: "email",
+      recipient: a.patient.email,
+      appointmentId: a.id,
+      payload: JSON.stringify(email),
+    });
+  }
 }
 
 export async function notifyRecall(a: AppointmentFull) {
-  if (!a.patient.phone) return;
-  await queueAndSend({
-    type: "recall_6m",
-    channel: "whatsapp",
-    recipient: a.patient.phone,
-    appointmentId: a.id,
-    payload:
-      `Bună ziua, ${a.patient.name}!\n` +
-      `Au trecut 6 luni de la ultima vizită la TechnicalDent (${a.service.title}).\n` +
-      `Vă recomandăm o nouă consultație. Vă așteptăm cu drag!`,
-  });
+  if (!a.patient.phone && !a.patient.email) return;
+
+  if (a.patient.phone) {
+    await queueAndSend({
+      type: "recall_6m",
+      channel: "whatsapp",
+      recipient: a.patient.phone,
+      appointmentId: a.id,
+      payload:
+        `Bună ziua, ${a.patient.name}!\n` +
+        `Au trecut 6 luni de la ultima vizită la TechnicalDent (${a.service.title}).\n` +
+        `Vă recomandăm o nouă consultaţie. Vă aşteptăm cu drag!`,
+    });
+  }
+
+  if (a.patient.email) {
+    const email = buildEmailHtml(a, {
+      title: "V-aă şteaptă o nouă vizită la TechnicalDent",
+      intro: `Bună ziua, ${a.patient.name}! Au trecut 6 luni de la ultima dvs. vizită. Vă recomandăm o nouă consultaţie.`,
+      showActions: false,
+      footer: "Pentru a vă programa, ne puteţi contacta telefonic sau prin formularul de pe site.",
+    });
+    await queueAndSend({
+      type: "recall_6m",
+      channel: "email",
+      recipient: a.patient.email,
+      appointmentId: a.id,
+      payload: JSON.stringify(email),
+    });
+  }
 
   await queueAndSend({
     type: "recall_6m",
