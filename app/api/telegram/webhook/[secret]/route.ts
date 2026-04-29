@@ -98,7 +98,10 @@ function parsePacientComma(rest: string): {
 
 async function cmdServicii(): Promise<string> {
   const services = await prisma.service.findMany({
-    where: { isActive: true, bookable: true },
+    where: {
+      isActive: { not: false },
+      bookable: { not: false },
+    },
     orderBy: { title: "asc" },
     select: { slug: true, title: true, duration: true },
     take: 50,
@@ -107,7 +110,7 @@ async function cmdServicii(): Promise<string> {
   return (
     `<b>Servicii (${services.length})</b>\n` +
     services
-      .map((s) => `• <code>${s.slug}</code> — ${s.title} (${s.duration} min)`)
+      .map((s) => `• <code>${s.slug}</code> — ${s.title} (${(s as { duration?: number }).duration ?? 30} min)`)
       .join("\n")
   );
 }
@@ -208,15 +211,16 @@ async function cmdProgramareNoua(rest: string): Promise<string> {
   if (!service) {
     return `❌ Serviciul <code>${slug}</code> nu există. Vezi /servicii.`;
   }
+  const serviceDuration = (service as { duration?: number }).duration ?? 30;
+  const durStr_parsed = parts[3];
+  const duration =
+    durStr_parsed && /^\d+$/.test(durStr_parsed) ? parseInt(durStr_parsed, 10) : serviceDuration;
 
   // Accept "YYYY-MM-DD HH:MM" by converting space to 'T'
   const isoCandidate = dateStr.includes("T") ? dateStr : dateStr.replace(" ", "T");
   const dt = parseDateTime(isoCandidate);
   if (!dt) return "❌ Dată/oră invalidă (folosește YYYY-MM-DD HH:MM).";
   if (dt.getTime() < Date.now() - 60_000) return "❌ Data este în trecut.";
-
-  const duration =
-    durStr && /^\d+$/.test(durStr) ? parseInt(durStr, 10) : service.duration || 30;
 
   const overlap = await findOverlappingAppointment({ dateTime: dt, duration });
   if (overlap) {
