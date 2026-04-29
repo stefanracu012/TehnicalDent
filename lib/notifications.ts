@@ -1,5 +1,5 @@
 // =============================================
-// Notifications — Telegram (admin) + Viber (client)
+// Notifications — Telegram (admin) + WhatsApp (client)
 // Generic queue/sender used by appointment triggers
 // and by the cron endpoint.
 // =============================================
@@ -21,8 +21,9 @@ const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
 const TELEGRAM_CHAT_ID =
   process.env.TELEGRAM_ADMIN_CHAT_ID || process.env.TELEGRAM_CHAT_ID || "";
 
-const VIBER_TOKEN = process.env.VIBER_BOT_TOKEN || "";
-const VIBER_SENDER_NAME = process.env.VIBER_SENDER_NAME || "TechnicalDent";
+// WhatsApp Business Cloud API (Meta)
+const WA_TOKEN = process.env.WHATSAPP_TOKEN || "";
+const WA_PHONE_ID = process.env.WHATSAPP_PHONE_ID || "";
 
 const MAX_ATTEMPTS = 3;
 
@@ -50,32 +51,35 @@ async function sendTelegramRaw(text: string): Promise<void> {
 }
 
 /**
- * Sends a Viber message to a phone number via Viber Business API.
- * Falls back gracefully if Viber is not configured (returns a "skipped" log
- * by throwing so the queue marks it failed — admin can switch channels).
+ * Sends a WhatsApp message via Meta WhatsApp Business Cloud API.
+ * Phone number must be in E.164 format (e.g. +40712345678).
+ * Falls back gracefully if not configured.
  */
-async function sendViberRaw(phone: string, text: string): Promise<void> {
-  if (!VIBER_TOKEN) {
-    throw new Error("Viber not configured (VIBER_BOT_TOKEN)");
+async function sendWhatsAppRaw(phone: string, text: string): Promise<void> {
+  if (!WA_TOKEN || !WA_PHONE_ID) {
+    throw new Error("WhatsApp not configured (WHATSAPP_TOKEN / WHATSAPP_PHONE_ID)");
   }
-  const res = await fetch("https://chatapi.viber.com/pa/send_message", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Viber-Auth-Token": VIBER_TOKEN,
+  // Meta requires phone in E.164 without leading '+'
+  const to = phone.replace(/^\+/, "").replace(/\s/g, "");
+  const res = await fetch(
+    `https://graph.facebook.com/v20.0/${WA_PHONE_ID}/messages`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${WA_TOKEN}`,
+      },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        to,
+        type: "text",
+        text: { body: text },
+      }),
     },
-    body: JSON.stringify({
-      receiver: phone,
-      sender: { name: VIBER_SENDER_NAME },
-      type: "text",
-      text,
-    }),
-  });
-  const data = (await res.json().catch(() => ({}))) as { status?: number; status_message?: string };
-  if (!res.ok || (data.status !== undefined && data.status !== 0)) {
-    throw new Error(
-      `Viber API ${res.status}: ${data.status_message || "unknown"} (status=${data.status})`,
-    );
+  );
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`WhatsApp API ${res.status}: ${body.slice(0, 300)}`);
   }
 }
 
@@ -116,8 +120,8 @@ async function tryDispatch(notificationId: string): Promise<void> {
   try {
     if (notif.channel === "telegram") {
       await sendTelegramRaw(notif.payload);
-    } else if (notif.channel === "viber") {
-      await sendViberRaw(notif.recipient, notif.payload);
+    } else if (notif.channel === "whatsapp") {
+      await sendWhatsAppRaw(notif.recipient, notif.payload);
     } else {
       throw new Error(`Channel ${notif.channel} not implemented`);
     }
@@ -135,7 +139,7 @@ async function tryDispatch(notificationId: string): Promise<void> {
     if (notif.channel !== "telegram" && TELEGRAM_TOKEN && TELEGRAM_CHAT_ID) {
       try {
         await sendTelegramRaw(
-          `⚠️ Eroare notificare ${notif.channel} (${notif.type}) către ${notif.recipient}\n${msg}`,
+          `⚠️ Eroare notificare WhatsApp (${notif.type}) către ${notif.recipient}\n${msg}`,
         );
       } catch {
         // ignore
@@ -184,12 +188,12 @@ export async function notifyCreated(a: AppointmentFull) {
       (a.notes ? `\n📝 ${a.notes}` : ""),
   });
 
-  // Client: Viber confirmation request
+  // Client: WhatsApp confirmation request
   if (a.patient.phone) {
     const url = buildConfirmUrl(a.id);
     await queueAndSend({
       type: "created",
-      channel: "viber",
+      channel: "whatsapp",
       recipient: a.patient.phone,
       appointmentId: a.id,
       payload:
@@ -224,7 +228,7 @@ export async function notifyCancelled(a: AppointmentFull, reason?: string) {
   if (a.patient.phone) {
     await queueAndSend({
       type: "cancelled",
-      channel: "viber",
+      channel: "whatsapp",
       recipient: a.patient.phone,
       appointmentId: a.id,
       payload:
@@ -241,7 +245,7 @@ export async function notifyReminder(a: AppointmentFull, kind: "24h" | "2h") {
   const lead = kind === "24h" ? "Vă reamintim că mâine aveți programare" : "Vă reamintim că peste 2 ore aveți programare";
   await queueAndSend({
     type,
-    channel: "viber",
+    channel: "whatsapp",
     recipient: a.patient.phone,
     appointmentId: a.id,
     payload:
@@ -254,7 +258,7 @@ export async function notifyRecall(a: AppointmentFull) {
   if (!a.patient.phone) return;
   await queueAndSend({
     type: "recall_6m",
-    channel: "viber",
+    channel: "whatsapp",
     recipient: a.patient.phone,
     appointmentId: a.id,
     payload:

@@ -88,19 +88,27 @@ export default function PublicAppointmentPage({
             <dl className="space-y-3 text-sm mb-6">
               <div>
                 <dt className="text-muted-foreground">Pacient</dt>
-                <dd className="font-medium text-foreground">{appt.patient.name}</dd>
+                <dd className="font-medium text-foreground">
+                  {appt.patient.name}
+                </dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">Serviciu</dt>
-                <dd className="font-medium text-foreground">{appt.service.title}</dd>
+                <dd className="font-medium text-foreground">
+                  {appt.service.title}
+                </dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">Data și ora</dt>
-                <dd className="font-medium text-foreground">{formatDate(appt.dateTime)}</dd>
+                <dd className="font-medium text-foreground">
+                  {formatDate(appt.dateTime)}
+                </dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">Status curent</dt>
-                <dd className="font-medium text-foreground capitalize">{appt.status}</dd>
+                <dd className="font-medium text-foreground capitalize">
+                  {appt.status}
+                </dd>
               </div>
             </dl>
 
@@ -132,7 +140,8 @@ export default function PublicAppointmentPage({
         )}
         {done === "cancelled" && (
           <div className="rounded border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800">
-            Programarea dvs. a fost anulată. Pentru reprogramare, ne puteți contacta.
+            Programarea dvs. a fost anulată. Pentru reprogramare, ne puteți
+            contacta.
           </div>
         )}
       </div>

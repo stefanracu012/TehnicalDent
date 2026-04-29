@@ -111,7 +111,10 @@ export default function AdminAppointmentsPage() {
       return { from: f, to: addDays(f, 7) };
     }
     // list view: ±60 days
-    return { from: addDays(startOfDay(anchor), -60), to: addDays(startOfDay(anchor), 60) };
+    return {
+      from: addDays(startOfDay(anchor), -60),
+      to: addDays(startOfDay(anchor), 60),
+    };
   }, [view, anchor]);
 
   const fetchAppts = useCallback(async () => {
@@ -142,18 +145,22 @@ export default function AdminAppointmentsPage() {
       .then((r) => r.json())
       .then((data) =>
         setServices(
-          (Array.isArray(data) ? data : []).map((s: { id: string; title: string; duration?: number }) => ({
-            id: s.id,
-            title: s.title,
-            duration: s.duration || 30,
-          })),
+          (Array.isArray(data) ? data : []).map(
+            (s: { id: string; title: string; duration?: number }) => ({
+              id: s.id,
+              title: s.title,
+              duration: s.duration || 30,
+            }),
+          ),
         ),
       )
       .catch(() => {});
   }, []);
 
   const onConfirm = async (id: string) => {
-    await secureFetch(`/api/admin/appointments/${id}/confirm`, { method: "POST" });
+    await secureFetch(`/api/admin/appointments/${id}/confirm`, {
+      method: "POST",
+    });
     fetchAppts();
   };
   const onCancel = async (id: string) => {
@@ -239,7 +246,9 @@ export default function AdminAppointmentsPage() {
               ))}
             </div>
             <button
-              onClick={() => setAnchor(addDays(anchor, view === "week" ? -7 : -1))}
+              onClick={() =>
+                setAnchor(addDays(anchor, view === "week" ? -7 : -1))
+              }
               className="px-3 py-2 text-sm border border-border bg-white hover:bg-muted"
             >
               ←
@@ -251,7 +260,9 @@ export default function AdminAppointmentsPage() {
               Astăzi
             </button>
             <button
-              onClick={() => setAnchor(addDays(anchor, view === "week" ? 7 : 1))}
+              onClick={() =>
+                setAnchor(addDays(anchor, view === "week" ? 7 : 1))
+              }
               className="px-3 py-2 text-sm border border-border bg-white hover:bg-muted"
             >
               →
@@ -354,14 +365,25 @@ export default function AdminAppointmentsPage() {
               {days.map((d) => {
                 const list = apptsByDay.get(d.toISOString()) || [];
                 return (
-                  <div key={`overlay-${d.toISOString()}`} className="relative" style={{ height: HOUR_PX * HOURS.length }}>
+                  <div
+                    key={`overlay-${d.toISOString()}`}
+                    className="relative"
+                    style={{ height: HOUR_PX * HOURS.length }}
+                  >
                     {list.map((a) => {
                       const start = new Date(a.dateTime);
                       const minutesFromTop =
                         (start.getHours() - HOURS[0]) * 60 + start.getMinutes();
-                      if (minutesFromTop < 0 || minutesFromTop > HOURS.length * 60) return null;
+                      if (
+                        minutesFromTop < 0 ||
+                        minutesFromTop > HOURS.length * 60
+                      )
+                        return null;
                       const top = (minutesFromTop / 60) * HOUR_PX;
-                      const height = Math.max(28, (a.duration / 60) * HOUR_PX - 2);
+                      const height = Math.max(
+                        28,
+                        (a.duration / 60) * HOUR_PX - 2,
+                      );
                       return (
                         <button
                           key={a.id}
@@ -394,7 +416,9 @@ export default function AdminAppointmentsPage() {
         {!loading && view === "list" && (
           <div className="bg-white border border-border overflow-x-auto">
             {appts.length === 0 ? (
-              <p className="p-6 text-sm text-muted-foreground text-center">Nicio programare.</p>
+              <p className="p-6 text-sm text-muted-foreground text-center">
+                Nicio programare.
+              </p>
             ) : (
               <table className="w-full text-sm">
                 <thead className="bg-muted/50 text-left">
@@ -404,12 +428,17 @@ export default function AdminAppointmentsPage() {
                     <th className="px-4 py-3 font-medium">Serviciu</th>
                     <th className="px-4 py-3 font-medium">Durată</th>
                     <th className="px-4 py-3 font-medium">Status</th>
-                    <th className="px-4 py-3 font-medium text-right">Acțiuni</th>
+                    <th className="px-4 py-3 font-medium text-right">
+                      Acțiuni
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {appts.map((a) => (
-                    <tr key={a.id} className="border-t border-border hover:bg-muted/30">
+                    <tr
+                      key={a.id}
+                      className="border-t border-border hover:bg-muted/30"
+                    >
                       <td className="px-4 py-3 whitespace-nowrap">
                         {new Date(a.dateTime).toLocaleString("ro-RO", {
                           day: "numeric",
@@ -420,25 +449,32 @@ export default function AdminAppointmentsPage() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="font-medium">{a.patient.name}</div>
-                        <div className="text-xs text-muted-foreground">{a.patient.phone}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {a.patient.phone}
+                        </div>
                       </td>
                       <td className="px-4 py-3">{a.service.title}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{a.duration} min</td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {a.duration} min
+                      </td>
                       <td className="px-4 py-3">
                         <span className="inline-flex items-center gap-1.5 text-xs">
-                          <span className={`w-2 h-2 rounded-full ${STATUS_DOT[a.status]}`} />
+                          <span
+                            className={`w-2 h-2 rounded-full ${STATUS_DOT[a.status]}`}
+                          />
                           {STATUS_LABELS[a.status]}
                         </span>
                       </td>
                       <td className="px-4 py-3 text-right whitespace-nowrap space-x-1">
-                        {a.status !== "confirmed" && a.status !== "cancelled" && (
-                          <button
-                            onClick={() => onConfirm(a.id)}
-                            className="text-xs px-2 py-1 border border-green-200 text-green-700 hover:bg-green-50"
-                          >
-                            Confirmă
-                          </button>
-                        )}
+                        {a.status !== "confirmed" &&
+                          a.status !== "cancelled" && (
+                            <button
+                              onClick={() => onConfirm(a.id)}
+                              className="text-xs px-2 py-1 border border-green-200 text-green-700 hover:bg-green-50"
+                            >
+                              Confirmă
+                            </button>
+                          )}
                         {a.status !== "cancelled" && (
                           <button
                             onClick={() => onCancel(a.id)}
@@ -511,18 +547,32 @@ function AppointmentForm({
     ? toLocalInput(new Date(editing.dateTime))
     : toLocalInput(new Date(Date.now() + 60 * 60_000));
 
-  const [serviceId, setServiceId] = useState(editing?.service.id || services[0]?.id || "");
-  const [duration, setDuration] = useState(editing?.duration || services[0]?.duration || 30);
+  const [serviceId, setServiceId] = useState(
+    editing?.service.id || services[0]?.id || "",
+  );
+  const [duration, setDuration] = useState(
+    editing?.duration || services[0]?.duration || 30,
+  );
   const [dateTime, setDateTime] = useState(initialDate);
   const [notes, setNotes] = useState(editing?.notes || "");
 
   const [patientQuery, setPatientQuery] = useState(editing?.patient.name || "");
   const [patientResults, setPatientResults] = useState<Patient[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(
-    editing ? { id: editing.patient.id, name: editing.patient.name, phone: editing.patient.phone } : null,
+    editing
+      ? {
+          id: editing.patient.id,
+          name: editing.patient.name,
+          phone: editing.patient.phone,
+        }
+      : null,
   );
   const [creatingNew, setCreatingNew] = useState(false);
-  const [newPatient, setNewPatient] = useState({ name: "", phone: "", email: "" });
+  const [newPatient, setNewPatient] = useState({
+    name: "",
+    phone: "",
+    email: "",
+  });
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -623,7 +673,9 @@ function AppointmentForm({
               <div className="flex items-center justify-between px-3 py-2 border border-border bg-muted/30">
                 <div>
                   <p className="text-sm font-medium">{selectedPatient.name}</p>
-                  <p className="text-xs text-muted-foreground">{selectedPatient.phone}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {selectedPatient.phone}
+                  </p>
                 </div>
                 <button
                   type="button"
@@ -642,20 +694,26 @@ function AppointmentForm({
                   required
                   placeholder="Nume *"
                   value={newPatient.name}
-                  onChange={(e) => setNewPatient({ ...newPatient, name: e.target.value })}
+                  onChange={(e) =>
+                    setNewPatient({ ...newPatient, name: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-border bg-white text-sm"
                 />
                 <input
                   required
                   placeholder="Telefon *"
                   value={newPatient.phone}
-                  onChange={(e) => setNewPatient({ ...newPatient, phone: e.target.value })}
+                  onChange={(e) =>
+                    setNewPatient({ ...newPatient, phone: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-border bg-white text-sm"
                 />
                 <input
                   placeholder="Email"
                   value={newPatient.email}
-                  onChange={(e) => setNewPatient({ ...newPatient, email: e.target.value })}
+                  onChange={(e) =>
+                    setNewPatient({ ...newPatient, email: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-border bg-white text-sm"
                 />
                 <button
@@ -689,7 +747,9 @@ function AppointmentForm({
                           className="w-full text-left px-3 py-2 text-sm hover:bg-muted"
                         >
                           <span className="font-medium">{p.name}</span>{" "}
-                          <span className="text-muted-foreground">· {p.phone}</span>
+                          <span className="text-muted-foreground">
+                            · {p.phone}
+                          </span>
                         </button>
                       </li>
                     ))}

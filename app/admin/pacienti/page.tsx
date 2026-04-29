@@ -49,7 +49,9 @@ export default function AdminPatientsPage() {
   const fetchPatients = useCallback(async () => {
     setLoading(true);
     try {
-      const url = q ? `/api/admin/patients?q=${encodeURIComponent(q)}` : "/api/admin/patients";
+      const url = q
+        ? `/api/admin/patients?q=${encodeURIComponent(q)}`
+        : "/api/admin/patients";
       const res = await secureFetch(url);
       const data = await res.json();
       setPatients(Array.isArray(data) ? data : []);
@@ -84,9 +86,7 @@ export default function AdminPatientsPage() {
     // Load full record to get notes
     secureFetch(`/api/admin/patients/${p.id}`)
       .then((r) => r.json())
-      .then((d) =>
-        setFormData((prev) => ({ ...prev, notes: d.notes || "" })),
-      )
+      .then((d) => setFormData((prev) => ({ ...prev, notes: d.notes || "" })))
       .catch(() => {});
   };
 
@@ -95,7 +95,9 @@ export default function AdminPatientsPage() {
     setSaving(true);
     setErrorMsg(null);
     try {
-      const url = editing ? `/api/admin/patients/${editing.id}` : "/api/admin/patients";
+      const url = editing
+        ? `/api/admin/patients/${editing.id}`
+        : "/api/admin/patients";
       const method = editing ? "PATCH" : "POST";
       const res = await secureFetch(url, {
         method,
@@ -114,7 +116,10 @@ export default function AdminPatientsPage() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Sigur ștergeți pacientul? Programările aferente vor fi șterse.")) return;
+    if (
+      !confirm("Sigur ștergeți pacientul? Programările aferente vor fi șterse.")
+    )
+      return;
     await secureFetch(`/api/admin/patients/${id}`, { method: "DELETE" });
     fetchPatients();
   };
@@ -176,21 +181,34 @@ export default function AdminPatientsPage() {
                 <tr>
                   <th className="px-4 py-3 font-medium">Nume</th>
                   <th className="px-4 py-3 font-medium">Telefon</th>
-                  <th className="px-4 py-3 font-medium hidden md:table-cell">Email</th>
-                  <th className="px-4 py-3 font-medium text-center">Programări</th>
-                  <th className="px-4 py-3 font-medium hidden md:table-cell">Adăugat</th>
+                  <th className="px-4 py-3 font-medium hidden md:table-cell">
+                    Email
+                  </th>
+                  <th className="px-4 py-3 font-medium text-center">
+                    Programări
+                  </th>
+                  <th className="px-4 py-3 font-medium hidden md:table-cell">
+                    Adăugat
+                  </th>
                   <th className="px-4 py-3 font-medium text-right">Acțiuni</th>
                 </tr>
               </thead>
               <tbody>
                 {patients.map((p) => (
-                  <tr key={p.id} className="border-t border-border hover:bg-muted/30">
+                  <tr
+                    key={p.id}
+                    className="border-t border-border hover:bg-muted/30"
+                  >
                     <td className="px-4 py-3 font-medium">{p.name}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{p.phone}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {p.phone}
+                    </td>
                     <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
                       {p.email || "—"}
                     </td>
-                    <td className="px-4 py-3 text-center">{p._count.appointments}</td>
+                    <td className="px-4 py-3 text-center">
+                      {p._count.appointments}
+                    </td>
                     <td className="px-4 py-3 text-muted-foreground hidden md:table-cell">
                       {formatDate(p.createdAt)}
                     </td>
@@ -237,7 +255,9 @@ export default function AdminPatientsPage() {
                 <input
                   required
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-border bg-white text-sm"
                 />
               </div>
@@ -248,7 +268,9 @@ export default function AdminPatientsPage() {
                 <input
                   required
                   value={formData.phone}
-                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, phone: e.target.value })
+                  }
                   placeholder="+373..."
                   className="w-full px-3 py-2 border border-border bg-white text-sm"
                 />
@@ -260,7 +282,9 @@ export default function AdminPatientsPage() {
                 <input
                   type="email"
                   value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, email: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-border bg-white text-sm"
                 />
               </div>
@@ -271,7 +295,9 @@ export default function AdminPatientsPage() {
                 <textarea
                   rows={4}
                   value={formData.notes}
-                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, notes: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-border bg-white text-sm"
                 />
               </div>
@@ -309,10 +335,14 @@ export default function AdminPatientsPage() {
           <div className="bg-white max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-start justify-between mb-4">
               <div>
-                <h2 className="font-serif text-xl font-medium">{detail.name}</h2>
+                <h2 className="font-serif text-xl font-medium">
+                  {detail.name}
+                </h2>
                 <p className="text-sm text-muted-foreground">{detail.phone}</p>
                 {detail.email && (
-                  <p className="text-sm text-muted-foreground">{detail.email}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {detail.email}
+                  </p>
                 )}
               </div>
               <button
@@ -340,9 +370,14 @@ export default function AdminPatientsPage() {
             ) : (
               <ul className="divide-y divide-border border border-border">
                 {detail.appointments.map((a) => (
-                  <li key={a.id} className="px-3 py-2.5 flex items-center justify-between gap-3">
+                  <li
+                    key={a.id}
+                    className="px-3 py-2.5 flex items-center justify-between gap-3"
+                  >
                     <div className="min-w-0">
-                      <p className="text-sm font-medium truncate">{a.service.title}</p>
+                      <p className="text-sm font-medium truncate">
+                        {a.service.title}
+                      </p>
                       <p className="text-xs text-muted-foreground">
                         {formatDate(a.dateTime)} · {a.service.duration} min
                       </p>
