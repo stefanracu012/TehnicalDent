@@ -287,8 +287,9 @@ export async function POST(request: Request, { params }: RouteParams) {
   const msg = update.message || update.edited_message;
   if (!msg || !msg.text) return NextResponse.json({ ok: true });
 
-  // Restrict to admin chat
-  if (ADMIN_CHAT_ID && String(msg.chat.id) !== String(ADMIN_CHAT_ID)) {
+  // Restrict to admin chat(s) — group AND private chat of the admin
+  const ALLOWED = [String(ADMIN_CHAT_ID), process.env.TELEGRAM_ADMIN_USER_ID || ""].filter(Boolean);
+  if (ALLOWED.length && !ALLOWED.includes(String(msg.chat.id))) {
     await tgSend(msg.chat.id, "⛔ Acces interzis.");
     return NextResponse.json({ ok: true });
   }
