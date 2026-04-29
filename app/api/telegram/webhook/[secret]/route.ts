@@ -51,16 +51,17 @@ const HELP = `<b>Comenzi disponibile</b>
 
 /help — afișează acest mesaj
 /servicii — listă servicii (cu slug + durată)
-/pacienti [text] — caută pacienți (opțional după nume/telefon)
+/pacienti [text] — caută pacienți după nume sau telefon
 
-<b>Pacient nou:</b>
-<code>/pacient_nou Nume | telefon | email?</code>
-Ex: <code>/pacient_nou Ion Popescu | +40712345678 | ion@mail.com</code>
+<b>Pacient nou</b> (fără separator, detectare automată):
+<code>/pacient_nou Nume Prenume telefon email?</code>
+Ex: <code>/pacient_nou Ion Popescu 0712345678 ion@mail.com</code>
+Ex: <code>/pacient_nou Maria Ionescu +40723456789</code>
 
-<b>Programare nouă:</b>
-<code>/programare_noua telefon | slug_serviciu | YYYY-MM-DD HH:MM | durată_min?</code>
-Ex: <code>/programare_noua +40712345678 | implant-dentar | 2026-05-10 14:30 | 60</code>
-(Pacientul trebuie să existe deja — folosește mai întâi /pacient_nou.)
+<b>Programare nouă</b> (cu virgulă):
+<code>/programare_noua telefon, slug_serviciu, YYYY-MM-DD HH:MM, durată_min?</code>
+Ex: <code>/programare_noua 0712345678, albire-dentara, 2026-05-10 14:30, 60</code>
+(Pacientul trebuie să existe — folosește /pacient_nou mai întâi.)
 
 <b>Listă programări:</b>
 /programari — următoarele 30 de zile
@@ -68,8 +69,35 @@ Ex: <code>/programare_noua +40712345678 | implant-dentar | 2026-05-10 14:30 | 60
 /programari maine
 /programari YYYY-MM-DD`;
 
-function splitArgs(rest: string): string[] {
-  return rest.split("|").map((s) => s.trim()).filter(Boolean);
+function splitComma(rest: string): string[] {
+  return rest.split(",").map((s) => s.trim()).filter(Boolean);
+}
+
+// Smart parser for /pacient_nou — detects phone and email by pattern
+function smartParsePacient(rest: string): {
+  name: string;
+  phone: string;
+  email: string;
+} {
+  const tokens = rest.trim().split(/\s+/);
+  const phonePat = /^[+]?[\d\s\-().]{7,20}$/;
+  const emailPat = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  let phone = "";
+  let email = "";
+  const nameParts: string[] = [];
+
+  for (const t of tokens) {
+    if (!email && emailPat.test(t)) {
+      email = t;
+    } else if (!phone && phonePat.test(t)) {
+      phone = t;
+    } else {
+      nameParts.push(t);
+    }
+  }
+
+  return { name: nameParts.join(" "), phone, email };
 }
 
 // ---------- Command handlers ----------
@@ -119,18 +147,23 @@ async function cmdPacienti(query: string): Promise<string> {
 }
 
 async function cmdPacientNou(rest: string): Promise<string> {
-  const parts = splitArgs(rest);
-  if (parts.length < 2) {
-    return "❌ Format: <code>/pacient_nou Nume | telefon | email?</code>";
-  }
-  const [name, phoneRaw, email] = parts;
-  if (!name || name.length < 2) return "❌ Nume invalid.";
-  if (!isValidPhone(phoneRaw)) return "❌ Telefon invalid (7-15 cifre).";
+  const { name, phone: phoneRaw, email } = smartParsePacient(rest);
+
+  if (!name || name.length < 2)
+    return (
+      "❌ Nu am putut detecta numele.\n" +
+      "Format: <code>/pacient_nou Ion Popescu 0712345678 ion@mail.com</code>"
+    );
+  if (!isValidPhone(phoneRaw))
+    return (
+      "❌ Nu am putut detecta telefonul (7-15 cifre).\n" +
+      "Ex: <code>/pacient_nou Ion Popescu 0712345678</code>"
+    );
 
   const phone = normalizePhone(phoneRaw);
   const existing = await prisma.patient.findFirst({ where: { phone } });
   if (existing) {
-    return `⚠️ Există deja: <b>${existing.name}</b> — <code>${existing.phone}</code>`;
+    return `⚠️ Există deja: <b>${existing.name}</b> — <code>${existing.phone}</code>${existing.email ? ` · ${existing.email}` : ""}`;
   }
 
   const p = await prisma.patient.create({
@@ -140,14 +173,19 @@ async function cmdPacientNou(rest: string): Promise<string> {
       email: email ? email.trim() : null,
     },
   });
-  return `✅ Pacient creat: <b>${p.name}</b> — <code>${p.phone}</code>`;
+  return (
+    `✅ <b>Pacient creat</b>\n` +
+    `👤 ${p.name}\n` +
+    `📞 <code>${p.phone}</code>` +
+    (p.email ? `\n📧 ${p.email}` : "")
+  );
 }
 
 async function cmdProgramareNoua(rest: string): Promise<string> {
-  const parts = splitArgs(rest);
+  const parts = splitComma(rest);
   if (parts.length < 3) {
     return (
-      "❌ Format: <code>/programare_noua telefon | slug_serviciu | YYYY-MM-DD HH:MM | durată?</code>\n" +
+      "❌ Format: <code>/programare_noua telefon, slug_serviciu, YYYY-MM-DD HH:MM, durată?</code>\n" +
       "Folosește /servicii pentru lista de slug-uri."
     );
   }

@@ -322,6 +322,7 @@ export async function notifyCreated(a: AppointmentFull) {
     appointmentId: a.id,
     payload:
       `<b>Programare nouă</b>\n${clientLine(a)}\n📞 ${a.patient.phone}` +
+      (a.patient.email ? `\n📧 ${a.patient.email}` : "") +
       (a.notes ? `\n📝 ${a.notes}` : ""),
   });
 
@@ -362,7 +363,8 @@ export async function notifyConfirmed(a: AppointmentFull) {
     channel: "telegram",
     recipient: TELEGRAM_CHAT_ID || "admin",
     appointmentId: a.id,
-    payload: `✅ <b>Programare confirmată</b>\n${clientLine(a)}\n📞 ${a.patient.phone}`,
+    payload: `✅ <b>Programare confirmată</b>\n${clientLine(a)}\n📞 ${a.patient.phone}` +
+      (a.patient.email ? `\n📧 ${a.patient.email}` : ""),
   });
 
   if (a.patient.email) {
@@ -390,6 +392,7 @@ export async function notifyCancelled(a: AppointmentFull, reason?: string) {
     appointmentId: a.id,
     payload:
       `❌ <b>Programare anulată</b>\n${clientLine(a)}\n📞 ${a.patient.phone}` +
+      (a.patient.email ? `\n📧 ${a.patient.email}` : "") +
       (reason ? `\nMotiv: ${reason}` : ""),
   });
 
