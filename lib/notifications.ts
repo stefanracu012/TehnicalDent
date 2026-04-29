@@ -25,9 +25,30 @@ const TELEGRAM_CHAT_ID =
 const WA_TOKEN = process.env.WHATSAPP_TOKEN || "";
 const WA_PHONE_ID = process.env.WHATSAPP_PHONE_ID || "";
 
-// Email (Resend) — https://resend.com
-const RESEND_API_KEY = process.env.RESEND_API_KEY || "";
+// Email (Nodemailer SMTP)
+import nodemailer, { type Transporter } from "nodemailer";
+const SMTP_HOST = process.env.SMTP_HOST || "";
+const SMTP_PORT = parseInt(process.env.SMTP_PORT || "587", 10);
+const SMTP_USER = process.env.SMTP_USER || "";
+const SMTP_PASS = process.env.SMTP_PASS || "";
+const SMTP_SECURE =
+  process.env.SMTP_SECURE === "true" || SMTP_PORT === 465;
 const EMAIL_FROM = process.env.EMAIL_FROM || "TechnicalDent <noreply@tehnicaldent.md>";
+
+let _transporter: Transporter | null = null;
+function getTransporter(): Transporter {
+  if (_transporter) return _transporter;
+  if (!SMTP_HOST || !SMTP_USER || !SMTP_PASS) {
+    throw new Error("Email not configured (SMTP_HOST / SMTP_USER / SMTP_PASS)");
+  }
+  _transporter = nodemailer.createTransport({
+    host: SMTP_HOST,
+    port: SMTP_PORT,
+    secure: SMTP_SECURE,
+    auth: { user: SMTP_USER, pass: SMTP_PASS },
+  });
+  return _transporter;
+}
 
 const MAX_ATTEMPTS = 3;
 
@@ -98,27 +119,14 @@ interface EmailPayload {
 }
 
 async function sendEmailRaw(to: string, payload: EmailPayload): Promise<void> {
-  if (!RESEND_API_KEY) {
-    throw new Error("Email not configured (RESEND_API_KEY)");
-  }
-  const res = await fetch("https://api.resend.com/emails", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${RESEND_API_KEY}`,
-    },
-    body: JSON.stringify({
-      from: EMAIL_FROM,
-      to: [to],
-      subject: payload.subject,
-      html: payload.html,
-      text: payload.text,
-    }),
+  const transporter = getTransporter();
+  await transporter.sendMail({
+    from: EMAIL_FROM,
+    to,
+    subject: payload.subject,
+    html: payload.html,
+    text: payload.text,
   });
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Resend API ${res.status}: ${body.slice(0, 300)}`);
-  }
 }
 
 // ---- Queue + retry ----
