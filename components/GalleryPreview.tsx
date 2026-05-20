@@ -309,8 +309,8 @@ export default function GalleryPreview({ images }: GalleryPreviewProps) {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 key={selectedIndex}
-                src={GALLERY_ITEMS[selectedIndex].src}
-                alt={GALLERY_ITEMS[selectedIndex].alt}
+                src={GALLERY_ITEMS[selectedIndex]?.src}
+                alt={GALLERY_ITEMS[selectedIndex]?.alt ?? ""}
                 onLoad={() => setImgLoaded(true)}
                 className={`w-full max-h-[72vh] object-contain transition-opacity duration-400 ${
                   imgLoaded ? "opacity-100" : "opacity-0"
@@ -368,7 +368,7 @@ export default function GalleryPreview({ images }: GalleryPreviewProps) {
 
             {/* Caption */}
             <p className="mt-4 text-white/50 text-sm text-center px-4">
-              {GALLERY_ITEMS[selectedIndex].alt}
+              {GALLERY_ITEMS[selectedIndex]?.alt ?? ""}
             </p>
 
             {/* Dot strip */}

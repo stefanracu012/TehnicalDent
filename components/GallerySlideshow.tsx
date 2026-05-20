@@ -65,7 +65,7 @@ export default function GallerySlideshow({
     return () => cancelAnimationFrame(rafRef.current);
   }, [current, paused, autoInterval]);
 
-  if (!items.length) return null;
+  if (!items.length || !items[current]) return null;
 
   return (
     <div

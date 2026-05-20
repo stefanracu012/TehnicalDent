@@ -68,7 +68,7 @@ export default function ServiceBentoGrid({
       {services.slice(0, 8).map((service, index) => {
         const size = bentoSizes[index] ?? "normal";
         const image =
-          service.images?.[0] || `/images/services/${service.slug}.jpg`;
+          (service.images?.[0] as string | undefined) || `/images/services/${service.slug}.jpg` || "/images/hero-dentist.jpg";
 
         const colClass =
           size === "large"
