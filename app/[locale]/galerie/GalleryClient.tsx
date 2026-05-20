@@ -21,10 +21,13 @@ export default function GalleryClient({ images: rawImages, ctaImage }: Props) {
   const t = useTranslations("Gallery");
   const tNav = useTranslations("Nav");
 
-  // Defensive: filter out invalid images upfront
-  const images = (rawImages || []).filter(
-    (img): img is GalleryImage =>
-      !!img && typeof img.url === "string" && img.url.length > 0,
+  // Defensive: filter out invalid images upfront and normalize nullish fields
+  const images = useMemo(
+    () =>
+      (rawImages || [])
+        .filter((img) => !!img && typeof img.url === "string" && img.url.length > 0)
+        .map((img) => ({ ...img, alt: img.alt ?? "", category: img.category ?? "" })) as GalleryImage[],
+    [rawImages],
   );
 
   // Build categories dynamically from images (already localized)
