@@ -31,12 +31,15 @@ interface GalleryPreviewProps {
 }
 
 export default function GalleryPreview({ images }: GalleryPreviewProps) {
+  const safeImages = (images || []).filter(
+    (img) => !!img && typeof img.url === "string" && img.url.length > 0,
+  );
   const GALLERY_ITEMS: GalleryItem[] =
-    images && images.length > 0
-      ? images.slice(0, 10).map((img, i) => ({
+    safeImages.length > 0
+      ? safeImages.slice(0, 10).map((img, i) => ({
           src: img.url,
-          alt: img.alt,
-          label: img.category,
+          alt: img.alt ?? "",
+          label: img.category ?? "",
           span: SPAN_PATTERN[i] ?? "normal",
         }))
       : FALLBACK_ITEMS;

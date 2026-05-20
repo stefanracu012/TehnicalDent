@@ -17,9 +17,14 @@ interface Props {
   ctaImage?: string;
 }
 
-export default function GalleryClient({ images, ctaImage }: Props) {
+export default function GalleryClient({ images: rawImages, ctaImage }: Props) {
   const t = useTranslations("Gallery");
   const tNav = useTranslations("Nav");
+
+  // Defensive: filter out invalid images upfront
+  const images = (rawImages || []).filter(
+    (img): img is GalleryImage => !!img && typeof img.url === "string" && img.url.length > 0,
+  );
 
   // Build categories dynamically from images (already localized)
   const uniqueCategories = Array.from(
@@ -127,7 +132,7 @@ export default function GalleryClient({ images, ctaImage }: Props) {
             <Image
               key={img.url}
               src={img.url}
-              alt={img.alt}
+              alt={img.alt ?? ""}
               fill
               sizes="100vw"
               priority={i === 0}

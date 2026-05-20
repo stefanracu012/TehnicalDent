@@ -29,10 +29,13 @@ const ASPECT_PATTERNS = [
 ];
 
 export default function GalleryGrid({
-  images,
+  images: rawImages,
   columns = 3,
   variant = "masonry",
 }: GalleryGridProps) {
+  const images = (rawImages || []).filter(
+    (img): img is GalleryImage => !!img && typeof img.url === "string" && img.url.length > 0,
+  );
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [lightboxVisible, setLightboxVisible] = useState(false);
   const [imgLoaded, setImgLoaded] = useState(false);

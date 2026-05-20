@@ -17,11 +17,14 @@ interface GallerySlideshowProps {
 }
 
 export default function GallerySlideshow({
-  items,
+  items: rawItems,
   autoInterval = 5000,
   onOpen,
   className = "",
 }: GallerySlideshowProps) {
+  const items = (rawItems || []).filter(
+    (it): it is SlideItem => !!it && typeof it.src === "string" && it.src.length > 0,
+  );
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);
   const [progress, setProgress] = useState(0);
@@ -132,10 +135,10 @@ export default function GallerySlideshow({
       {/* ── LABEL + CAPTION bottom-left ───────────────── */}
       <div className="absolute bottom-12 left-6 z-30 pointer-events-none select-none">
         <p className="text-xs font-semibold uppercase tracking-[0.25em] text-accent mb-1.5">
-          {items[current].label}
+          {items[current]?.label ?? ""}
         </p>
         <p className="text-white/85 text-sm font-medium max-w-xs leading-snug">
-          {items[current].alt}
+          {items[current]?.alt ?? ""}
         </p>
       </div>
 
