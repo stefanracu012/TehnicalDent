@@ -35,13 +35,20 @@ export default function GalleryPreview({ images }: GalleryPreviewProps) {
     const safe = (images || [])
       .filter((img) => !!img && typeof img.url === "string" && img.url.length > 0)
       .map((img) => ({ ...img, alt: img.alt ?? "", category: img.category ?? "" }));
-    if (safe.length === 0) return FALLBACK_ITEMS;
-    return safe.slice(0, 10).map((img, i) => ({
-      src: img.url,
-      alt: img.alt ?? "",
-      label: img.category ?? "",
-      span: SPAN_PATTERN[i] ?? "normal",
-    }));
+    const base =
+      safe.length === 0
+        ? FALLBACK_ITEMS
+        : safe.slice(0, 10).map((img, i) => ({
+            src: img.url,
+            alt: img.alt ?? "",
+            label: img.category ?? "",
+            span: SPAN_PATTERN[i] ?? "normal",
+          }));
+    // Always pad to 10 items so fixed-index GalleryCard[0..9] never receives undefined
+    while (base.length < 10) {
+      base.push(FALLBACK_ITEMS[base.length % FALLBACK_ITEMS.length]);
+    }
+    return base;
   }, [images]);
 
   const t = useTranslations("GalleryPreview");
@@ -433,6 +440,8 @@ function GalleryCard({
     observer.observe(el);
     return () => observer.disconnect();
   }, [delay]);
+
+  if (!item) return <div className={`bg-muted ${className}`} />;
 
   return (
     <div
