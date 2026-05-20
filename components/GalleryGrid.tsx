@@ -35,10 +35,9 @@ export default function GalleryGrid({
 }: GalleryGridProps) {
   const images = useMemo(
     () =>
-      (rawImages || []).filter(
-        (img): img is GalleryImage =>
-          !!img && typeof img.url === "string" && img.url.length > 0,
-      ),
+      (rawImages || [])
+        .filter((img) => !!img && typeof img.url === "string" && img.url.length > 0)
+        .map((img) => ({ ...img, alt: img.alt ?? "", category: img.category ?? "" })) as GalleryImage[],
     [rawImages],
   );
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);

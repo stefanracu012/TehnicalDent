@@ -24,10 +24,9 @@ export default function GallerySlideshow({
 }: GallerySlideshowProps) {
   const items = useMemo(
     () =>
-      (rawItems || []).filter(
-        (it): it is SlideItem =>
-          !!it && typeof it.src === "string" && it.src.length > 0,
-      ),
+      (rawItems || [])
+        .filter((it) => !!it && typeof it.src === "string" && it.src.length > 0)
+        .map((it) => ({ ...it, alt: it.alt ?? "", label: it.label ?? "" })) as SlideItem[],
     [rawItems],
   );
   const [current, setCurrent] = useState(0);
@@ -93,7 +92,7 @@ export default function GallerySlideshow({
           <Image
             key={i === current ? `a-${current}` : `i-${i}`}
             src={item.src}
-            alt={item.alt}
+            alt={item.alt ?? ""}
             fill
             sizes="100vw"
             className={`object-cover ${

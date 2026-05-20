@@ -32,9 +32,9 @@ interface GalleryPreviewProps {
 
 export default function GalleryPreview({ images }: GalleryPreviewProps) {
   const GALLERY_ITEMS = useMemo<GalleryItem[]>(() => {
-    const safe = (images || []).filter(
-      (img) => !!img && typeof img.url === "string" && img.url.length > 0,
-    );
+    const safe = (images || [])
+      .filter((img) => !!img && typeof img.url === "string" && img.url.length > 0)
+      .map((img) => ({ ...img, alt: img.alt ?? "", category: img.category ?? "" }));
     if (safe.length === 0) return FALLBACK_ITEMS;
     return safe.slice(0, 10).map((img, i) => ({
       src: img.url,
@@ -449,7 +449,7 @@ function GalleryCard({
     >
       <Image
         src={item.src}
-        alt={item.alt}
+        alt={item.alt ?? ""}
         fill
         sizes="(max-width: 768px) 50vw, 25vw"
         className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
