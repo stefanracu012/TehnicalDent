@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Image from "next/image";
 
 interface GalleryImage {
@@ -33,8 +33,13 @@ export default function GalleryGrid({
   columns = 3,
   variant = "masonry",
 }: GalleryGridProps) {
-  const images = (rawImages || []).filter(
-    (img): img is GalleryImage => !!img && typeof img.url === "string" && img.url.length > 0,
+  const images = useMemo(
+    () =>
+      (rawImages || []).filter(
+        (img): img is GalleryImage =>
+          !!img && typeof img.url === "string" && img.url.length > 0,
+      ),
+    [rawImages],
   );
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [lightboxVisible, setLightboxVisible] = useState(false);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Image from "next/image";
 
 interface SlideItem {
@@ -22,8 +22,13 @@ export default function GallerySlideshow({
   onOpen,
   className = "",
 }: GallerySlideshowProps) {
-  const items = (rawItems || []).filter(
-    (it): it is SlideItem => !!it && typeof it.src === "string" && it.src.length > 0,
+  const items = useMemo(
+    () =>
+      (rawItems || []).filter(
+        (it): it is SlideItem =>
+          !!it && typeof it.src === "string" && it.src.length > 0,
+      ),
+    [rawItems],
   );
   const [current, setCurrent] = useState(0);
   const [paused, setPaused] = useState(false);

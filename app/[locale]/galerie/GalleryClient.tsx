@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useMemo, useRef, useCallback } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
@@ -23,7 +23,8 @@ export default function GalleryClient({ images: rawImages, ctaImage }: Props) {
 
   // Defensive: filter out invalid images upfront
   const images = (rawImages || []).filter(
-    (img): img is GalleryImage => !!img && typeof img.url === "string" && img.url.length > 0,
+    (img): img is GalleryImage =>
+      !!img && typeof img.url === "string" && img.url.length > 0,
   );
 
   // Build categories dynamically from images (already localized)
@@ -48,10 +49,13 @@ export default function GalleryClient({ images: rawImages, ctaImage }: Props) {
 
   const slideCount = Math.min(images.length, 10);
 
-  const filtered =
-    activeCategory === "Toate"
-      ? images
-      : images.filter((img) => img.category === activeCategory);
+  const filtered = useMemo(
+    () =>
+      activeCategory === "Toate"
+        ? images
+        : images.filter((img) => img.category === activeCategory),
+    [images, activeCategory],
+  );
 
   const goNext = useCallback(() => {
     setHeroSlide((prev) => (prev + 1) % slideCount);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
@@ -31,18 +31,18 @@ interface GalleryPreviewProps {
 }
 
 export default function GalleryPreview({ images }: GalleryPreviewProps) {
-  const safeImages = (images || []).filter(
-    (img) => !!img && typeof img.url === "string" && img.url.length > 0,
-  );
-  const GALLERY_ITEMS: GalleryItem[] =
-    safeImages.length > 0
-      ? safeImages.slice(0, 10).map((img, i) => ({
-          src: img.url,
-          alt: img.alt ?? "",
-          label: img.category ?? "",
-          span: SPAN_PATTERN[i] ?? "normal",
-        }))
-      : FALLBACK_ITEMS;
+  const GALLERY_ITEMS = useMemo<GalleryItem[]>(() => {
+    const safe = (images || []).filter(
+      (img) => !!img && typeof img.url === "string" && img.url.length > 0,
+    );
+    if (safe.length === 0) return FALLBACK_ITEMS;
+    return safe.slice(0, 10).map((img, i) => ({
+      src: img.url,
+      alt: img.alt ?? "",
+      label: img.category ?? "",
+      span: SPAN_PATTERN[i] ?? "normal",
+    }));
+  }, [images]);
 
   const t = useTranslations("GalleryPreview");
   const sectionRef = useRef<HTMLDivElement>(null);
