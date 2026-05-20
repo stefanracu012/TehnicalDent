@@ -415,8 +415,13 @@ export async function getGalleryImages(): Promise<GalleryImage[]> {
       where: { isActive: true },
       orderBy: { order: "asc" },
     });
-    if (images.length > 0) {
-      return images as GalleryImage[];
+    const valid = images.filter((img) => img.url && typeof img.url === "string" && img.url.length > 0);
+    if (valid.length > 0) {
+      return valid.map((img) => ({
+        ...img,
+        alt: img.alt || "",
+        category: img.category || "",
+      })) as GalleryImage[];
     }
   } catch (error) {
     console.log("Database not available, using mock data");

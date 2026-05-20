@@ -269,6 +269,7 @@ function Lightbox({
 }: LightboxProps) {
   if (selectedIndex === null) return null;
   const image = images[selectedIndex];
+  if (!image) return null;
 
   return (
     <div

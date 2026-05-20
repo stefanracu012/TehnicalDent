@@ -245,7 +245,7 @@ export default function GalleryPreview({ images }: GalleryPreviewProps) {
       </div>
 
       {/* ─── LIGHTBOX ─────────────────────────────────────── */}
-      {selectedIndex !== null && (
+      {selectedIndex !== null && GALLERY_ITEMS[selectedIndex] && (
         <div
           className={`fixed inset-0 z-[999] flex items-center justify-center transition-all duration-350 ${
             lightboxOpen
