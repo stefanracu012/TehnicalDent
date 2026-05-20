@@ -358,7 +358,11 @@ export async function getServices(): Promise<Service[]> {
       orderBy: { order: "asc" },
     });
     if (services.length > 0) {
-      return services as Service[];
+      return services.map((s) => ({
+        ...s,
+        images: Array.isArray(s.images) ? s.images.filter(Boolean) : [],
+        benefits: Array.isArray(s.benefits) ? s.benefits.filter(Boolean) : [],
+      })) as Service[];
     }
   } catch (error) {
     console.log("Database not available, using mock data");
@@ -372,7 +376,11 @@ export async function getServiceBySlug(slug: string): Promise<Service | null> {
       where: { slug },
     });
     if (service) {
-      return service as Service;
+      return {
+        ...service,
+        images: Array.isArray(service.images) ? service.images.filter(Boolean) : [],
+        benefits: Array.isArray(service.benefits) ? service.benefits.filter(Boolean) : [],
+      } as Service;
     }
   } catch (error) {
     console.log("Database not available, using mock data");
@@ -387,7 +395,10 @@ export async function getTeamMembers(): Promise<TeamMember[]> {
       orderBy: { order: "asc" },
     });
     if (members.length > 0) {
-      return members as TeamMember[];
+      return members.map((m) => ({
+        ...m,
+        image: m.image || "/images/team/placeholder.jpg",
+      })) as TeamMember[];
     }
   } catch (error) {
     console.log("Database not available, using mock data");
