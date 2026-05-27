@@ -102,8 +102,8 @@ export default function HeroSlideshow({
         </div>
       </div>
 
-      {/* Slide indicators — bottom left, aligned with text */}
-      <div className="absolute bottom-10 left-0 z-20 flex items-center gap-2 px-24 lg:px-36">
+      {/* Slide indicators — bottom center */}
+      <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
         {SLIDES.map((_, i) => (
           <button
             key={i}
