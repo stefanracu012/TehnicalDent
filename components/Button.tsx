@@ -29,10 +29,10 @@ export default function Button({
     "inline-flex items-center justify-center font-medium transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed";
 
   const variants = {
-    primary: "bg-foreground text-white hover:bg-foreground/90 hover:shadow-lg",
+    primary: "bg-accent text-white hover:bg-accent/90 hover:shadow-lg",
     secondary: "bg-muted text-foreground hover:bg-border",
     outline:
-      "border border-foreground text-foreground hover:bg-foreground hover:text-white",
+      "border border-accent text-accent hover:bg-accent hover:text-white",
   };
 
   const sizes = {

@@ -177,7 +177,7 @@ export default function Header() {
           <div className="hidden lg:flex lg:flex-1 lg:justify-end lg:items-center">
             <Link
               href="/contact"
-              className="rounded-none bg-foreground px-6 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:bg-foreground/90 hover:shadow-lg"
+              className="rounded-none bg-accent px-6 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:bg-accent/90 hover:shadow-lg"
             >
               {tNav("programare")}
             </Link>
@@ -209,7 +209,7 @@ export default function Header() {
 
             <Link
               href="/contact"
-              className="mt-5 block w-full rounded-none bg-foreground px-6 py-3 text-center text-base font-medium text-white transition-colors hover:bg-foreground/90"
+              className="mt-5 block w-full rounded-none bg-accent px-6 py-3 text-center text-base font-medium text-white transition-colors hover:bg-accent/90"
               onClick={() => setMobileMenuOpen(false)}
             >
               {tNav("programare")}
