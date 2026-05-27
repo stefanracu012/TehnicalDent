@@ -199,7 +199,13 @@ export default async function AboutPage({
             </div>
           </div>
           <div className="relative">
-            <div className="aspect-[4/5] overflow-hidden rounded-2xl shadow-xl relative">
+            <div
+              className="aspect-square overflow-hidden rounded-2xl relative"
+              style={{
+                boxShadow:
+                  "0 0 0 6px rgba(116,150,142,0.25), 0 20px 60px 0 rgba(116,150,142,0.55), inset 0 0 60px 10px rgba(116,150,142,0.22)",
+              }}
+            >
               <Image
                 src={aboutStoryImage}
                 alt={t("clinicaImgAlt")}
@@ -271,7 +277,13 @@ export default async function AboutPage({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {teamMembers.map((member) => (
             <div key={member.id} className="group">
-              <div className="relative aspect-[3/4] overflow-hidden rounded-2xl bg-muted">
+              <div
+                className="relative aspect-square overflow-hidden rounded-2xl bg-muted"
+                style={{
+                  boxShadow:
+                    "0 8px 32px 0 rgba(116,150,142,0.35), inset 0 0 32px 0 rgba(116,150,142,0.18)",
+                }}
+              >
                 <Image
                   src={member.image}
                   alt={member.name}
@@ -279,14 +291,18 @@ export default async function AboutPage({
                   sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                <div className="absolute inset-x-0 bottom-0 p-5 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
-                  <p className="text-xs text-white/70 leading-relaxed line-clamp-3">
+                <div className="absolute inset-0 bg-gradient-to-t from-[#1e3530]/80 via-[#74968E]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                <div className="absolute inset-x-0 bottom-0 p-4 translate-y-4 opacity-0 group-hover:translate-y-0 group-hover:opacity-100 transition-all duration-300">
+                  <p className="text-xs text-white/80 leading-relaxed line-clamp-3">
                     {member.description}
                   </p>
                 </div>
+                {/* accent strip inside image bottom */}
+                <div className="absolute inset-x-0 bottom-0 h-1 bg-accent" />
               </div>
-              <div className="pt-5">
+              {/* accent strip outside image */}
+              <div className="h-1.5 rounded-b-xl bg-accent/20 mx-1 mb-0" />
+              <div className="pt-4">
                 <h3 className="font-serif text-lg font-medium text-foreground">
                   {member.name}
                 </h3>

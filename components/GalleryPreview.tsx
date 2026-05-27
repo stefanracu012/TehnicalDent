@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import Image from "next/image";
 import { Link } from "@/i18n/navigation";
 import { useTranslations } from "next-intl";
-import GallerySlideshow from "@/components/GallerySlideshow";
 
 const SPAN_PATTERN = [
   "large",
@@ -126,14 +125,6 @@ export default function GalleryPreview({ images }: GalleryPreviewProps) {
 
   return (
     <div ref={sectionRef} className="relative overflow-hidden">
-      {/* ── AUTO SLIDESHOW ── */}
-      <GallerySlideshow
-        items={GALLERY_ITEMS}
-        autoInterval={5000}
-        onOpen={openLightbox}
-        className="h-[52vh] md:h-[65vh] mb-14"
-      />
-
       {/* Heading row */}
       <div
         ref={headingRef}
@@ -147,9 +138,7 @@ export default function GalleryPreview({ images }: GalleryPreviewProps) {
             {t("subtitle")}
           </p>
           <h2 className="font-serif text-3xl font-medium tracking-tight text-foreground sm:text-4xl lg:text-5xl">
-            {t("title")}
-            <br />
-            <span className="italic font-normal">{t("titleAccent")}</span>
+            Galerie
           </h2>
         </div>
         <p className="text-muted-foreground max-w-sm leading-relaxed text-sm md:text-base md:text-right">
@@ -157,82 +146,20 @@ export default function GalleryPreview({ images }: GalleryPreviewProps) {
         </p>
       </div>
 
-      {/* Asymmetric mosaic grid */}
+      {/* Uniform 1:1 grid */}
       <div
         ref={gridRef}
-        className="grid grid-cols-2 md:grid-cols-4 grid-rows-[auto] gap-3 md:gap-4"
+        className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"
       >
-        {/* Item 1 — large (2×2) */}
-        <GalleryCard
-          item={GALLERY_ITEMS[0]}
-          className="col-span-2 row-span-2 md:h-[480px] h-[280px]"
-          delay={0}
-          onOpen={() => openLightbox(0)}
-        />
-
-        {/* Item 2 — top-right */}
-        <GalleryCard
-          item={GALLERY_ITEMS[1]}
-          className="col-span-1 md:col-span-1 h-[180px] md:h-[232px]"
-          delay={80}
-          onOpen={() => openLightbox(1)}
-        />
-
-        {/* Item 3 — top-right */}
-        <GalleryCard
-          item={GALLERY_ITEMS[2]}
-          className="col-span-1 md:col-span-1 h-[180px] md:h-[232px]"
-          delay={160}
-          onOpen={() => openLightbox(2)}
-        />
-
-        {/* Item 4 — bottom-right wide */}
-        <GalleryCard
-          item={GALLERY_ITEMS[3]}
-          className="col-span-2 md:col-span-2 h-[180px] md:h-[232px]"
-          delay={240}
-          onOpen={() => openLightbox(3)}
-        />
-
-        {/* Row 3 — full 4 columns */}
-        <GalleryCard
-          item={GALLERY_ITEMS[4]}
-          className="col-span-1 h-[180px] md:h-[220px]"
-          delay={320}
-          onOpen={() => openLightbox(4)}
-        />
-        <GalleryCard
-          item={GALLERY_ITEMS[5]}
-          className="col-span-1 h-[180px] md:h-[220px]"
-          delay={400}
-          onOpen={() => openLightbox(5)}
-        />
-        <GalleryCard
-          item={GALLERY_ITEMS[6]}
-          className="col-span-1 h-[180px] md:h-[220px]"
-          delay={480}
-          onOpen={() => openLightbox(6)}
-        />
-        <GalleryCard
-          item={GALLERY_ITEMS[7]}
-          className="col-span-1 h-[180px] md:h-[220px]"
-          delay={560}
-          onOpen={() => openLightbox(7)}
-        />
-
-        {/* Row 4 — two wide */}
-        <GalleryCard
-          item={GALLERY_ITEMS[8]}
-          className="col-span-2 h-[180px] md:h-[220px]"
-          delay={640}
-          onOpen={() => openLightbox(8)}
-        />
-        <GalleryCard
-          item={GALLERY_ITEMS[9]}
-          className="col-span-2 h-[180px] md:h-[220px]"
-          delay={720}
-          onOpen={() => openLightbox(9)}
-        />
+        {GALLERY_ITEMS.map((item, index) => (
+          <GalleryCard
+            key={index}
+            item={item}
+            className="aspect-square"
+            delay={index * 60}
+            onOpen={() => openLightbox(index)}
+          />
+        ))}
       </div>
 
       {/* CTA row */}

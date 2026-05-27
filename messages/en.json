@@ -27,7 +27,9 @@
     "copii": "Children",
     "nuStiiCeTratament": "Not sure which treatment you need?",
     "programeazaConsultatieGratuita": "Schedule a free consultation →",
-    "veziToateServiciile": "View all services"
+    "veziToateServiciile": "View all services",
+    "galeriSubtitle": "Photo gallery",
+    "galeriTitle": "Gallery"
   },
   "Home": {
     "heroTitle": "Excellence in modern dentistry",
@@ -39,6 +41,8 @@
     "serviciiTitle": "Complete dental treatments",
     "serviciiDescription": "We offer a full range of dental services, from prevention and hygiene to complex surgery and implantology procedures. Each treatment is performed with precision and attention to detail.",
     "veziToateServiciile": "View all services",
+    "galeriSubtitle": "Photo gallery",
+    "galeriTitle": "Gallery",
     "ctaTitle": "Ready to take the first step?",
     "ctaDescription": "Schedule a consultation to discuss your needs with one of our specialists and receive a personalized treatment plan. We are here to help you achieve the smile you deserve.",
     "programeazaAcum": "Book now",

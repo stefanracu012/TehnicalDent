@@ -14,6 +14,7 @@ import {
 } from "@/lib/localize";
 import HeroSlideshow from "@/components/HeroSlideshow";
 import AboutPreview from "@/components/AboutPreview";
+import ReviewsSection from "@/components/ReviewsSection";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 export default async function HomePage({
@@ -55,7 +56,7 @@ export default async function HomePage({
         />
 
         <div className="mt-12">
-          <ServiceBentoGrid services={services} />
+          <ServiceBentoGrid services={services.slice(0, 6)} />
         </div>
 
         <div className="mt-12 text-center">
@@ -72,45 +73,46 @@ export default async function HomePage({
 
       {/* Gallery Preview */}
       <Section background="muted">
-        <GalleryPreview images={galleryImages} />
-      </Section>
-
-      {/* Testimonials */}
-      <section className="bg-muted overflow-hidden">
-        <TestimonialsCarousel testimonials={testimonials.slice(0, 3)} />
-      </section>
-
-      {/* Final CTA */}
-      <Section>
-        <div className="relative py-16 lg:py-24">
-          <div className="absolute inset-0 bg-foreground" />
-          <div className="relative z-10 text-center px-6">
-            <h2 className="font-serif text-3xl font-medium tracking-tight text-white sm:text-4xl lg:text-5xl">
-              {t("ctaTitle")}
-            </h2>
-            <p className="mt-6 max-w-2xl mx-auto text-lg leading-relaxed text-white/80">
-              {t("ctaDescription")}
-            </p>
-            <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
-              <Button
-                href="/contact#formular"
-                size="lg"
-                className="!bg-background !text-foreground hover:!bg-white/90"
-              >
-                {t("programeazaAcum")}
-              </Button>
-              <Button
-                href="tel:+37379950008"
-                variant="outline"
-                size="lg"
-                className="!text-white !border-white hover:!bg-background hover:!text-foreground"
-              >
-                {t("sunaNeLabel")}
-              </Button>
-            </div>
-          </div>
+        <SectionHeader
+          subtitle={t("galeriSubtitle")}
+          title={t("galeriTitle")}
+        />
+        <div className="mt-12">
+          <GalleryPreview images={galleryImages} />
         </div>
       </Section>
+
+      {/* Reviews */}
+      <ReviewsSection testimonials={testimonials} />
+
+      {/* Final CTA */}
+      <section className="relative w-screen py-24 lg:py-36 bg-foreground text-center">
+        <div className="relative z-10 px-6">
+          <h2 className="font-serif text-3xl font-medium tracking-tight text-white sm:text-4xl lg:text-5xl">
+            {t("ctaTitle")}
+          </h2>
+          <p className="mt-6 max-w-2xl mx-auto text-lg leading-relaxed text-white/80">
+            {t("ctaDescription")}
+          </p>
+          <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
+            <Button
+              href="/contact#formular"
+              size="lg"
+              className="!bg-background !text-foreground hover:!bg-white/90"
+            >
+              {t("programeazaAcum")}
+            </Button>
+            <Button
+              href="tel:+37379950008"
+              variant="outline"
+              size="lg"
+              className="!text-white !border-white hover:!bg-background hover:!text-foreground"
+            >
+              {t("sunaNeLabel")}
+            </Button>
+          </div>
+        </div>
+      </section>
     </>
   );
 }

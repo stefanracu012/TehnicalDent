@@ -27,7 +27,9 @@
     "copii": "Bambini",
     "nuStiiCeTratament": "Non sai quale trattamento ti serve?",
     "programeazaConsultatieGratuita": "Prenota una consulenza gratuita →",
-    "veziToateServiciile": "Vedi tutti i servizi"
+    "veziToateServiciile": "Vedi tutti i servizi",
+    "galeriSubtitle": "Galleria foto",
+    "galeriTitle": "Galleria"
   },
   "Home": {
     "heroTitle": "Eccellenza nell'odontoiatria moderna",
@@ -39,6 +41,8 @@
     "serviciiTitle": "Trattamenti odontoiatrici completi",
     "serviciiDescription": "Offriamo una gamma completa di servizi odontoiatrici, dalla prevenzione e igiene agli interventi complessi di chirurgia e implantologia. Ogni trattamento è realizzato con precisione e attenzione ai dettagli.",
     "veziToateServiciile": "Vedi tutti i servizi",
+    "galeriSubtitle": "Galleria foto",
+    "galeriTitle": "Galleria",
     "ctaTitle": "Pronti a fare il primo passo?",
     "ctaDescription": "Prenota una consulenza per discutere le tue esigenze con uno dei nostri specialisti e ricevere un piano di trattamento personalizzato. Siamo qui per aiutarti a ottenere il sorriso che meriti.",
     "programeazaAcum": "Prenota ora",
