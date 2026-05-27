@@ -52,7 +52,7 @@ export default async function HomePage({
 
         {/* Text positioned in the white-wall area on the left of the image */}
         <div className="absolute inset-0 z-10 flex items-center">
-          <div className="px-16 lg:px-24 w-full max-w-5xl">
+          <div className="px-24 lg:px-36 w-full max-w-5xl">
             <div className="animate-fade-in-up space-y-8">
               <p className="text-xs font-bold uppercase tracking-[0.45em] text-accent">
                 TehnicalDent · Chișinău
