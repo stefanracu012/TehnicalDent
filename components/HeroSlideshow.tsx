@@ -109,10 +109,19 @@ export default function HeroSlideshow({
               {description}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-1">
-              <Button href="/contact#formular" size="lg" className="px-8 sm:px-10 py-4 text-sm sm:text-base">
+              <Button
+                href="/contact#formular"
+                size="lg"
+                className="px-8 sm:px-10 py-4 text-sm sm:text-base"
+              >
                 {ctaLabel}
               </Button>
-              <Button href="/servicii" variant="outline" size="lg" className="px-8 sm:px-10 py-4 text-sm sm:text-base">
+              <Button
+                href="/servicii"
+                variant="outline"
+                size="lg"
+                className="px-8 sm:px-10 py-4 text-sm sm:text-base"
+              >
                 {servicesLabel}
               </Button>
             </div>
