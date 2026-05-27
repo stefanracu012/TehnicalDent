@@ -11,8 +11,6 @@ import {
   getServices,
   getTestimonials,
   getGalleryImages,
-  getSetting,
-  getAllSettings,
 } from "@/lib/data";
 import {
   localizeService,
@@ -37,34 +35,8 @@ export default async function HomePage({
   const galleryImages = (await getGalleryImages()).map((g) =>
     localizeGalleryImage(g, locale),
   );
-  const heroImage =
-    (await getSetting("heroImage")) || "/images/f9fcff16-2ae0-4969-a4f6-8e2e5d3d7bc0.png";
-  const allSettings = await getAllSettings();
-  const heroTitle =
-    (allSettings["heroTitle_" + locale] || allSettings["heroTitle"])?.trim() ||
-    null;
-  const heroDescription =
-    (
-      allSettings["heroDescription_" + locale] || allSettings["heroDescription"]
-    )?.trim() || null;
-  const ls = (key: string) =>
-    allSettings[key + "_" + locale] || allSettings[key] || undefined;
-  const aboutOverrides = {
-    image: allSettings["aboutPreviewImage"] || undefined,
-    years: ls("aboutPreviewYears"),
-    badge: ls("aboutPreviewBadge"),
-    subtitle: ls("aboutPreviewSubtitle"),
-    title: ls("aboutPreviewTitle"),
-    p1: ls("aboutPreviewP1"),
-    p2: ls("aboutPreviewP2"),
-    stat1Value: ls("aboutPreviewStat1Value"),
-    stat1Label: ls("aboutPreviewStat1Label"),
-    stat2Value: ls("aboutPreviewStat2Value"),
-    stat2Label: ls("aboutPreviewStat2Label"),
-    stat3Value: ls("aboutPreviewStat3Value"),
-    stat3Label: ls("aboutPreviewStat3Label"),
-    link: ls("aboutPreviewLink"),
-  };
+  const heroImage = "/images/f9fcff16-2ae0-4969-a4f6-8e2e5d3d7bc0.png";
+  const aboutOverrides = {};
   const t = await getTranslations("Home");
 
   return (
@@ -85,10 +57,10 @@ export default async function HomePage({
         <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8 py-20">
           <div className="max-w-2xl animate-fade-in-up">
             <h1 className="font-serif text-4xl font-medium tracking-tight text-foreground sm:text-5xl lg:text-6xl">
-              {heroTitle ?? t("heroTitle")}
+              {t("heroTitle")}
             </h1>
             <p className="mt-8 text-lg leading-relaxed text-foreground/80">
-              {heroDescription ?? t("heroDescription")}
+              {t("heroDescription")}
             </p>
             <div className="mt-10 flex flex-col sm:flex-row gap-4">
               <Button href="/contact#formular" size="lg">
