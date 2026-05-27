@@ -9,7 +9,10 @@ const SLIDES = [
   "/ae1428f8-acda-4648-8bd0-e14249a94fd2.png",
 ];
 
-const MOBILE_IMAGE = "/2ffca908-e06d-48dd-8216-cb8538bfebf1.png";
+const MOBILE_SLIDES = [
+  "/2ffca908-e06d-48dd-8216-cb8538bfebf1.png",
+  "/54e81c12-3c06-4060-b140-2db93d4b0529.png",
+];
 
 interface HeroSlideshowProps {
   title: string;
@@ -52,16 +55,24 @@ export default function HeroSlideshow({
 
   return (
     <section className="relative h-screen overflow-hidden">
-      {/* Mobile image (shown only on small screens) */}
-      <div className="absolute inset-0 block sm:hidden">
-        <Image
-          src={MOBILE_IMAGE}
-          alt={imgAlt}
-          fill
-          priority
-          sizes="100vw"
-          className="object-cover object-top"
-        />
+      {/* Mobile images slideshow (shown only on small screens) */}
+      <div className="block sm:hidden">
+        {MOBILE_SLIDES.map((src, i) => (
+          <div
+            key={src}
+            className="absolute inset-0 transition-opacity duration-700 ease-in-out"
+            style={{ opacity: i === current % MOBILE_SLIDES.length ? 1 : 0 }}
+          >
+            <Image
+              src={src}
+              alt={imgAlt}
+              fill
+              priority={i === 0}
+              sizes="100vw"
+              className="object-cover object-top"
+            />
+          </div>
+        ))}
       </div>
 
       {/* Desktop images slideshow (hidden on mobile) */}
