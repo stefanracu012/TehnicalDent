@@ -72,7 +72,7 @@ export default async function HomePage({
       </Section>
 
       {/* Gallery Preview */}
-      <Section background="muted">
+      <Section background="muted" className="!py-8 lg:!py-20">
         <SectionHeader
           subtitle={t("galeriSubtitle")}
           title={t("galeriTitle")}
