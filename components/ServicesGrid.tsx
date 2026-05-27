@@ -115,8 +115,8 @@ export default function ServicesGrid({ services }: { services: Service[] }) {
             />
 
             {/* Gradients */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/0" />
-            <div className="absolute inset-0 bg-black/25 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#1e3530]/90 via-[#1e3530]/20 to-transparent" />
+            <div className="absolute inset-0 bg-[#74968E]/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
             {/* Content */}
             <div className="absolute inset-x-0 bottom-0 p-5 z-10">
