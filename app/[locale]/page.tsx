@@ -52,7 +52,7 @@ export default async function HomePage({
 
         {/* Text positioned in the white-wall area on the left of the image */}
         <div className="absolute inset-0 z-10 flex items-center">
-          <div className="px-16 lg:px-24 w-full max-w-2xl">
+          <div className="px-16 lg:px-24 w-full max-w-3xl">
             <div className="animate-fade-in-up space-y-8">
               <p className="text-xs font-bold uppercase tracking-[0.45em] text-accent">
                 TehnicalDent · Chișinău
@@ -60,7 +60,7 @@ export default async function HomePage({
               <h1 className="font-serif text-6xl font-semibold leading-[1.05] tracking-tight text-foreground lg:text-7xl xl:text-8xl">
                 {t("heroTitle")}
               </h1>
-              <p className="text-lg leading-relaxed text-foreground/60 max-w-sm">
+              <p className="text-lg leading-relaxed text-foreground/60 max-w-lg">
                 {t("heroDescription").split(".")[0]}.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 pt-1">

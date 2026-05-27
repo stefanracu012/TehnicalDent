@@ -79,11 +79,13 @@ export default function Header() {
   };
 
   return (
-    <header className={`left-0 right-0 z-40 bg-muted border-b border-border transition-shadow duration-300 ${
-      scrolled
-        ? "fixed top-0 shadow-md backdrop-blur-sm bg-muted/95"
-        : "relative"
-    }`}>
+    <header
+      className={`left-0 right-0 z-40 bg-muted border-b border-border transition-shadow duration-300 ${
+        scrolled
+          ? "fixed top-0 shadow-md backdrop-blur-sm bg-muted/95"
+          : "relative"
+      }`}
+    >
       <nav className="mx-auto max-w-7xl px-6 lg:px-8" aria-label="Global">
         <div className="flex h-24 items-center justify-between">
           {/* Logo */}
