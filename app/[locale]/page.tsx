@@ -7,11 +7,7 @@ export const dynamic = "force-dynamic";
 import ServiceBentoGrid from "@/components/ServiceBentoGrid";
 import TestimonialsCarousel from "@/components/TestimonialsCarousel";
 import GalleryPreview from "@/components/GalleryPreview";
-import {
-  getServices,
-  getTestimonials,
-  getGalleryImages,
-} from "@/lib/data";
+import { getServices, getTestimonials, getGalleryImages } from "@/lib/data";
 import {
   localizeService,
   localizeTestimonial,
@@ -42,7 +38,7 @@ export default async function HomePage({
   return (
     <>
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center pt-[11rem]">
+      <section className="relative min-h-screen flex items-center">
         <div className="absolute inset-0 z-0 overflow-hidden">
           <Image
             src={heroImage}
@@ -66,11 +62,7 @@ export default async function HomePage({
               <Button href="/contact#formular" size="lg">
                 {t("programeazaConsultatie")}
               </Button>
-              <Button
-                href="/servicii"
-                variant="outline"
-                size="lg"
-              >
+              <Button href="/servicii" variant="outline" size="lg">
                 {t("exploreaServiciile")}
               </Button>
             </div>

@@ -20,7 +20,7 @@ export default function TopBar() {
   }, []);
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-foreground text-white text-xs">
+    <div className="relative z-50 bg-foreground text-white text-xs">
       <div className="mx-auto max-w-7xl px-6 lg:px-8">
         <div className="flex h-9 items-center justify-center gap-6 sm:justify-end">
           {/* Phone dropdown */}

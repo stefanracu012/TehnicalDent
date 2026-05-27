@@ -2,7 +2,7 @@
 
 import { Link, usePathname } from "@/i18n/navigation";
 import Image from "next/image";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { useTranslations } from "next-intl";
 
 const navigationItems = [
@@ -48,10 +48,17 @@ const megaMenuCategories = [
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [megaOpen, setMegaOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const tNav = useTranslations("Nav");
   const tMega = useTranslations("MegaMenu");
   const pathname = usePathname();
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   const handleLogoClick = useCallback(
     (e: React.MouseEvent) => {
@@ -72,7 +79,11 @@ export default function Header() {
   };
 
   return (
-    <header className="fixed top-9 left-0 right-0 z-40 bg-muted/95 backdrop-blur-sm border-b border-border">
+    <header className={`left-0 right-0 z-40 bg-muted border-b border-border transition-shadow duration-300 ${
+      scrolled
+        ? "fixed top-0 shadow-md backdrop-blur-sm bg-muted/95"
+        : "relative"
+    }`}>
       <nav className="mx-auto max-w-7xl px-6 lg:px-8" aria-label="Global">
         <div className="flex h-24 items-center justify-between">
           {/* Logo */}
