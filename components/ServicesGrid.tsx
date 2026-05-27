@@ -96,7 +96,7 @@ export default function ServicesGrid({ services }: { services: Service[] }) {
             key={service.slug}
             data-card
             onClick={() => router.push(`/servicii/${service.slug}`)}
-            className="group relative overflow-hidden rounded-2xl cursor-pointer h-[280px]"
+            className="group relative overflow-hidden rounded-2xl cursor-pointer aspect-square"
             style={{
               opacity: 0,
               transform: "translateY(20px)",

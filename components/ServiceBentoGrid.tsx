@@ -78,11 +78,8 @@ export default function ServiceBentoGrid({
             : size === "wide"
               ? "sm:col-span-2 lg:col-span-2"
               : "";
-        const rowClass = size === "large" ? "lg:row-span-2" : "";
-        const heightClass =
-          size === "large"
-            ? "h-[300px] sm:h-[380px] lg:h-full"
-            : "h-[200px] sm:h-[220px] lg:h-full";
+        const rowClass = "";
+        const heightClass = "aspect-square";
 
         const titleSize = size === "large" ? "text-2xl lg:text-3xl" : "text-lg";
         const descLines = size === "large" ? "line-clamp-4" : "line-clamp-2";
