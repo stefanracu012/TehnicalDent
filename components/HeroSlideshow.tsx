@@ -9,6 +9,8 @@ const SLIDES = [
   "/ae1428f8-acda-4648-8bd0-e14249a94fd2.png",
 ];
 
+const MOBILE_IMAGE = "/2ffca908-e06d-48dd-8216-cb8538bfebf1.png";
+
 interface HeroSlideshowProps {
   title: string;
   description: string;
@@ -50,51 +52,56 @@ export default function HeroSlideshow({
 
   return (
     <section className="relative h-screen overflow-hidden">
-      {/* Images */}
-      {SLIDES.map((src, i) => (
-        <div
-          key={src}
-          className="absolute inset-0 transition-opacity duration-700 ease-in-out"
-          style={{ opacity: i === current ? 1 : 0 }}
-        >
-          <Image
-            src={src}
-            alt={imgAlt}
-            fill
-            priority={i === 0}
-            sizes="100vw"
-            className="object-cover object-top"
-          />
-        </div>
-      ))}
+      {/* Mobile image (shown only on small screens) */}
+      <div className="absolute inset-0 block sm:hidden">
+        <Image
+          src={MOBILE_IMAGE}
+          alt={imgAlt}
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover object-top"
+        />
+      </div>
 
-      {/* Text */}
-      <div className="absolute inset-0 z-10 flex items-center">
-        <div className="px-24 lg:px-36 w-full max-w-5xl">
-          <div className="animate-fade-in-up space-y-8">
+      {/* Desktop images slideshow (hidden on mobile) */}
+      <div className="hidden sm:block">
+        {SLIDES.map((src, i) => (
+          <div
+            key={src}
+            className="absolute inset-0 transition-opacity duration-700 ease-in-out"
+            style={{ opacity: i === current ? 1 : 0 }}
+          >
+            <Image
+              src={src}
+              alt={imgAlt}
+              fill
+              priority={i === 0}
+              sizes="100vw"
+              className="object-cover object-top"
+            />
+          </div>
+        ))}
+      </div>
+
+      {/* Text — top on mobile, center on desktop */}
+      <div className="absolute inset-0 z-10 flex items-start sm:items-center pt-10 sm:pt-0">
+        <div className="px-6 sm:px-24 lg:px-36 w-full max-w-5xl">
+          <div className="animate-fade-in-up space-y-5 sm:space-y-8">
             <p className="text-xs font-bold uppercase tracking-[0.45em] text-accent">
               {badge}
             </p>
-            <h1 className="font-serif text-6xl font-semibold leading-[1.05] tracking-tight text-foreground lg:text-7xl xl:text-8xl">
+            <h1 className="font-serif text-4xl sm:text-6xl font-semibold leading-[1.05] tracking-tight text-foreground lg:text-7xl xl:text-8xl">
               {title}
             </h1>
-            <p className="text-xl leading-relaxed text-foreground/60 max-w-2xl">
+            <p className="text-base sm:text-xl leading-relaxed text-foreground/60 max-w-xs sm:max-w-2xl">
               {description}
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 pt-1">
-              <Button
-                href="/contact#formular"
-                size="lg"
-                className="px-10 py-4 text-base"
-              >
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 pt-1">
+              <Button href="/contact#formular" size="lg" className="px-8 sm:px-10 py-4 text-sm sm:text-base">
                 {ctaLabel}
               </Button>
-              <Button
-                href="/servicii"
-                variant="outline"
-                size="lg"
-                className="px-10 py-4 text-base"
-              >
+              <Button href="/servicii" variant="outline" size="lg" className="px-8 sm:px-10 py-4 text-sm sm:text-base">
                 {servicesLabel}
               </Button>
             </div>
