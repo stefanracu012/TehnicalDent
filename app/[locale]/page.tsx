@@ -79,18 +79,15 @@ export default async function HomePage({
             priority
             sizes="100vw"
             className="object-cover animate-ken-burns"
-            style={{ filter: "saturate(0.8) brightness(0.6)" }}
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/30 to-black/10" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
         </div>
 
         <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8 py-20">
           <div className="max-w-2xl animate-fade-in-up">
-            <h1 className="font-serif text-4xl font-medium tracking-tight text-white sm:text-5xl lg:text-6xl">
+            <h1 className="font-serif text-4xl font-medium tracking-tight text-foreground sm:text-5xl lg:text-6xl">
               {heroTitle ?? t("heroTitle")}
             </h1>
-            <p className="mt-8 text-lg leading-relaxed text-white/90">
+            <p className="mt-8 text-lg leading-relaxed text-foreground/80">
               {heroDescription ?? t("heroDescription")}
             </p>
             <div className="mt-10 flex flex-col sm:flex-row gap-4">
@@ -101,7 +98,6 @@ export default async function HomePage({
                 href="/servicii"
                 variant="outline"
                 size="lg"
-                className="!text-white !border-white hover:!bg-background hover:!text-foreground"
               >
                 {t("exploreaServiciile")}
               </Button>
@@ -111,7 +107,7 @@ export default async function HomePage({
 
         {/* Scroll indicator */}
         <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10">
-          <div className="w-px h-16 bg-gradient-to-b from-white/50 to-transparent animate-pulse" />
+          <div className="w-px h-16 bg-gradient-to-b from-foreground/30 to-transparent animate-pulse" />
         </div>
       </section>
 
