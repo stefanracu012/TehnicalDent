@@ -51,21 +51,21 @@ export default async function HomePage({
         </div>
 
         <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8 py-20 w-full">
-          <div className="max-w-xl animate-fade-in-up">
-            <p className="text-xs font-bold uppercase tracking-[0.25em] text-accent mb-4">
-              TehnicalDent
+          <div className="max-w-lg animate-fade-in-up">
+            <p className="text-xs font-bold uppercase tracking-[0.35em] text-accent mb-6">
+              TehnicalDent · Chișinău
             </p>
-            <h1 className="font-serif text-4xl font-medium tracking-tight text-foreground sm:text-5xl lg:text-6xl">
+            <h1 className="font-serif text-5xl font-semibold leading-[1.1] tracking-tight text-foreground sm:text-6xl lg:text-7xl">
               {t("heroTitle")}
             </h1>
-            <p className="mt-6 text-base leading-relaxed text-foreground/70 max-w-lg">
-              {t("heroDescription")}
+            <p className="mt-6 text-base leading-relaxed text-foreground/60 max-w-sm">
+              {t("heroDescription").split(".")[0]}.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row gap-4">
-              <Button href="/contact#formular" size="lg">
+              <Button href="/contact#formular" size="lg" className="px-8 py-4 text-base">
                 {t("programeazaConsultatie")}
               </Button>
-              <Button href="/servicii" variant="outline" size="lg">
+              <Button href="/servicii" variant="outline" size="lg" className="px-8 py-4 text-base">
                 {t("exploreaServiciile")}
               </Button>
             </div>
