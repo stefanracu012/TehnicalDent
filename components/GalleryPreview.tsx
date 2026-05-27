@@ -33,8 +33,14 @@ interface GalleryPreviewProps {
 export default function GalleryPreview({ images }: GalleryPreviewProps) {
   const GALLERY_ITEMS = useMemo<GalleryItem[]>(() => {
     const safe = (images || [])
-      .filter((img) => !!img && typeof img.url === "string" && img.url.length > 0)
-      .map((img) => ({ ...img, alt: img.alt ?? "", category: img.category ?? "" }));
+      .filter(
+        (img) => !!img && typeof img.url === "string" && img.url.length > 0,
+      )
+      .map((img) => ({
+        ...img,
+        alt: img.alt ?? "",
+        category: img.category ?? "",
+      }));
     const base =
       safe.length === 0
         ? FALLBACK_ITEMS

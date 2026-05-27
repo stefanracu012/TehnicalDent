@@ -26,7 +26,11 @@ export default function GallerySlideshow({
     () =>
       (rawItems || [])
         .filter((it) => !!it && typeof it.src === "string" && it.src.length > 0)
-        .map((it) => ({ ...it, alt: it.alt ?? "", label: it.label ?? "" })) as SlideItem[],
+        .map((it) => ({
+          ...it,
+          alt: it.alt ?? "",
+          label: it.label ?? "",
+        })) as SlideItem[],
     [rawItems],
   );
   const [current, setCurrent] = useState(0);

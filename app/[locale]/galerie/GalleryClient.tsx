@@ -25,8 +25,14 @@ export default function GalleryClient({ images: rawImages, ctaImage }: Props) {
   const images = useMemo(
     () =>
       (rawImages || [])
-        .filter((img) => !!img && typeof img.url === "string" && img.url.length > 0)
-        .map((img) => ({ ...img, alt: img.alt ?? "", category: img.category ?? "" })) as GalleryImage[],
+        .filter(
+          (img) => !!img && typeof img.url === "string" && img.url.length > 0,
+        )
+        .map((img) => ({
+          ...img,
+          alt: img.alt ?? "",
+          category: img.category ?? "",
+        })) as GalleryImage[],
     [rawImages],
   );
 
