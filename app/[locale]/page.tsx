@@ -38,8 +38,8 @@ export default async function HomePage({
   return (
     <>
       {/* Hero Section */}
-      <section className="relative min-h-screen flex items-center">
-        <div className="absolute inset-0 z-0 overflow-hidden">
+      <section className="relative h-screen">
+        <div className="absolute inset-0 z-0">
           <Image
             src={heroImage}
             alt={t("heroImgAlt")}
@@ -50,31 +50,34 @@ export default async function HomePage({
           />
         </div>
 
-        <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8 w-full h-full flex items-end pb-24 pt-32">
-          <div className="max-w-lg animate-fade-in-up space-y-8">
-            <p className="text-xs font-bold uppercase tracking-[0.4em] text-accent">
-              TehnicalDent · Chișinău
-            </p>
-            <h1 className="font-serif text-6xl font-semibold leading-[1.05] tracking-tight text-foreground lg:text-7xl xl:text-8xl">
-              {t("heroTitle")}
-            </h1>
-            <p className="text-lg leading-relaxed text-foreground/55 max-w-sm">
-              {t("heroDescription").split(".")[0]}.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 pt-2">
-              <Button href="/contact#formular" size="lg" className="px-10 py-5 text-base">
-                {t("programeazaConsultatie")}
-              </Button>
-              <Button href="/servicii" variant="outline" size="lg" className="px-10 py-5 text-base">
-                {t("exploreaServiciile")}
-              </Button>
+        {/* Text positioned in the white-wall area on the left of the image */}
+        <div className="absolute inset-0 z-10 flex items-center">
+          <div className="mx-auto max-w-7xl px-8 lg:px-16 w-full">
+            <div className="max-w-md animate-fade-in-up space-y-7">
+              <p className="text-[11px] font-bold uppercase tracking-[0.45em] text-accent">
+                TehnicalDent · Chișinău
+              </p>
+              <h1 className="font-serif text-5xl font-semibold leading-[1.08] tracking-tight text-foreground lg:text-6xl xl:text-7xl">
+                {t("heroTitle")}
+              </h1>
+              <p className="text-base leading-relaxed text-foreground/60 max-w-xs">
+                {t("heroDescription").split(".")[0]}.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <Button href="/contact#formular" size="lg" className="px-9 py-4 text-sm">
+                  {t("programeazaConsultatie")}
+                </Button>
+                <Button href="/servicii" variant="outline" size="lg" className="px-9 py-4 text-sm">
+                  {t("exploreaServiciile")}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
 
         {/* Scroll indicator */}
-        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 z-10">
-          <div className="w-px h-16 bg-gradient-to-b from-foreground/30 to-transparent animate-pulse" />
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-10">
+          <div className="w-px h-14 bg-gradient-to-b from-foreground/25 to-transparent animate-pulse" />
         </div>
       </section>
 
