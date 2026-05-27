@@ -52,22 +52,22 @@ export default async function HomePage({
 
         {/* Text positioned in the white-wall area on the left of the image */}
         <div className="absolute inset-0 z-10 flex items-center">
-          <div className="mx-auto max-w-7xl px-8 lg:px-16 w-full">
-            <div className="max-w-md animate-fade-in-up space-y-7">
-              <p className="text-[11px] font-bold uppercase tracking-[0.45em] text-accent">
+          <div className="px-8 lg:px-12 w-full max-w-2xl">
+            <div className="animate-fade-in-up space-y-8">
+              <p className="text-xs font-bold uppercase tracking-[0.45em] text-accent">
                 TehnicalDent · Chișinău
               </p>
-              <h1 className="font-serif text-5xl font-semibold leading-[1.08] tracking-tight text-foreground lg:text-6xl xl:text-7xl">
+              <h1 className="font-serif text-6xl font-semibold leading-[1.05] tracking-tight text-foreground lg:text-7xl xl:text-8xl">
                 {t("heroTitle")}
               </h1>
-              <p className="text-base leading-relaxed text-foreground/60 max-w-xs">
+              <p className="text-lg leading-relaxed text-foreground/60 max-w-sm">
                 {t("heroDescription").split(".")[0]}.
               </p>
-              <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                <Button href="/contact#formular" size="lg" className="px-9 py-4 text-sm">
+              <div className="flex flex-col sm:flex-row gap-4 pt-1">
+                <Button href="/contact#formular" size="lg" className="px-10 py-4 text-base">
                   {t("programeazaConsultatie")}
                 </Button>
-                <Button href="/servicii" variant="outline" size="lg" className="px-9 py-4 text-sm">
+                <Button href="/servicii" variant="outline" size="lg" className="px-10 py-4 text-base">
                   {t("exploreaServiciile")}
                 </Button>
               </div>
