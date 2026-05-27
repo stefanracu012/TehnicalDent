@@ -116,7 +116,7 @@ export default async function HomePage({
       </section>
 
       {/* Services Preview */}
-      <Section>
+      <Section background="muted">
         <SectionHeader
           subtitle={t("serviciiSubtitle")}
           title={t("serviciiTitle")}
@@ -140,7 +140,7 @@ export default async function HomePage({
       </Section>
 
       {/* Gallery Preview */}
-      <Section>
+      <Section background="muted">
         <GalleryPreview images={galleryImages} />
       </Section>
 

@@ -72,7 +72,7 @@ export default function Header() {
   };
 
   return (
-    <header className="fixed top-9 left-0 right-0 z-40 bg-background/95 backdrop-blur-sm border-b border-border">
+    <header className="fixed top-9 left-0 right-0 z-40 bg-muted/95 backdrop-blur-sm border-b border-border">
       <nav className="mx-auto max-w-7xl px-6 lg:px-8" aria-label="Global">
         <div className="flex h-24 items-center justify-between">
           {/* Logo */}
