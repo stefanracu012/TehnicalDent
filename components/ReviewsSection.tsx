@@ -112,8 +112,8 @@ export default function ReviewsSection({
               ))}
             </div>
 
-            {/* Navigation */}
-            <div className="flex items-center gap-4">
+            {/* Navigation — hidden on mobile, shown on desktop inside left col */}
+            <div className="hidden lg:flex items-center gap-4">
               <button
                 onClick={goPrev}
                 className="w-11 h-11 rounded-full border border-border flex items-center justify-center text-foreground hover:bg-muted transition-colors duration-200"
@@ -258,6 +258,58 @@ export default function ReviewsSection({
             </div>
           </div>
         </div>
+
+        {/* Navigation — mobile only, below the reviews stack */}
+        <div className="lg:hidden flex items-center justify-center gap-4 mt-6">
+          <button
+            onClick={goPrev}
+            className="w-11 h-11 rounded-full border border-border flex items-center justify-center text-foreground hover:bg-background transition-colors duration-200"
+            aria-label="Recenzia anterioară"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+            </svg>
+          </button>
+
+          <div className="flex items-center gap-2">
+            {REVIEWS.map((_, i) => {
+              const isActive = i === current;
+              return (
+                <button
+                  key={i}
+                  onClick={() => goTo(i)}
+                  aria-label={`Recenzia ${i + 1}`}
+                  className="relative flex items-center justify-center transition-all duration-300"
+                  style={{ width: isActive ? 28 : 10, height: isActive ? 28 : 10 }}
+                >
+                  {isActive ? (
+                    <>
+                      <span className="absolute inset-0 rounded-full bg-accent/20" />
+                      <svg key={animKey} className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 28 28">
+                        <circle cx="14" cy="14" r="9" fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeOpacity="0.25" strokeDasharray={CIRCUMFERENCE} />
+                        <circle cx="14" cy="14" r="9" fill="none" stroke="var(--accent)" strokeWidth="2.5" strokeDasharray={CIRCUMFERENCE} strokeDashoffset={CIRCUMFERENCE} strokeLinecap="round"
+                          style={{ animation: `ring-fill ${AUTOPLAY_DURATION}ms linear forwards` }} />
+                      </svg>
+                      <span className="relative w-2.5 h-2.5 rounded-full bg-accent" />
+                    </>
+                  ) : (
+                    <span className="w-2 h-2 rounded-full bg-border hover:bg-accent/40 transition-colors duration-200" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          <button
+            onClick={goNext}
+            className="w-11 h-11 rounded-full border border-border flex items-center justify-center text-foreground hover:bg-background transition-colors duration-200"
+            aria-label="Recenzia următoare"
+          >
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+            </svg>
+          </button>
+        </div>
       </div>
     </section>
   );
@@ -298,22 +350,16 @@ function ReviewCard({
         <div
           className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center text-sm font-semibold text-white flex-shrink-0"
           style={{
-            backgroundColor: active
-              ? "var(--accent)"
-              : "var(--muted-foreground)",
+            backgroundColor: active ? "var(--accent)" : "var(--muted-foreground)",
           }}
         >
-          {review.image ? (
-            <Image
-              src={review.image}
-              alt={review.name}
-              width={48}
-              height={48}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            initials
-          )}
+          <Image
+            src={review.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(review.name)}&background=74968E&color=fff&size=96&bold=true`}
+            alt={review.name}
+            width={48}
+            height={48}
+            className="w-full h-full object-cover"
+          />
         </div>
         {/* Stars */}
         <div className="flex gap-0.5">

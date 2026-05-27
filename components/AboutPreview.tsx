@@ -175,7 +175,9 @@ export default function AboutPreview({
           />
           <div
             className="absolute inset-0 rounded-2xl pointer-events-none"
-            style={{ boxShadow: "inset 0 -180px 120px -10px rgba(116,150,142,1)" }}
+            style={{
+              boxShadow: "inset 0 -180px 120px -10px rgba(116,150,142,1)",
+            }}
           />
         </div>
 

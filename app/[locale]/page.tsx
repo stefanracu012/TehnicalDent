@@ -77,9 +77,7 @@ export default async function HomePage({
           subtitle={t("galeriSubtitle")}
           title={t("galeriTitle")}
         />
-        <div className="mt-12">
-          <GalleryPreview images={galleryImages} />
-        </div>
+        <GalleryPreview images={galleryImages} />
       </Section>
 
       {/* Reviews */}
