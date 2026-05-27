@@ -16,19 +16,6 @@ interface Service {
   discountPrice?: number | null;
 }
 
-type BentoSize = "large" | "wide" | "normal";
-
-const bentoSizes: BentoSize[] = [
-  "large", // 0 - implantologie
-  "normal", // 1 - ortodontie
-  "normal", // 2 - estetica
-  "normal", // 3 - chirurgie
-  "normal", // 4 - protetica
-  "normal", // 5 - endodontie
-  "wide", // 6 - parodontologie
-  "normal", // 7 - pedodontie
-];
-
 export default function ServiceBentoGrid({
   services,
 }: {
@@ -63,33 +50,20 @@ export default function ServiceBentoGrid({
   return (
     <div
       ref={gridRef}
-      className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:[grid-template-rows:240px_240px_270px]"
+      className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3"
     >
       {services.slice(0, 8).map((service, index) => {
-        const size = bentoSizes[index] ?? "normal";
         const image =
           (service.images?.[0] as string | undefined) ||
           `/images/services/${service.slug}.jpg` ||
           "/images/hero-dentist.jpg";
-
-        const colClass =
-          size === "large"
-            ? "sm:col-span-2 lg:col-span-2"
-            : size === "wide"
-              ? "sm:col-span-2 lg:col-span-2"
-              : "";
-        const rowClass = "";
-        const heightClass = "aspect-square";
-
-        const titleSize = size === "large" ? "text-2xl lg:text-3xl" : "text-lg";
-        const descLines = size === "large" ? "line-clamp-4" : "line-clamp-2";
 
         return (
           <div
             key={service.slug}
             data-bento-card
             onClick={() => router.push(`/servicii/${service.slug}`)}
-            className={`group relative overflow-hidden rounded-2xl cursor-pointer ${colClass} ${rowClass} ${heightClass}`}
+            className="group relative overflow-hidden rounded-2xl cursor-pointer aspect-square"
             style={{
               opacity: 0,
               transform: "translateY(24px)",
@@ -117,9 +91,7 @@ export default function ServiceBentoGrid({
                 {service.category}
               </span>
 
-              <h3
-                className={`font-serif font-medium text-white leading-snug ${titleSize}`}
-              >
+              <h3 className="font-serif font-medium text-white leading-snug text-lg">
                 {service.title}
               </h3>
 
@@ -145,9 +117,7 @@ export default function ServiceBentoGrid({
 
               {/* Revealed on hover */}
               <div className="overflow-hidden max-h-0 group-hover:max-h-[200px] transition-all duration-500 ease-out">
-                <p
-                  className={`text-white/75 text-sm leading-relaxed mt-3 ${descLines}`}
-                >
+                <p className="text-white/75 text-sm leading-relaxed mt-3 line-clamp-2">
                   {service.shortDesc}
                 </p>
                 <div className="flex flex-wrap gap-2 mt-4">
