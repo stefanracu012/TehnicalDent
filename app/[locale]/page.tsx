@@ -50,12 +50,15 @@ export default async function HomePage({
           />
         </div>
 
-        <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8 py-20">
-          <div className="max-w-2xl animate-fade-in-up">
+        <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8 py-20 w-full">
+          <div className="max-w-xl animate-fade-in-up">
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-accent mb-4">
+              TehnicalDent
+            </p>
             <h1 className="font-serif text-4xl font-medium tracking-tight text-foreground sm:text-5xl lg:text-6xl">
               {t("heroTitle")}
             </h1>
-            <p className="mt-8 text-lg leading-relaxed text-foreground/80">
+            <p className="mt-6 text-base leading-relaxed text-foreground/70 max-w-lg">
               {t("heroDescription")}
             </p>
             <div className="mt-10 flex flex-col sm:flex-row gap-4">
