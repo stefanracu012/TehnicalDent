@@ -6,7 +6,7 @@ import Button from "@/components/Button";
 
 const SLIDES = [
   "/images/f9fcff16-2ae0-4969-a4f6-8e2e5d3d7bc0.png",
-  "/images/ae1428f8-acda-4648-8bd0-e14249a94fd2.png",
+  "/ae1428f8-acda-4648-8bd0-e14249a94fd2.png",
 ];
 
 interface HeroSlideshowProps {
