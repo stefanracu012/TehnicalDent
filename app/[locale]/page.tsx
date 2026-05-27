@@ -76,6 +76,7 @@ export default async function HomePage({
         <SectionHeader
           subtitle={t("galeriSubtitle")}
           title={t("galeriTitle")}
+          className="mb-4 lg:mb-10"
         />
         <GalleryPreview images={galleryImages} />
       </Section>
