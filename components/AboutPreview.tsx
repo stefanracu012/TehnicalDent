@@ -125,7 +125,7 @@ export default function AboutPreview({
             transform: "translate(12px, 12px)",
             transition: "opacity 0.7s ease 0.35s, transform 0.7s ease 0.35s",
           }}
-          className="absolute -bottom-6 -right-6 w-44 h-44 bg-white rounded-2xl shadow-lg p-6 hidden lg:flex flex-col justify-center"
+          className="absolute -bottom-6 -right-6 w-44 h-44 bg-background rounded-2xl shadow-lg p-6 hidden lg:flex flex-col justify-center"
         >
           <p className="font-serif text-5xl font-semibold text-foreground leading-none">
             {overrides.years || "2+"}

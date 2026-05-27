@@ -402,7 +402,7 @@ function Lightbox({
             <button
               key={i}
               onClick={() => setImgLoaded(false)}
-              className={`transition-all duration-300 ${i === selectedIndex ? "w-6 h-1.5 bg-white" : "w-1.5 h-1.5 bg-white/30 hover:bg-white/60"}`}
+              className={`transition-all duration-300 ${i === selectedIndex ? "w-6 h-1.5 bg-background" : "w-1.5 h-1.5 bg-white/30 hover:bg-white/60"}`}
               aria-label={`Imaginea ${i + 1}`}
             />
           ))}

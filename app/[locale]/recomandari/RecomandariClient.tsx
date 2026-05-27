@@ -124,7 +124,7 @@ export default function RecomandariClient({ posts }: RecomandariClientProps) {
             </p>
             <Link
               href="/contact"
-              className="mt-8 inline-flex items-center gap-2 bg-white text-foreground px-8 py-4 text-sm font-medium tracking-wide uppercase hover:bg-white/90 transition-colors duration-200"
+              className="mt-8 inline-flex items-center gap-2 bg-background text-foreground px-8 py-4 text-sm font-medium tracking-wide uppercase hover:bg-white/90 transition-colors duration-200"
             >
               {t("programeazaConsultatie")}
               <svg

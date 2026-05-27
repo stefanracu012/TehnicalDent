@@ -218,7 +218,7 @@ export default function EditBlogPostPage({
           </p>
         </div>
 
-        <div className="bg-white border border-border p-4 sm:p-8">
+        <div className="bg-background border border-border p-4 sm:p-8">
           <div className="mb-4 space-y-3">
             <LanguageTabs active={activeLocale} onChange={setActiveLocale} />
             <AutoTranslateButton

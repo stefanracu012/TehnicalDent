@@ -1,4 +1,4 @@
-﻿import { Link } from "@/i18n/navigation";
+import { Link } from "@/i18n/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import Image from "next/image";
 import Button from "@/components/Button";
@@ -124,12 +124,12 @@ export default async function AboutPage({
 
   return (
     <>
-      {/* ── HERO ── */}
+      {/* -- HERO -- */}
       <section className="relative min-h-[55vh] flex items-end pb-16 pt-[11rem]">
         <div className="absolute inset-0 overflow-hidden">
           <Image
             src={aboutStoryImage}
-            alt="Clinică TechnicalDent"
+            alt="Clinica TechnicalDent"
             fill
             priority
             sizes="100vw"
@@ -159,7 +159,7 @@ export default async function AboutPage({
         </div>
       </section>
 
-      {/* ── STORY ── */}
+      {/* -- STORY -- */}
       <section className="mx-auto max-w-7xl px-6 lg:px-8 py-16 lg:py-24">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           <div>
@@ -220,7 +220,7 @@ export default async function AboutPage({
         </div>
       </section>
 
-      {/* ── VALUES ── */}
+      {/* -- VALUES -- */}
       <section className="bg-muted">
         <div className="mx-auto max-w-7xl px-6 lg:px-8 py-16 lg:py-24">
           <div className="text-center max-w-2xl mx-auto mb-14">
@@ -238,7 +238,7 @@ export default async function AboutPage({
             {values.map((v, i) => (
               <div
                 key={i}
-                className="bg-white rounded-2xl p-7 shadow-sm border border-border/50 hover:shadow-md hover:-translate-y-1 transition-all duration-300"
+                className="bg-background rounded-2xl p-7 shadow-sm border border-border/50 hover:shadow-md hover:-translate-y-1 transition-all duration-300"
               >
                 <div className="w-11 h-11 rounded-xl bg-accent/10 text-accent flex items-center justify-center mb-5">
                   {v.icon}
@@ -255,7 +255,7 @@ export default async function AboutPage({
         </div>
       </section>
 
-      {/* ── TEAM ── */}
+      {/* -- TEAM -- */}
       <section className="mx-auto max-w-7xl px-6 lg:px-8 py-16 lg:py-24">
         <div className="text-center max-w-2xl mx-auto mb-14">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-3">
@@ -299,7 +299,7 @@ export default async function AboutPage({
         </div>
       </section>
 
-      {/* ── FACILITY ── */}
+      {/* -- FACILITY -- */}
       <section className="bg-muted">
         <div className="mx-auto max-w-7xl px-6 lg:px-8 py-16 lg:py-24">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
@@ -372,7 +372,7 @@ export default async function AboutPage({
         </div>
       </section>
 
-      {/* ── CTA ── */}
+      {/* -- CTA -- */}
       <section className="bg-foreground">
         <div className="mx-auto max-w-7xl px-6 lg:px-8 py-16 lg:py-20">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">

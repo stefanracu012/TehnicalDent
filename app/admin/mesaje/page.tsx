@@ -89,7 +89,7 @@ export default function AdminMessagesPage() {
             Se încarcă...
           </div>
         ) : messages.length === 0 ? (
-          <div className="text-center py-12 bg-white border border-border">
+          <div className="text-center py-12 bg-background border border-border">
             <p className="text-muted-foreground">Nu există mesaje de afișat.</p>
           </div>
         ) : (
@@ -105,8 +105,8 @@ export default function AdminMessagesPage() {
                   }}
                   className={`w-full text-left p-4 border transition-colors ${
                     selectedMessage?.id === msg.id
-                      ? "bg-white border-foreground"
-                      : "bg-white border-border hover:border-foreground/50"
+                      ? "bg-background border-foreground"
+                      : "bg-background border-border hover:border-foreground/50"
                   }`}
                 >
                   <div className="flex items-start justify-between">
@@ -137,7 +137,7 @@ export default function AdminMessagesPage() {
             {/* Message Detail */}
             <div className="lg:col-span-2">
               {selectedMessage ? (
-                <div className="bg-white border border-border p-4 sm:p-8">
+                <div className="bg-background border border-border p-4 sm:p-8">
                   <div className="flex items-start justify-between mb-6">
                     <div>
                       <h2 className="font-serif text-xl font-medium text-foreground">
@@ -203,7 +203,7 @@ export default function AdminMessagesPage() {
                   </div>
                 </div>
               ) : (
-                <div className="bg-white border border-border p-8 text-center text-muted-foreground">
+                <div className="bg-background border border-border p-8 text-center text-muted-foreground">
                   Selectați un mesaj pentru a-l vizualiza
                 </div>
               )}

@@ -398,7 +398,7 @@ export default function GalleryPreview({ images }: GalleryPreviewProps) {
                   }}
                   className={`transition-all duration-300 rounded-full ${
                     i === selectedIndex
-                      ? "w-5 h-1.5 bg-white rounded-full"
+                      ? "w-5 h-1.5 bg-background rounded-full"
                       : "w-1.5 h-1.5 bg-white/25 hover:bg-white/50"
                   }`}
                   aria-label={`Imaginea ${i + 1}`}

@@ -85,7 +85,7 @@ export default function AdminServicesPage() {
             Se încarcă...
           </div>
         ) : services.length === 0 ? (
-          <div className="text-center py-12 bg-white border border-border">
+          <div className="text-center py-12 bg-background border border-border">
             <p className="text-muted-foreground mb-4">
               Nu există servicii înregistrate.
             </p>
@@ -94,7 +94,7 @@ export default function AdminServicesPage() {
         ) : (
           <>
             {/* Desktop table */}
-            <div className="hidden md:block bg-white border border-border">
+            <div className="hidden md:block bg-background border border-border">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border">
@@ -214,7 +214,7 @@ export default function AdminServicesPage() {
               {services.map((service) => (
                 <div
                   key={service.id}
-                  className="bg-white border border-border p-4 rounded-lg"
+                  className="bg-background border border-border p-4 rounded-lg"
                 >
                   {service.images?.length > 0 && (
                     <div className="flex gap-1.5 mb-3 overflow-x-auto">

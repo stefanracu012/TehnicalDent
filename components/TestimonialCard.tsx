@@ -10,7 +10,7 @@ export default function TestimonialCard({
   service,
 }: TestimonialCardProps) {
   return (
-    <article className="bg-white p-8 lg:p-10 border border-border">
+    <article className="bg-background p-8 lg:p-10 border border-border">
       <blockquote>
         <p className="text-base leading-relaxed text-foreground italic">
           &ldquo;{content}&rdquo;

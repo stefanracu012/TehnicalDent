@@ -115,7 +115,7 @@ export default function AdminBlogPage() {
               className={`px-4 py-2 text-sm font-semibold rounded-full transition-colors ${
                 filterStatus === key
                   ? "bg-foreground text-white"
-                  : "bg-white border border-border text-muted-foreground hover:text-foreground"
+                  : "bg-background border border-border text-muted-foreground hover:text-foreground"
               }`}
             >
               {label}
@@ -138,7 +138,7 @@ export default function AdminBlogPage() {
             Se încarcă...
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-12 bg-white border border-border">
+          <div className="text-center py-12 bg-background border border-border">
             <p className="text-muted-foreground mb-4">
               {posts.length === 0
                 ? "Nu există articole pe blog."
@@ -156,7 +156,7 @@ export default function AdminBlogPage() {
             {filtered.map((post) => (
               <div
                 key={post.id}
-                className="bg-white border border-border p-4 sm:p-6 flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6"
+                className="bg-background border border-border p-4 sm:p-6 flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6"
               >
                 {/* Cover Image Thumbnail */}
                 {post.coverImage && (

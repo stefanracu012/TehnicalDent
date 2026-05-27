@@ -246,7 +246,7 @@ export default async function ContactPage({
                     href="https://wa.me/37379950008"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex items-center gap-4 bg-white border border-border p-5 hover:border-[#25D366]/40 transition-colors duration-300"
+                    className="group flex items-center gap-4 bg-background border border-border p-5 hover:border-[#25D366]/40 transition-colors duration-300"
                   >
                     <div className="shrink-0 w-10 h-10 flex items-center justify-center bg-[#25D366]/10 text-[#25D366]">
                       <svg
@@ -283,7 +283,7 @@ export default async function ContactPage({
 
                   <a
                     href="viber://chat?number=%2B37379950008"
-                    className="group flex items-center gap-4 bg-white border border-border p-5 hover:border-[#7360F2]/40 transition-colors duration-300"
+                    className="group flex items-center gap-4 bg-background border border-border p-5 hover:border-[#7360F2]/40 transition-colors duration-300"
                   >
                     <div className="shrink-0 w-10 h-10 flex items-center justify-center bg-[#7360F2]/10 text-[#7360F2]">
                       <svg
@@ -321,7 +321,7 @@ export default async function ContactPage({
                     href={MAPS_URL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group flex items-center gap-4 bg-white border border-border p-5 hover:border-foreground/20 transition-colors duration-300"
+                    className="group flex items-center gap-4 bg-background border border-border p-5 hover:border-foreground/20 transition-colors duration-300"
                   >
                     <div className="shrink-0 w-10 h-10 flex items-center justify-center bg-foreground/8 text-foreground/60">
                       <svg
@@ -430,7 +430,7 @@ export default async function ContactPage({
           />
         </div>
         {/* Overlay card */}
-        <div className="absolute bottom-4 left-4 right-4 sm:right-auto sm:bottom-6 sm:left-6 lg:bottom-10 lg:left-10 z-10 bg-white border border-border p-5 sm:p-6 sm:max-w-xs shadow-xl">
+        <div className="absolute bottom-4 left-4 right-4 sm:right-auto sm:bottom-6 sm:left-6 lg:bottom-10 lg:left-10 z-10 bg-background border border-border p-5 sm:p-6 sm:max-w-xs shadow-xl">
           <h3 className="font-serif text-lg font-medium text-foreground mb-2">
             {t("mapCardTitle")}
           </h3>

@@ -161,7 +161,7 @@ export default function GallerySlideshow({
             }}
             className={`transition-all duration-300 rounded-full ${
               i === current
-                ? "w-5 h-[5px] bg-white"
+                ? "w-5 h-[5px] bg-background"
                 : "w-[5px] h-[5px] bg-white/35 hover:bg-white/65"
             }`}
             aria-label={`Slide ${i + 1}`}

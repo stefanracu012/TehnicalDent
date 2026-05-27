@@ -153,7 +153,7 @@ export default function LanguageSwitcher({ dark = false }: { dark?: boolean }) {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-40 rounded-lg border border-border bg-white shadow-lg z-50 overflow-hidden">
+        <div className="absolute right-0 top-full mt-2 w-40 rounded-lg border border-border bg-background shadow-lg z-50 overflow-hidden">
           {routing.locales.map((l) => (
             <button
               key={l}

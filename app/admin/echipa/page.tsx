@@ -182,7 +182,7 @@ export default function AdminTeamPage() {
 
         {showForm && (
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4">
-            <div className="bg-white w-full sm:max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto p-5 sm:p-8 rounded-t-2xl sm:rounded-lg">
+            <div className="bg-background w-full sm:max-w-2xl max-h-[95vh] sm:max-h-[90vh] overflow-y-auto p-5 sm:p-8 rounded-t-2xl sm:rounded-lg">
               <h2 className="font-serif text-2xl font-medium text-foreground mb-6">
                 {editing ? "Editează membru" : "Adaugă membru nou"}
               </h2>
@@ -352,7 +352,7 @@ export default function AdminTeamPage() {
             Se încarcă...
           </div>
         ) : members.length === 0 ? (
-          <div className="text-center py-12 bg-white border border-border">
+          <div className="text-center py-12 bg-background border border-border">
             <p className="text-muted-foreground mb-4">
               Nu există membri în echipă.
             </p>
@@ -368,7 +368,7 @@ export default function AdminTeamPage() {
             {members.map((member) => (
               <div
                 key={member.id}
-                className={`bg-white border border-border overflow-hidden ${!member.isActive ? "opacity-50" : ""}`}
+                className={`bg-background border border-border overflow-hidden ${!member.isActive ? "opacity-50" : ""}`}
               >
                 {member.image ? (
                   // eslint-disable-next-line @next/next/no-img-element

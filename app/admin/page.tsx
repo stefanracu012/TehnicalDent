@@ -72,7 +72,7 @@ export default function AdminDashboard() {
             <Link
               key={link.href}
               href={link.href}
-              className="group block bg-white p-5 sm:p-8 border border-border hover:border-foreground transition-colors"
+              className="group block bg-background p-5 sm:p-8 border border-border hover:border-foreground transition-colors"
             >
               <h2 className="font-serif text-lg sm:text-xl font-medium text-foreground group-hover:text-accent transition-colors">
                 {link.title}

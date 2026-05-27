@@ -308,7 +308,7 @@ export default function NewServicePage() {
 
         <form
           onSubmit={handleSubmit}
-          className="bg-white border border-border p-4 sm:p-8"
+          className="bg-background border border-border p-4 sm:p-8"
         >
           <div className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

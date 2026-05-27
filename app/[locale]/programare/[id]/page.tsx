@@ -81,7 +81,7 @@ export default function PublicAppointmentPage({
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4 py-16 bg-muted">
-      <div className="w-full max-w-md bg-white border border-border p-8">
+      <div className="w-full max-w-md bg-background border border-border p-8">
         <h1 className="font-serif text-2xl font-medium text-foreground mb-1">
           Programarea dvs.
         </h1>
@@ -136,7 +136,7 @@ export default function PublicAppointmentPage({
                 <button
                   disabled={submitting}
                   onClick={() => submit("cancel")}
-                  className="border border-border bg-white text-foreground px-4 py-3 text-sm font-medium hover:bg-muted disabled:opacity-50"
+                  className="border border-border bg-background text-foreground px-4 py-3 text-sm font-medium hover:bg-muted disabled:opacity-50"
                 >
                   Anulează
                 </button>

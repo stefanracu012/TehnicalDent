@@ -271,7 +271,7 @@ export default function Header() {
       <div
         onMouseEnter={openMega}
         onMouseLeave={closeMega}
-        className={`hidden lg:block absolute left-0 right-0 bg-white border-b border-border shadow-xl z-50 transition-all duration-200 origin-top ${
+        className={`hidden lg:block absolute left-0 right-0 bg-background border-b border-border shadow-xl z-50 transition-all duration-200 origin-top ${
           megaOpen
             ? "opacity-100 translate-y-0 pointer-events-auto"
             : "opacity-0 -translate-y-2 pointer-events-none"

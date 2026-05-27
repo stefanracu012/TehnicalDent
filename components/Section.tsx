@@ -12,7 +12,7 @@ export default function Section({
   id,
 }: SectionProps) {
   const backgrounds = {
-    white: "bg-white",
+    white: "bg-background",
     muted: "bg-muted",
   };
 

@@ -95,7 +95,7 @@ export default function LanguageTabs({
           onClick={() => onChange(l.code)}
           className={`flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2.5 text-sm font-semibold rounded-md transition-all ${
             active === l.code
-              ? "bg-white text-foreground shadow-sm"
+              ? "bg-background text-foreground shadow-sm"
               : "text-muted-foreground hover:text-foreground"
           }`}
         >

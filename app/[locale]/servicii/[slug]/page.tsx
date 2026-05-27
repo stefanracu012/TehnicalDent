@@ -346,7 +346,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
           <div className="lg:col-span-1">
             <div className="sticky top-32 space-y-5">
               {/* CTA card */}
-              <div className="rounded-2xl border border-border bg-white shadow-sm overflow-hidden">
+              <div className="rounded-2xl border border-border bg-background shadow-sm overflow-hidden">
                 <div className="bg-foreground px-6 py-5">
                   <h3 className="font-serif text-lg font-medium text-white">
                     {t("sidebarTitle")}
@@ -394,7 +394,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
 
               {/* Price card */}
               {price != null && (
-                <div className="rounded-2xl border border-border bg-white px-6 py-5 space-y-2">
+                <div className="rounded-2xl border border-border bg-background px-6 py-5 space-y-2">
                   <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-3">
                     {t("pret")}
                   </p>
@@ -427,7 +427,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
 
               {/* Related services */}
               {relatedServices.length > 0 && (
-                <div className="rounded-2xl border border-border bg-white overflow-hidden">
+                <div className="rounded-2xl border border-border bg-background overflow-hidden">
                   <p className="px-6 pt-5 pb-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground border-b border-border">
                     {t("serviciiSimilare")}
                   </p>

@@ -157,7 +157,7 @@ export default function AdminPatientsPage() {
               placeholder="Caută nume, telefon, email..."
               value={q}
               onChange={(e) => setQ(e.target.value)}
-              className="px-3 py-2 border border-border bg-white text-sm w-full sm:w-72"
+              className="px-3 py-2 border border-border bg-background text-sm w-full sm:w-72"
             />
             <button
               onClick={openNew}
@@ -171,11 +171,11 @@ export default function AdminPatientsPage() {
         {loading ? (
           <p className="text-muted-foreground">Se încarcă...</p>
         ) : patients.length === 0 ? (
-          <div className="bg-white border border-border p-8 text-center text-muted-foreground">
+          <div className="bg-background border border-border p-8 text-center text-muted-foreground">
             Niciun pacient înregistrat.
           </div>
         ) : (
-          <div className="bg-white border border-border overflow-x-auto">
+          <div className="bg-background border border-border overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/50 text-left">
                 <tr>
@@ -243,7 +243,7 @@ export default function AdminPatientsPage() {
       {/* Form modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center px-4">
-          <div className="bg-white max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
+          <div className="bg-background max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
             <h2 className="font-serif text-xl font-medium mb-4">
               {editing ? "Editează pacient" : "Pacient nou"}
             </h2>
@@ -258,7 +258,7 @@ export default function AdminPatientsPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-border bg-white text-sm"
+                  className="w-full px-3 py-2 border border-border bg-background text-sm"
                 />
               </div>
               <div>
@@ -272,7 +272,7 @@ export default function AdminPatientsPage() {
                     setFormData({ ...formData, phone: e.target.value })
                   }
                   placeholder="+373..."
-                  className="w-full px-3 py-2 border border-border bg-white text-sm"
+                  className="w-full px-3 py-2 border border-border bg-background text-sm"
                 />
               </div>
               <div>
@@ -285,7 +285,7 @@ export default function AdminPatientsPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-border bg-white text-sm"
+                  className="w-full px-3 py-2 border border-border bg-background text-sm"
                 />
               </div>
               <div>
@@ -298,7 +298,7 @@ export default function AdminPatientsPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, notes: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-border bg-white text-sm"
+                  className="w-full px-3 py-2 border border-border bg-background text-sm"
                 />
               </div>
 
@@ -332,7 +332,7 @@ export default function AdminPatientsPage() {
       {/* History modal */}
       {detail && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center px-4">
-          <div className="bg-white max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
+          <div className="bg-background max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h2 className="font-serif text-xl font-medium">

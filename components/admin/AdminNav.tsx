@@ -68,17 +68,17 @@ export default function AdminNav() {
             >
               <div className="w-5 h-4 relative flex flex-col justify-between">
                 <span
-                  className={`block h-[2px] w-full bg-white rounded-full transition-all duration-300 origin-center ${
+                  className={`block h-[2px] w-full bg-background rounded-full transition-all duration-300 origin-center ${
                     mobileOpen ? "translate-y-[7px] rotate-45" : ""
                   }`}
                 />
                 <span
-                  className={`block h-[2px] w-full bg-white rounded-full transition-all duration-200 ${
+                  className={`block h-[2px] w-full bg-background rounded-full transition-all duration-200 ${
                     mobileOpen ? "opacity-0 scale-x-0" : ""
                   }`}
                 />
                 <span
-                  className={`block h-[2px] w-full bg-white rounded-full transition-all duration-300 origin-center ${
+                  className={`block h-[2px] w-full bg-background rounded-full transition-all duration-300 origin-center ${
                     mobileOpen ? "-translate-y-[7px] -rotate-45" : ""
                   }`}
                 />

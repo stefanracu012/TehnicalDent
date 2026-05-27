@@ -59,7 +59,7 @@ export default function TopBar() {
             </button>
 
             {open && (
-              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-44 bg-white rounded shadow-lg overflow-hidden z-[200]">
+              <div className="absolute top-full left-1/2 -translate-x-1/2 mt-2 w-44 bg-background rounded shadow-lg overflow-hidden z-[200]">
                 {/* Call */}
                 <a
                   href="tel:+37379950008"

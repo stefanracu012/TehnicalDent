@@ -114,7 +114,7 @@ export default function ImageUpload({
                   e.stopPropagation();
                   inputRef.current?.click();
                 }}
-                className="bg-white text-foreground text-xs font-semibold px-4 py-2 rounded-full hover:bg-white/90"
+                className="bg-background text-foreground text-xs font-semibold px-4 py-2 rounded-full hover:bg-white/90"
               >
                 Schimbă
               </button>

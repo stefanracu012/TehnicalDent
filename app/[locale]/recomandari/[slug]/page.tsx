@@ -122,7 +122,7 @@ export default async function BlogPostPage({ params }: Props) {
           <div className="absolute top-6 left-6 z-10">
             <Link
               href="/recomandari"
-              className="inline-flex items-center gap-2 bg-white/90 backdrop-blur-sm px-4 py-2.5 text-xs font-medium uppercase tracking-widest text-foreground hover:bg-white transition-colors duration-200"
+              className="inline-flex items-center gap-2 bg-white/90 backdrop-blur-sm px-4 py-2.5 text-xs font-medium uppercase tracking-widest text-foreground hover:bg-background transition-colors duration-200"
             >
               <svg
                 className="w-4 h-4"
@@ -370,7 +370,7 @@ export default async function BlogPostPage({ params }: Props) {
                   <Link
                     key={related.slug}
                     href={`/recomandari/${related.slug}`}
-                    className="group block bg-white border border-border overflow-hidden hover:border-foreground/20 transition-colors duration-300"
+                    className="group block bg-background border border-border overflow-hidden hover:border-foreground/20 transition-colors duration-300"
                   >
                     <div className="relative aspect-[16/9] overflow-hidden">
                       <Image

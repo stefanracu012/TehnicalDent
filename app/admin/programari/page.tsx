@@ -234,7 +234,7 @@ export default function AdminAppointmentsPage() {
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
-            <div className="flex border border-border bg-white">
+            <div className="flex border border-border bg-background">
               {(["day", "week", "list"] as const).map((v) => (
                 <button
                   key={v}
@@ -249,13 +249,13 @@ export default function AdminAppointmentsPage() {
               onClick={() =>
                 setAnchor(addDays(anchor, view === "week" ? -7 : -1))
               }
-              className="px-3 py-2 text-sm border border-border bg-white hover:bg-muted"
+              className="px-3 py-2 text-sm border border-border bg-background hover:bg-muted"
             >
               ←
             </button>
             <button
               onClick={() => setAnchor(startOfDay(new Date()))}
-              className="px-3 py-2 text-sm border border-border bg-white hover:bg-muted"
+              className="px-3 py-2 text-sm border border-border bg-background hover:bg-muted"
             >
               Astăzi
             </button>
@@ -263,7 +263,7 @@ export default function AdminAppointmentsPage() {
               onClick={() =>
                 setAnchor(addDays(anchor, view === "week" ? 7 : 1))
               }
-              className="px-3 py-2 text-sm border border-border bg-white hover:bg-muted"
+              className="px-3 py-2 text-sm border border-border bg-background hover:bg-muted"
             >
               →
             </button>
@@ -281,7 +281,7 @@ export default function AdminAppointmentsPage() {
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as "" | Status)}
-            className="px-3 py-2 border border-border bg-white text-sm"
+            className="px-3 py-2 border border-border bg-background text-sm"
           >
             <option value="">Toate statusurile</option>
             {(Object.keys(STATUS_LABELS) as Status[]).map((s) => (
@@ -293,7 +293,7 @@ export default function AdminAppointmentsPage() {
           <select
             value={filterServiceId}
             onChange={(e) => setFilterServiceId(e.target.value)}
-            className="px-3 py-2 border border-border bg-white text-sm"
+            className="px-3 py-2 border border-border bg-background text-sm"
           >
             <option value="">Toate serviciile</option>
             {services.map((s) => (
@@ -307,7 +307,7 @@ export default function AdminAppointmentsPage() {
             placeholder="Caută pacient/serviciu..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="px-3 py-2 border border-border bg-white text-sm flex-1 min-w-[200px]"
+            className="px-3 py-2 border border-border bg-background text-sm flex-1 min-w-[200px]"
           />
         </div>
 
@@ -315,7 +315,7 @@ export default function AdminAppointmentsPage() {
 
         {/* Calendar grid (day + week) */}
         {!loading && view !== "list" && (
-          <div className="bg-white border border-border overflow-x-auto">
+          <div className="bg-background border border-border overflow-x-auto">
             <div
               className="grid"
               style={{
@@ -414,7 +414,7 @@ export default function AdminAppointmentsPage() {
 
         {/* List view */}
         {!loading && view === "list" && (
-          <div className="bg-white border border-border overflow-x-auto">
+          <div className="bg-background border border-border overflow-x-auto">
             {appts.length === 0 ? (
               <p className="p-6 text-sm text-muted-foreground text-center">
                 Nicio programare.
@@ -658,7 +658,7 @@ function AppointmentForm({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center px-4">
-      <div className="bg-white max-w-2xl w-full p-6 max-h-[92vh] overflow-y-auto">
+      <div className="bg-background max-w-2xl w-full p-6 max-h-[92vh] overflow-y-auto">
         <h2 className="font-serif text-xl font-medium mb-4">
           {editing ? "Editează programare" : "Programare nouă"}
         </h2>
@@ -697,7 +697,7 @@ function AppointmentForm({
                   onChange={(e) =>
                     setNewPatient({ ...newPatient, name: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-border bg-white text-sm"
+                  className="w-full px-3 py-2 border border-border bg-background text-sm"
                 />
                 <input
                   required
@@ -706,7 +706,7 @@ function AppointmentForm({
                   onChange={(e) =>
                     setNewPatient({ ...newPatient, phone: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-border bg-white text-sm"
+                  className="w-full px-3 py-2 border border-border bg-background text-sm"
                 />
                 <input
                   placeholder="Email"
@@ -714,7 +714,7 @@ function AppointmentForm({
                   onChange={(e) =>
                     setNewPatient({ ...newPatient, email: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-border bg-white text-sm"
+                  className="w-full px-3 py-2 border border-border bg-background text-sm"
                 />
                 <button
                   type="button"
@@ -731,7 +731,7 @@ function AppointmentForm({
                   placeholder="Caută după nume sau telefon..."
                   value={patientQuery}
                   onChange={(e) => setPatientQuery(e.target.value)}
-                  className="w-full px-3 py-2 border border-border bg-white text-sm"
+                  className="w-full px-3 py-2 border border-border bg-background text-sm"
                 />
                 {patientResults.length > 0 && (
                   <ul className="mt-1 border border-border max-h-40 overflow-y-auto">
@@ -775,7 +775,7 @@ function AppointmentForm({
               required
               value={serviceId}
               onChange={(e) => setServiceId(e.target.value)}
-              className="w-full px-3 py-2 border border-border bg-white text-sm"
+              className="w-full px-3 py-2 border border-border bg-background text-sm"
             >
               <option value="">— alegeți —</option>
               {services.map((s) => (
@@ -797,7 +797,7 @@ function AppointmentForm({
                 required
                 value={dateTime}
                 onChange={(e) => setDateTime(e.target.value)}
-                className="w-full px-3 py-2 border border-border bg-white text-sm"
+                className="w-full px-3 py-2 border border-border bg-background text-sm"
               />
             </div>
             <div>
@@ -810,7 +810,7 @@ function AppointmentForm({
                 step={5}
                 value={duration}
                 onChange={(e) => setDuration(parseInt(e.target.value) || 30)}
-                className="w-full px-3 py-2 border border-border bg-white text-sm"
+                className="w-full px-3 py-2 border border-border bg-background text-sm"
               />
             </div>
           </div>
@@ -824,7 +824,7 @@ function AppointmentForm({
               rows={3}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              className="w-full px-3 py-2 border border-border bg-white text-sm"
+              className="w-full px-3 py-2 border border-border bg-background text-sm"
             />
           </div>
 

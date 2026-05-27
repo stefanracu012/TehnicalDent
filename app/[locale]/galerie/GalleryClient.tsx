@@ -221,7 +221,7 @@ export default function GalleryClient({ images: rawImages, ctaImage }: Props) {
               }}
               className={`transition-all duration-300 rounded-full ${
                 i === heroSlide
-                  ? "w-6 h-2 bg-white"
+                  ? "w-6 h-2 bg-background"
                   : "w-2 h-2 bg-white/40 hover:bg-white/70"
               }`}
               aria-label={`Slide ${i + 1}`}
@@ -510,7 +510,7 @@ export default function GalleryClient({ images: rawImages, ctaImage }: Props) {
             <div className="flex flex-col sm:flex-row gap-4">
               <Link
                 href="/contact"
-                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-white text-foreground text-sm font-semibold uppercase tracking-widest hover:bg-white/90 transition-colors"
+                className="inline-flex items-center justify-center gap-2 px-8 py-4 bg-background text-foreground text-sm font-semibold uppercase tracking-widest hover:bg-white/90 transition-colors"
               >
                 {t("programeazaAcum")}
               </Link>

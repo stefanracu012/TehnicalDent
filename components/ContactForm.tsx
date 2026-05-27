@@ -105,7 +105,7 @@ export default function ContactForm({
             required
             value={formData.name}
             onChange={handleChange}
-            className="mt-2 block w-full border border-border bg-white px-4 py-3 text-foreground placeholder-muted-foreground focus:border-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+            className="mt-2 block w-full border border-border bg-background px-4 py-3 text-foreground placeholder-muted-foreground focus:border-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
             placeholder={t("numeleDvs")}
           />
         </div>
@@ -124,7 +124,7 @@ export default function ContactForm({
             required
             value={formData.phone}
             onChange={handleChange}
-            className="mt-2 block w-full border border-border bg-white px-4 py-3 text-foreground placeholder-muted-foreground focus:border-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+            className="mt-2 block w-full border border-border bg-background px-4 py-3 text-foreground placeholder-muted-foreground focus:border-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
             placeholder={t("nrTelefon")}
           />
         </div>
@@ -142,7 +142,7 @@ export default function ContactForm({
             name="email"
             value={formData.email}
             onChange={handleChange}
-            className="mt-2 block w-full border border-border bg-white px-4 py-3 text-foreground placeholder-muted-foreground focus:border-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+            className="mt-2 block w-full border border-border bg-background px-4 py-3 text-foreground placeholder-muted-foreground focus:border-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
             placeholder={t("emailPlaceholder")}
           />
         </div>
@@ -160,7 +160,7 @@ export default function ContactForm({
               name="service"
               value={formData.service}
               onChange={handleChange}
-              className="block w-full appearance-none border border-border bg-white px-4 py-3 pr-10 text-foreground focus:border-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
+              className="block w-full appearance-none border border-border bg-background px-4 py-3 pr-10 text-foreground focus:border-foreground focus:outline-none focus:ring-1 focus:ring-foreground"
             >
               <option value="Consultație">{t("consultatie")}</option>
               <option value="Implantologie Dentară">
@@ -209,7 +209,7 @@ export default function ContactForm({
             rows={5}
             value={formData.message}
             onChange={handleChange}
-            className="mt-2 block w-full border border-border bg-white px-4 py-3 text-foreground placeholder-muted-foreground focus:border-foreground focus:outline-none focus:ring-1 focus:ring-foreground resize-none"
+            className="mt-2 block w-full border border-border bg-background px-4 py-3 text-foreground placeholder-muted-foreground focus:border-foreground focus:outline-none focus:ring-1 focus:ring-foreground resize-none"
             placeholder={t("mesajPlaceholder")}
           />
         </div>

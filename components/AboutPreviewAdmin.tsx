@@ -67,7 +67,7 @@ export default function AboutPreviewAdmin(props: AboutPreviewAdminProps) {
         </div>
 
         {/* Badge */}
-        <div className="absolute -bottom-6 -right-6 w-44 h-44 bg-white rounded-2xl shadow-lg p-6 hidden lg:flex flex-col justify-center">
+        <div className="absolute -bottom-6 -right-6 w-44 h-44 bg-background rounded-2xl shadow-lg p-6 hidden lg:flex flex-col justify-center">
           <p className="font-serif text-5xl font-semibold text-foreground leading-none">
             {v("years")}
           </p>

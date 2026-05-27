@@ -101,7 +101,7 @@ export default async function HomePage({
                 href="/servicii"
                 variant="outline"
                 size="lg"
-                className="!text-white !border-white hover:!bg-white hover:!text-foreground"
+                className="!text-white !border-white hover:!bg-background hover:!text-foreground"
               >
                 {t("exploreaServiciile")}
               </Button>
@@ -164,7 +164,7 @@ export default async function HomePage({
               <Button
                 href="/contact#formular"
                 size="lg"
-                className="!bg-white !text-foreground hover:!bg-white/90"
+                className="!bg-background !text-foreground hover:!bg-white/90"
               >
                 {t("programeazaAcum")}
               </Button>
@@ -172,7 +172,7 @@ export default async function HomePage({
                 href="tel:+37379950008"
                 variant="outline"
                 size="lg"
-                className="!text-white !border-white hover:!bg-white hover:!text-foreground"
+                className="!text-white !border-white hover:!bg-background hover:!text-foreground"
               >
                 {t("sunaNeLabel")}
               </Button>

@@ -196,7 +196,7 @@ export default function AdminGalleryPage() {
             <button
               key={cat}
               onClick={() => setFilterCat(cat)}
-              className={`px-4 py-2 text-sm font-semibold rounded-full transition-colors ${filterCat === cat ? "bg-foreground text-white" : "bg-white border border-border text-muted-foreground hover:text-foreground"}`}
+              className={`px-4 py-2 text-sm font-semibold rounded-full transition-colors ${filterCat === cat ? "bg-foreground text-white" : "bg-background border border-border text-muted-foreground hover:text-foreground"}`}
             >
               {cat}
               {cat !== "Toate" && (
@@ -210,7 +210,7 @@ export default function AdminGalleryPage() {
 
         {showForm && (
           <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4">
-            <div className="bg-white w-full sm:max-w-lg max-h-[95vh] sm:max-h-[90vh] overflow-y-auto p-5 sm:p-8 rounded-t-2xl sm:rounded-lg">
+            <div className="bg-background w-full sm:max-w-lg max-h-[95vh] sm:max-h-[90vh] overflow-y-auto p-5 sm:p-8 rounded-t-2xl sm:rounded-lg">
               <h2 className="font-serif text-2xl font-medium text-foreground mb-6">
                 {editing ? "Editează imagine" : "Adaugă imagine nouă"}
               </h2>
@@ -379,7 +379,7 @@ export default function AdminGalleryPage() {
             Se încarcă...
           </div>
         ) : filtered.length === 0 ? (
-          <div className="text-center py-12 bg-white border border-border">
+          <div className="text-center py-12 bg-background border border-border">
             <p className="text-muted-foreground mb-4">
               {images.length === 0
                 ? "Nu există imagini în galerie."
@@ -397,7 +397,7 @@ export default function AdminGalleryPage() {
             {filtered.map((img) => (
               <div
                 key={img.id}
-                className={`group relative bg-white border border-border overflow-hidden rounded-lg ${!img.isActive ? "opacity-50" : ""}`}
+                className={`group relative bg-background border border-border overflow-hidden rounded-lg ${!img.isActive ? "opacity-50" : ""}`}
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -409,7 +409,7 @@ export default function AdminGalleryPage() {
                 <div className="hidden sm:flex absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex-col items-center justify-center gap-2">
                   <button
                     onClick={() => openEdit(img)}
-                    className="bg-white text-foreground text-xs font-semibold px-4 py-1.5 rounded-full hover:bg-white/90"
+                    className="bg-background text-foreground text-xs font-semibold px-4 py-1.5 rounded-full hover:bg-white/90"
                   >
                     Editează
                   </button>
