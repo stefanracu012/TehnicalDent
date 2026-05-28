@@ -104,17 +104,9 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
       <section className="relative min-h-[55vh] flex items-end pb-16 pt-[11rem]">
         {/* Background */}
         <div className="absolute inset-0 overflow-hidden">
-          <Image
-            src={heroImage}
-            alt={title}
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover scale-105"
-            style={{ filter: "brightness(0.45) saturate(0.8)" }}
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/20" />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/50 to-transparent" />
+          <div className="absolute inset-0 bg-foreground" />
+          <div className="absolute inset-0 bg-gradient-to-tr from-foreground via-foreground to-accent/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
         </div>
 
         <div className="relative z-10 mx-auto max-w-7xl px-6 lg:px-8 w-full">
@@ -179,6 +171,20 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-16">
           {/* ── MAIN CONTENT ── */}
           <div className="lg:col-span-2 space-y-16">
+            {/* Hero image — 1:1 */}
+            {sectionImages[0] && (
+              <div className="relative w-full aspect-square rounded-2xl overflow-hidden">
+                <Image
+                  src={sectionImages[0]}
+                  alt={title}
+                  fill
+                  priority
+                  sizes="(max-width: 1024px) 100vw, 60vw"
+                  className="object-cover"
+                />
+              </div>
+            )}
+
             {/* Overview */}
             <div>
               <div className="flex items-center gap-3 mb-5">
