@@ -220,31 +220,53 @@ export default function KanbanPage() {
     { key: "custom", label: "Perioadă" },
   ];
 
+  // Mobile tab state — which status column is visible
+  const [mobileTab, setMobileTab] = useState<Status>("pending");
+
   return (
     <div className="min-h-screen bg-muted flex flex-col">
       {/* Header */}
-      <div className="bg-background border-b border-border px-6 py-4 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/admin/programari"
-            className="text-muted-foreground hover:text-foreground transition-colors text-sm"
-          >
-            ← Calendar
-          </Link>
-          <span className="text-border">|</span>
-          <h1 className="font-serif text-xl font-medium text-foreground">
-            Kanban Programări
-          </h1>
+      <div className="bg-background border-b border-border px-4 sm:px-6 py-3 flex flex-col gap-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Link
+              href="/admin/programari"
+              className="text-muted-foreground hover:text-foreground transition-colors text-sm"
+            >
+              ← Calendar
+            </Link>
+            <span className="text-border hidden sm:inline">|</span>
+            <h1 className="font-serif text-lg font-medium text-foreground hidden sm:block">
+              Kanban Programări
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Search */}
+            <input
+              type="search"
+              placeholder="Caută pacient..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="px-3 py-1.5 border border-border bg-background text-sm rounded w-36 sm:w-44"
+            />
+            <Link
+              href="/admin/programari"
+              className="px-3 py-1.5 bg-foreground text-white text-sm rounded hover:bg-foreground/90 transition-colors whitespace-nowrap"
+            >
+              + Programare
+            </Link>
+          </div>
         </div>
 
+        {/* Preset buttons + custom range — second row */}
         <div className="flex flex-wrap items-center gap-2">
-          {/* Preset buttons */}
           <div className="flex border border-border bg-muted rounded-lg overflow-hidden">
             {presets.map((p) => (
               <button
                 key={p.key}
                 onClick={() => setPreset(p.key)}
-                className={`px-3 py-1.5 text-sm transition-colors ${
+                className={`px-2.5 py-1.5 text-xs sm:text-sm transition-colors ${
                   preset === p.key
                     ? "bg-foreground text-white"
                     : "hover:bg-background"
@@ -255,54 +277,35 @@ export default function KanbanPage() {
             ))}
           </div>
 
-          {/* Custom date range */}
           {preset === "custom" && (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 flex-wrap">
               <input
                 type="date"
                 value={customFrom}
                 onChange={(e) => setCustomFrom(e.target.value)}
-                className="px-2 py-1.5 border border-border bg-background text-sm rounded"
+                className="px-2 py-1.5 border border-border bg-background text-xs sm:text-sm rounded"
               />
               <span className="text-muted-foreground text-sm">→</span>
               <input
                 type="date"
                 value={customTo}
                 onChange={(e) => setCustomTo(e.target.value)}
-                className="px-2 py-1.5 border border-border bg-background text-sm rounded"
+                className="px-2 py-1.5 border border-border bg-background text-xs sm:text-sm rounded"
               />
             </div>
           )}
-
-          {/* Search */}
-          <input
-            type="search"
-            placeholder="Caută pacient..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="px-3 py-1.5 border border-border bg-background text-sm rounded w-44"
-          />
-
-          <Link
-            href="/admin/programari"
-            className="px-3 py-1.5 bg-foreground text-white text-sm rounded hover:bg-foreground/90 transition-colors"
-          >
-            + Programare
-          </Link>
         </div>
       </div>
 
       {/* Stats bar */}
-      <div className="bg-background border-b border-border px-6 py-2 flex gap-6 overflow-x-auto">
+      <div className="bg-background border-b border-border px-4 sm:px-6 py-2 flex gap-4 overflow-x-auto">
         {COLUMNS.map((s) => (
-          <div key={s} className="flex items-center gap-2 text-sm shrink-0">
+          <div key={s} className="flex items-center gap-1.5 text-sm shrink-0">
             <span className={`w-2 h-2 rounded-full ${STATUS_META[s].dot}`} />
-            <span className="text-muted-foreground">
+            <span className="text-muted-foreground hidden sm:inline">
               {STATUS_META[s].label}
             </span>
-            <span className="font-semibold text-foreground">
-              {totalByStatus(s)}
-            </span>
+            <span className="font-semibold text-foreground">{totalByStatus(s)}</span>
           </div>
         ))}
         <div className="ml-auto flex items-center gap-1 text-sm text-muted-foreground shrink-0">
@@ -311,81 +314,133 @@ export default function KanbanPage() {
         </div>
       </div>
 
+      {/* Mobile status tabs */}
+      <div className="md:hidden flex border-b border-border bg-background overflow-x-auto shrink-0">
+        {COLUMNS.map((s) => {
+          const meta = STATUS_META[s];
+          const active = mobileTab === s;
+          return (
+            <button
+              key={s}
+              onClick={() => setMobileTab(s)}
+              className={`flex items-center gap-1.5 px-3 py-2.5 text-xs font-medium whitespace-nowrap border-b-2 transition-colors shrink-0 ${
+                active
+                  ? "border-foreground text-foreground"
+                  : "border-transparent text-muted-foreground"
+              }`}
+            >
+              <span className={`w-2 h-2 rounded-full ${meta.dot}`} />
+              {meta.label}
+              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${active ? "bg-foreground text-white" : "bg-muted text-muted-foreground"}`}>
+                {totalByStatus(s)}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       {/* Kanban board */}
       {loading ? (
         <div className="flex-1 flex items-center justify-center text-muted-foreground">
           Se încarcă...
         </div>
       ) : (
-        <div className="flex-1 flex gap-3 p-4 overflow-x-auto items-start">
-          {COLUMNS.map((col) => {
-            const meta = STATUS_META[col];
-            const cards = byStatus[col];
-            const isOver = dragOver === col;
-
-            return (
-              <div
-                key={col}
-                className={`flex flex-col rounded-xl border-2 border-t-4 shrink-0 w-72 transition-all duration-150 ${meta.color} ${
-                  isOver ? "ring-2 ring-foreground/30 scale-[1.01]" : ""
-                }`}
-                style={{ borderTopColor: undefined }}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDragOver(col);
-                }}
-                onDragLeave={(e) => {
-                  // Only clear dragOver if leaving to outside the column entirely
-                  if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-                    setDragOver(null);
-                  }
-                }}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  handleDrop(col);
-                }}
-              >
-                {/* Column header */}
-                <div
-                  className={`px-4 py-3 rounded-t-xl flex items-center justify-between ${meta.header}`}
-                >
-                  <span className="text-white font-semibold text-sm">
-                    {meta.label}
-                  </span>
-                  <span className="bg-white/30 text-white text-xs font-bold px-2 py-0.5 rounded-full">
-                    {cards.length}
-                  </span>
-                </div>
-
-                {/* Cards */}
-                <div className="flex flex-col gap-2 p-2 min-h-24 overflow-y-auto max-h-[calc(100vh-220px)]">
-                  {cards.length === 0 && (
-                    <p className="text-xs text-center text-muted-foreground py-6">
-                      Nicio programare
-                    </p>
-                  )}
-                  {cards.map((a) => (
-                    <KanbanCard
-                      key={a.id}
-                      appt={a}
-                      isDragging={dragging === a.id}
-                      onDragStart={() => {
-                        draggingRef.current = a.id;
-                        setDragging(a.id);
-                      }}
-                      onDragEnd={() => {
-                        draggingRef.current = null;
-                        setDragging(null);
-                        setDragOver(null);
-                      }}
-                      onStatusChange={(s) => changeStatus(a.id, s)}
-                    />
-                  ))}
-                </div>
+        <>
+          {/* ── MOBILE: single column view ── */}
+          <div className="md:hidden flex-1 overflow-y-auto p-3">
+            {byStatus[mobileTab].length === 0 ? (
+              <p className="text-center text-muted-foreground text-sm py-12">
+                Nicio programare în această categorie.
+              </p>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {byStatus[mobileTab].map((a) => (
+                  <KanbanCard
+                    key={a.id}
+                    appt={a}
+                    isDragging={false}
+                    onDragStart={() => {}}
+                    onDragEnd={() => {}}
+                    onStatusChange={(s) => {
+                      changeStatus(a.id, s);
+                      setMobileTab(s);
+                    }}
+                  />
+                ))}
               </div>
-            );
-          })}
-        </div>
+            )}
+          </div>
+
+          {/* ── DESKTOP: full kanban columns ── */}
+          <div className="hidden md:flex flex-1 gap-3 p-4 overflow-x-auto items-start">
+            {COLUMNS.map((col) => {
+              const meta = STATUS_META[col];
+              const cards = byStatus[col];
+              const isOver = dragOver === col;
+
+              return (
+                <div
+                  key={col}
+                  className={`flex flex-col rounded-xl border-2 border-t-4 shrink-0 w-72 transition-all duration-150 ${meta.color} ${
+                    isOver ? "ring-2 ring-foreground/30 scale-[1.01]" : ""
+                  }`}
+                  style={{ borderTopColor: undefined }}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDragOver(col);
+                  }}
+                  onDragLeave={(e) => {
+                    if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                      setDragOver(null);
+                    }
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    handleDrop(col);
+                  }}
+                >
+                  {/* Column header */}
+                  <div
+                    className={`px-4 py-3 rounded-t-xl flex items-center justify-between ${meta.header}`}
+                  >
+                    <span className="text-white font-semibold text-sm">
+                      {meta.label}
+                    </span>
+                    <span className="bg-white/30 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                      {cards.length}
+                    </span>
+                  </div>
+
+                  {/* Cards */}
+                  <div className="flex flex-col gap-2 p-2 min-h-24 overflow-y-auto max-h-[calc(100vh-220px)]">
+                    {cards.length === 0 && (
+                      <p className="text-xs text-center text-muted-foreground py-6">
+                        Nicio programare
+                      </p>
+                    )}
+                    {cards.map((a) => (
+                      <KanbanCard
+                        key={a.id}
+                        appt={a}
+                        isDragging={dragging === a.id}
+                        onDragStart={() => {
+                          draggingRef.current = a.id;
+                          setDragging(a.id);
+                        }}
+                        onDragEnd={() => {
+                          draggingRef.current = null;
+                          setDragging(null);
+                          setDragOver(null);
+                        }}
+                        onStatusChange={(s) => changeStatus(a.id, s)}
+                      />
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>
       )}
     </div>
   );
