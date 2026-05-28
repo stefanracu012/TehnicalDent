@@ -73,7 +73,7 @@ export default function AdminMessagesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-muted pt-20">
+    <div className="min-h-screen bg-muted">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
         <div className="mb-6 sm:mb-12">
           <h1 className="font-serif text-2xl sm:text-3xl font-medium text-foreground">

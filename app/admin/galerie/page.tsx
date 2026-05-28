@@ -172,7 +172,7 @@ export default function AdminGalleryPage() {
       : images.filter((img) => img.category === filterCat);
 
   return (
-    <div className="min-h-screen bg-muted pt-20">
+    <div className="min-h-screen bg-muted">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-12">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
           <div>

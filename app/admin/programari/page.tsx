@@ -97,6 +97,7 @@ export default function AdminAppointmentsPage() {
   const [filterStatus, setFilterStatus] = useState<"" | Status>("");
   const [filterServiceId, setFilterServiceId] = useState("");
   const [search, setSearch] = useState("");
+  const [filterMonth, setFilterMonth] = useState<string>(""); // "YYYY-MM"
 
   // modal
   const [editing, setEditing] = useState<Appointment | null>(null);
@@ -110,12 +111,18 @@ export default function AdminAppointmentsPage() {
       const f = startOfWeek(anchor);
       return { from: f, to: addDays(f, 7) };
     }
-    // list view: ±60 days
+    // list view: month filter or ±60 days
+    if (filterMonth) {
+      const [y, m] = filterMonth.split("-").map(Number);
+      const from = new Date(y, m - 1, 1);
+      const to = new Date(y, m, 1);
+      return { from, to };
+    }
     return {
       from: addDays(startOfDay(anchor), -60),
       to: addDays(startOfDay(anchor), 60),
     };
-  }, [view, anchor]);
+  }, [view, anchor, filterMonth]);
 
   const fetchAppts = useCallback(async () => {
     setLoading(true);
@@ -221,8 +228,8 @@ export default function AdminAppointmentsPage() {
   }, [appts]);
 
   return (
-    <div className="min-h-screen bg-muted pt-20">
-      <div className="mx-auto max-w-[100rem] px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+    <div className="min-h-screen bg-muted">
+      <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-6">
           <div>
             <h1 className="font-serif text-2xl sm:text-3xl font-medium text-foreground">
@@ -302,6 +309,14 @@ export default function AdminAppointmentsPage() {
               </option>
             ))}
           </select>
+          {view === "list" && (
+            <input
+              type="month"
+              value={filterMonth}
+              onChange={(e) => setFilterMonth(e.target.value)}
+              className="px-3 py-2 border border-border bg-background text-sm"
+            />
+          )}
           <input
             type="search"
             placeholder="Caută pacient/serviciu..."

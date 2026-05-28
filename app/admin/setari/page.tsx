@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import { secureFetch } from "@/lib/csrf-client";
@@ -106,37 +106,37 @@ const STORY_TEXT_FIELDS = [
   },
   {
     key: "aboutStoryStat1Value",
-    label: "Stat 1 � Valoare (ex: 2024)",
+    label: "Stat 1 ? Valoare (ex: 2024)",
     defaultValue: "2024",
     multiline: false,
   },
   {
     key: "aboutStoryStat1Label",
-    label: "Stat 1 � Eticheta (ex: An fondare)",
+    label: "Stat 1 ? Eticheta (ex: An fondare)",
     defaultValue: "An fondare",
     multiline: false,
   },
   {
     key: "aboutStoryStat2Value",
-    label: "Stat 2 � Valoare (ex: 2+)",
+    label: "Stat 2 ? Valoare (ex: 2+)",
     defaultValue: "2+",
     multiline: false,
   },
   {
     key: "aboutStoryStat2Label",
-    label: "Stat 2 � Eticheta (ex: Ani experien?a)",
+    label: "Stat 2 ? Eticheta (ex: Ani experien?a)",
     defaultValue: "Ani experien?a",
     multiline: false,
   },
   {
     key: "aboutStoryStat3Value",
-    label: "Stat 3 � Valoare (ex: 400+)",
+    label: "Stat 3 ? Valoare (ex: 400+)",
     defaultValue: "400+",
     multiline: false,
   },
   {
     key: "aboutStoryStat3Label",
-    label: "Stat 3 � Eticheta (ex: Pacien?i)",
+    label: "Stat 3 ? Eticheta (ex: Pacien?i)",
     defaultValue: "Pacien?i",
     multiline: false,
   },
@@ -172,7 +172,7 @@ const ABOUT_TEXT_FIELDS = [
     key: "aboutPreviewP1",
     label: "Paragraf 1",
     defaultValue:
-      "TechnicalDent este mai mult decat o clinica stomatologica � este un loc unde tehnologia avansata intalne?te grija autentica pentru pacient. Cu o echipa de speciali?ti dedica?i ?i echipamente de ultima genera?ie, oferim tratamente personalizate pentru fiecare nevoie.",
+      "TechnicalDent este mai mult decat o clinica stomatologica ? este un loc unde tehnologia avansata intalne?te grija autentica pentru pacient. Cu o echipa de speciali?ti dedica?i ?i echipamente de ultima genera?ie, oferim tratamente personalizate pentru fiecare nevoie.",
     multiline: true,
   },
   {
@@ -184,37 +184,37 @@ const ABOUT_TEXT_FIELDS = [
   },
   {
     key: "aboutPreviewStat1Value",
-    label: 'Statistica 1 � Valoare (ex: "Modern")',
+    label: 'Statistica 1 ? Valoare (ex: "Modern")',
     defaultValue: "Modern",
     multiline: false,
   },
   {
     key: "aboutPreviewStat1Label",
-    label: "Statistica 1 � Descriere",
+    label: "Statistica 1 ? Descriere",
     defaultValue: "Echipamente de ultima genera?ie",
     multiline: false,
   },
   {
     key: "aboutPreviewStat2Value",
-    label: 'Statistica 2 � Valoare (ex: "Complet")',
+    label: 'Statistica 2 ? Valoare (ex: "Complet")',
     defaultValue: "Complet",
     multiline: false,
   },
   {
     key: "aboutPreviewStat2Label",
-    label: "Statistica 2 � Descriere",
+    label: "Statistica 2 ? Descriere",
     defaultValue: "Toate specialita?ile sub un acoperi?",
     multiline: false,
   },
   {
     key: "aboutPreviewStat3Value",
-    label: 'Statistica 3 � Valoare (ex: "Personal")',
+    label: 'Statistica 3 ? Valoare (ex: "Personal")',
     defaultValue: "Personal",
     multiline: false,
   },
   {
     key: "aboutPreviewStat3Label",
-    label: "Statistica 3 � Descriere",
+    label: "Statistica 3 ? Descriere",
     defaultValue: "Plan de tratament individualizat",
     multiline: false,
   },
@@ -362,14 +362,14 @@ export default function SettingsPage() {
 
   if (!loaded) {
     return (
-      <div className="min-h-screen bg-muted pt-20 flex items-center justify-center">
+      <div className="min-h-screen bg-muted flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-foreground/20 border-t-foreground rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-muted pt-20">
+    <div className="min-h-screen bg-muted">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         <div className="mb-8">
           <h1 className="font-serif text-2xl sm:text-3xl font-medium text-foreground">
@@ -428,7 +428,7 @@ export default function SettingsPage() {
                   </button>
                 )}
 
-              {/* -- Hero text fields � shown only for heroImage -- */}
+              {/* -- Hero text fields ? shown only for heroImage -- */}
               {config.key === "heroImage" && (
                 <div className="mt-8 pt-8 border-t border-border">
                   <div className="flex items-center justify-between mb-5">
@@ -474,11 +474,11 @@ export default function SettingsPage() {
                 </div>
               )}
 
-              {/* -- Story text fields � shown only for aboutStoryImage -- */}
+              {/* -- Story text fields ? shown only for aboutStoryImage -- */}
               {config.key === "aboutStoryImage" && (
                 <div className="mt-8 pt-8 border-t border-border">
                   <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-5">
-                    Texte sec?iune �Povestea noastra"
+                    Texte sec?iune ?Povestea noastra"
                   </p>
 
                   {/* Subtitlu + Titlu */}
@@ -559,7 +559,7 @@ export default function SettingsPage() {
         <div className="mt-12 mb-6">
           <div className="flex items-center justify-between mb-1">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-              Texte � Sec?iunea �Despre noi� (Homepage)
+              Texte ? Sec?iunea ?Despre noi? (Homepage)
             </p>
             <div className="flex gap-1">
               {LOCALES.map((l) => (
@@ -578,7 +578,7 @@ export default function SettingsPage() {
             </div>
           </div>
           <p className="text-sm text-muted-foreground mt-1">
-            Modifica?i textele afi?ate in sec?iunea �Despre noi� de pe pagina
+            Modifica?i textele afi?ate in sec?iunea ?Despre noi? de pe pagina
             principala. Lasa?i un camp gol pentru a folosi textul implicit.
           </p>
           {activeLang !== "ro" && (
@@ -589,7 +589,7 @@ export default function SettingsPage() {
           )}
         </div>
 
-        {/* Live preview � identical to homepage */}
+        {/* Live preview ? identical to homepage */}
         <div className="mb-6">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-3">
             Previzualizare live
@@ -729,7 +729,7 @@ export default function SettingsPage() {
               4
             </span>
             <h3 className="font-serif text-base font-medium text-foreground">
-              Link �Afla mai multe"
+              Link ?Afla mai multe"
             </h3>
           </div>
           {ABOUT_TEXT_FIELDS.filter((f) => f.key === "aboutPreviewLink").map(
