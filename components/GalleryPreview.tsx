@@ -125,27 +125,6 @@ export default function GalleryPreview({ images }: GalleryPreviewProps) {
 
   return (
     <div ref={sectionRef} className="relative overflow-hidden">
-      {/* Heading row */}
-      <div
-        ref={headingRef}
-        className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12
-          opacity-0 translate-y-10 transition-all duration-700 ease-out
-          [.in-view_&]:opacity-100 [.in-view_&]:translate-y-0"
-        style={{ transitionDelay: "0ms" }}
-      >
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.25em] text-accent mb-3">
-            {t("subtitle")}
-          </p>
-          <h2 className="font-serif text-3xl font-medium tracking-tight text-foreground sm:text-4xl lg:text-5xl">
-            Galerie
-          </h2>
-        </div>
-        <p className="text-muted-foreground max-w-sm leading-relaxed text-sm md:text-base md:text-right">
-          {t("description")}
-        </p>
-      </div>
-
       {/* Uniform 1:1 grid */}
       <div
         ref={gridRef}
