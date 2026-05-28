@@ -212,7 +212,7 @@ export default function AdminNav() {
   return (
     <>
       {/* ── SIDEBAR desktop ── */}
-      <aside className="hidden md:flex flex-col w-56 shrink-0 min-h-screen bg-foreground text-white">
+      <aside className="hidden md:flex flex-col w-56 shrink-0 h-screen sticky top-0 bg-foreground text-white overflow-hidden">
         {/* Logo */}
         <div className="px-5 py-5 border-b border-white/10">
           <span className="font-serif text-lg font-semibold tracking-tight">
@@ -224,7 +224,7 @@ export default function AdminNav() {
         </div>
 
         {/* Nav links */}
-        <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto">
+        <nav className="flex-1 px-3 py-4 space-y-0.5 overflow-y-auto admin-sidebar-scroll">
           {navLinks.map((link) => {
             const isActive =
               link.href === "/admin"

@@ -448,92 +448,89 @@ export default function AdminAppointmentsPage() {
       {/* List view */}
       {!loading && view === "list" && (
         <div className="flex-1 overflow-auto bg-background border-t border-border mx-4 sm:mx-6 lg:mx-8 mb-4 rounded-b-lg border-x border-b">
-            {appts.length === 0 ? (
-              <p className="p-6 text-sm text-muted-foreground text-center">
-                Nicio programare.
-              </p>
-            ) : (
-              <table className="w-full text-sm">
-                <thead className="bg-muted/50 text-left">
-                  <tr>
-                    <th className="px-4 py-3 font-medium">Data / Ora</th>
-                    <th className="px-4 py-3 font-medium">Pacient</th>
-                    <th className="px-4 py-3 font-medium">Serviciu</th>
-                    <th className="px-4 py-3 font-medium">Durată</th>
-                    <th className="px-4 py-3 font-medium">Status</th>
-                    <th className="px-4 py-3 font-medium text-right">
-                      Acțiuni
-                    </th>
+          {appts.length === 0 ? (
+            <p className="p-6 text-sm text-muted-foreground text-center">
+              Nicio programare.
+            </p>
+          ) : (
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 text-left">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Data / Ora</th>
+                  <th className="px-4 py-3 font-medium">Pacient</th>
+                  <th className="px-4 py-3 font-medium">Serviciu</th>
+                  <th className="px-4 py-3 font-medium">Durată</th>
+                  <th className="px-4 py-3 font-medium">Status</th>
+                  <th className="px-4 py-3 font-medium text-right">Acțiuni</th>
+                </tr>
+              </thead>
+              <tbody>
+                {appts.map((a) => (
+                  <tr
+                    key={a.id}
+                    className="border-t border-border hover:bg-muted/30"
+                  >
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      {new Date(a.dateTime).toLocaleString("ro-RO", {
+                        day: "numeric",
+                        month: "short",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="font-medium">{a.patient.name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {a.patient.phone}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">{a.service.title}</td>
+                    <td className="px-4 py-3 text-muted-foreground">
+                      {a.duration} min
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className="inline-flex items-center gap-1.5 text-xs">
+                        <span
+                          className={`w-2 h-2 rounded-full ${STATUS_DOT[a.status]}`}
+                        />
+                        {STATUS_LABELS[a.status]}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right whitespace-nowrap space-x-1">
+                      {a.status !== "confirmed" && a.status !== "cancelled" && (
+                        <button
+                          onClick={() => onConfirm(a.id)}
+                          className="text-xs px-2 py-1 border border-green-200 text-green-700 hover:bg-green-50"
+                        >
+                          Confirmă
+                        </button>
+                      )}
+                      {a.status !== "cancelled" && (
+                        <button
+                          onClick={() => onCancel(a.id)}
+                          className="text-xs px-2 py-1 border border-red-200 text-red-700 hover:bg-red-50"
+                        >
+                          Anulează
+                        </button>
+                      )}
+                      <button
+                        onClick={() => openEdit(a)}
+                        className="text-xs px-2 py-1 border border-border hover:bg-muted"
+                      >
+                        Editează
+                      </button>
+                      <button
+                        onClick={() => onDelete(a.id)}
+                        className="text-xs px-2 py-1 border border-border hover:bg-muted"
+                      >
+                        🗑
+                      </button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {appts.map((a) => (
-                    <tr
-                      key={a.id}
-                      className="border-t border-border hover:bg-muted/30"
-                    >
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        {new Date(a.dateTime).toLocaleString("ro-RO", {
-                          day: "numeric",
-                          month: "short",
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="font-medium">{a.patient.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {a.patient.phone}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">{a.service.title}</td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {a.duration} min
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="inline-flex items-center gap-1.5 text-xs">
-                          <span
-                            className={`w-2 h-2 rounded-full ${STATUS_DOT[a.status]}`}
-                          />
-                          {STATUS_LABELS[a.status]}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-right whitespace-nowrap space-x-1">
-                        {a.status !== "confirmed" &&
-                          a.status !== "cancelled" && (
-                            <button
-                              onClick={() => onConfirm(a.id)}
-                              className="text-xs px-2 py-1 border border-green-200 text-green-700 hover:bg-green-50"
-                            >
-                              Confirmă
-                            </button>
-                          )}
-                        {a.status !== "cancelled" && (
-                          <button
-                            onClick={() => onCancel(a.id)}
-                            className="text-xs px-2 py-1 border border-red-200 text-red-700 hover:bg-red-50"
-                          >
-                            Anulează
-                          </button>
-                        )}
-                        <button
-                          onClick={() => openEdit(a)}
-                          className="text-xs px-2 py-1 border border-border hover:bg-muted"
-                        >
-                          Editează
-                        </button>
-                        <button
-                          onClick={() => onDelete(a.id)}
-                          className="text-xs px-2 py-1 border border-border hover:bg-muted"
-                        >
-                          🗑
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       )}
 
