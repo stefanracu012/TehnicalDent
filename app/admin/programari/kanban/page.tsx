@@ -251,7 +251,7 @@ export default function KanbanPage() {
               className="px-3 py-1.5 border border-border bg-background text-sm rounded w-36 sm:w-44"
             />
             <Link
-              href="/admin/programari"
+              href="/admin/programari?nou=1"
               className="px-3 py-1.5 bg-foreground text-white text-sm rounded hover:bg-foreground/90 transition-colors whitespace-nowrap"
             >
               + Programare

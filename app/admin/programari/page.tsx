@@ -104,6 +104,18 @@ export default function AdminAppointmentsPage() {
   const [editing, setEditing] = useState<Appointment | null>(null);
   const [showForm, setShowForm] = useState(false);
 
+  // Deschide formularul automat dacă URL conține ?nou=1
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("nou") === "1") {
+      setShowForm(true);
+      // Curăță param din URL fără reload
+      const url = new URL(window.location.href);
+      url.searchParams.delete("nou");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, []);
+
   const range = useMemo(() => {
     if (view === "day") {
       return { from: startOfDay(anchor), to: addDays(startOfDay(anchor), 1) };
