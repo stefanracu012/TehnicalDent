@@ -718,37 +718,39 @@ function AppointmentForm({
                 </button>
               </div>
             ) : creatingNew ? (
-              <div className="border border-border p-3 space-y-2 bg-muted/20">
+              <div className="border border-accent/30 p-3 space-y-2 bg-accent/5 rounded">
+                <p className="text-xs font-semibold text-accent uppercase tracking-wide mb-2">Pacient nou</p>
                 <input
                   required
-                  placeholder="Nume *"
+                  placeholder="Nume complet *"
                   value={newPatient.name}
                   onChange={(e) =>
                     setNewPatient({ ...newPatient, name: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-border bg-background text-sm"
+                  className="w-full px-3 py-2 border border-border bg-background text-sm rounded"
                 />
                 <input
                   required
-                  placeholder="Telefon *"
+                  placeholder="Telefon * (ex: +40712345678)"
                   value={newPatient.phone}
                   onChange={(e) =>
                     setNewPatient({ ...newPatient, phone: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-border bg-background text-sm"
+                  className="w-full px-3 py-2 border border-border bg-background text-sm rounded"
                 />
                 <input
-                  placeholder="Email"
+                  type="email"
+                  placeholder="Email (opțional)"
                   value={newPatient.email}
                   onChange={(e) =>
                     setNewPatient({ ...newPatient, email: e.target.value })
                   }
-                  className="w-full px-3 py-2 border border-border bg-background text-sm"
+                  className="w-full px-3 py-2 border border-border bg-background text-sm rounded"
                 />
                 <button
                   type="button"
                   onClick={() => setCreatingNew(false)}
-                  className="text-xs text-muted-foreground hover:text-foreground"
+                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1"
                 >
                   ← Înapoi la căutare
                 </button>
@@ -784,12 +786,20 @@ function AppointmentForm({
                     ))}
                   </ul>
                 )}
+                {patientQuery.trim() && patientResults.length === 0 && (
+                  <p className="mt-1 text-xs text-muted-foreground px-1">
+                    Niciun pacient găsit.
+                  </p>
+                )}
                 <button
                   type="button"
                   onClick={() => setCreatingNew(true)}
-                  className="mt-2 text-xs text-accent hover:underline"
+                  className="mt-2 flex items-center gap-1.5 px-3 py-1.5 text-xs border border-accent/40 text-accent hover:bg-accent/10 rounded transition-colors"
                 >
-                  + Pacient nou
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  </svg>
+                  Pacient nou
                 </button>
               </>
             )}

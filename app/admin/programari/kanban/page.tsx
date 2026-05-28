@@ -305,7 +305,9 @@ export default function KanbanPage() {
             <span className="text-muted-foreground hidden sm:inline">
               {STATUS_META[s].label}
             </span>
-            <span className="font-semibold text-foreground">{totalByStatus(s)}</span>
+            <span className="font-semibold text-foreground">
+              {totalByStatus(s)}
+            </span>
           </div>
         ))}
         <div className="ml-auto flex items-center gap-1 text-sm text-muted-foreground shrink-0">
@@ -331,7 +333,9 @@ export default function KanbanPage() {
             >
               <span className={`w-2 h-2 rounded-full ${meta.dot}`} />
               {meta.label}
-              <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${active ? "bg-foreground text-white" : "bg-muted text-muted-foreground"}`}>
+              <span
+                className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${active ? "bg-foreground text-white" : "bg-muted text-muted-foreground"}`}
+              >
                 {totalByStatus(s)}
               </span>
             </button>
