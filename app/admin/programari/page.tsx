@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, useCallback } from "react";
+import Link from "next/link";
 import { secureFetch } from "@/lib/csrf-client";
 
 type Status = "pending" | "confirmed" | "cancelled" | "completed" | "noshow";
@@ -228,16 +229,13 @@ export default function AdminAppointmentsPage() {
   }, [appts]);
 
   return (
-    <div className="min-h-screen bg-muted">
-      <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-4 mb-6">
+    <div className="h-full flex flex-col overflow-hidden bg-muted">
+      <div className="px-4 sm:px-6 lg:px-8 pt-4 pb-2 shrink-0">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 mb-3">
           <div>
-            <h1 className="font-serif text-2xl sm:text-3xl font-medium text-foreground">
+            <h1 className="font-serif text-xl sm:text-2xl font-medium text-foreground">
               Programări
             </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Gestionați calendarul, statusurile și notificările pacienților.
-            </p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -251,6 +249,25 @@ export default function AdminAppointmentsPage() {
                   {v === "day" ? "Zi" : v === "week" ? "Săptămână" : "Listă"}
                 </button>
               ))}
+              <Link
+                href="/admin/programari/kanban"
+                className="px-3 py-2 text-sm hover:bg-muted flex items-center gap-1 border-l border-border"
+              >
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={2}
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"
+                  />
+                </svg>
+                Kanban
+              </Link>
             </div>
             <button
               onClick={() =>
@@ -284,7 +301,7 @@ export default function AdminAppointmentsPage() {
         </div>
 
         {/* Filters */}
-        <div className="flex flex-wrap gap-2 mb-4">
+        <div className="flex flex-wrap gap-2 mb-2">
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value as "" | Status)}
@@ -326,110 +343,111 @@ export default function AdminAppointmentsPage() {
           />
         </div>
 
-        {loading && <p className="text-muted-foreground">Se încarcă...</p>}
+        {loading && <p className="text-muted-foreground py-2">Se încarcă...</p>}
+      </div>
 
-        {/* Calendar grid (day + week) */}
-        {!loading && view !== "list" && (
-          <div className="bg-background border border-border overflow-x-auto">
-            <div
-              className="grid"
-              style={{
-                gridTemplateColumns: `60px repeat(${days.length}, minmax(140px, 1fr))`,
-              }}
-            >
-              <div className="border-b border-border bg-muted/40" />
-              {days.map((d) => (
+      {/* Calendar grid (day + week) */}
+      {!loading && view !== "list" && (
+        <div className="flex-1 overflow-auto bg-background border-t border-border mx-4 sm:mx-6 lg:mx-8 mb-4 rounded-b-lg border-x border-b">
+          <div
+            className="grid"
+            style={{
+              gridTemplateColumns: `60px repeat(${days.length}, minmax(140px, 1fr))`,
+            }}
+          >
+            <div className="border-b border-border bg-muted/40" />
+            {days.map((d) => (
+              <div
+                key={d.toISOString()}
+                className="border-b border-l border-border p-2 text-xs font-semibold uppercase tracking-wide text-center bg-muted/40"
+              >
+                {fmtDay(d)}
+              </div>
+            ))}
+
+            {/* Hour rows */}
+            {HOURS.map((h) => (
+              <div key={`row-${h}`} className="contents">
                 <div
-                  key={d.toISOString()}
-                  className="border-b border-l border-border p-2 text-xs font-semibold uppercase tracking-wide text-center bg-muted/40"
+                  className="border-t border-border text-[11px] text-muted-foreground text-right pr-2"
+                  style={{ height: HOUR_PX }}
                 >
-                  {fmtDay(d)}
+                  {String(h).padStart(2, "0")}:00
                 </div>
-              ))}
-
-              {/* Hour rows */}
-              {HOURS.map((h) => (
-                <div key={`row-${h}`} className="contents">
+                {days.map((d) => (
                   <div
-                    className="border-t border-border text-[11px] text-muted-foreground text-right pr-2"
+                    key={`${d.toISOString()}-${h}`}
+                    className="border-t border-l border-border relative"
                     style={{ height: HOUR_PX }}
-                  >
-                    {String(h).padStart(2, "0")}:00
-                  </div>
-                  {days.map((d) => (
-                    <div
-                      key={`${d.toISOString()}-${h}`}
-                      className="border-t border-l border-border relative"
-                      style={{ height: HOUR_PX }}
-                    />
-                  ))}
-                </div>
-              ))}
-            </div>
-
-            {/* Overlay day columns absolutely-positioned blocks */}
-            <div
-              className="grid relative"
-              style={{
-                gridTemplateColumns: `60px repeat(${days.length}, minmax(140px, 1fr))`,
-                marginTop: -HOUR_PX * HOURS.length - 1,
-                pointerEvents: "none",
-              }}
-            >
-              <div />
-              {days.map((d) => {
-                const list = apptsByDay.get(d.toISOString()) || [];
-                return (
-                  <div
-                    key={`overlay-${d.toISOString()}`}
-                    className="relative"
-                    style={{ height: HOUR_PX * HOURS.length }}
-                  >
-                    {list.map((a) => {
-                      const start = new Date(a.dateTime);
-                      const minutesFromTop =
-                        (start.getHours() - HOURS[0]) * 60 + start.getMinutes();
-                      if (
-                        minutesFromTop < 0 ||
-                        minutesFromTop > HOURS.length * 60
-                      )
-                        return null;
-                      const top = (minutesFromTop / 60) * HOUR_PX;
-                      const height = Math.max(
-                        28,
-                        (a.duration / 60) * HOUR_PX - 2,
-                      );
-                      return (
-                        <button
-                          key={a.id}
-                          onClick={() => openEdit(a)}
-                          style={{
-                            top,
-                            height,
-                            left: 4,
-                            right: 4,
-                            position: "absolute",
-                            pointerEvents: "auto",
-                          }}
-                          className={`text-left text-[11px] px-1.5 py-1 border rounded shadow-sm overflow-hidden ${STATUS_BG[a.status]}`}
-                        >
-                          <div className="font-semibold truncate">
-                            {fmtTime(a.dateTime)} · {a.patient.name}
-                          </div>
-                          <div className="truncate">{a.service.title}</div>
-                        </button>
-                      );
-                    })}
-                  </div>
-                );
-              })}
-            </div>
+                  />
+                ))}
+              </div>
+            ))}
           </div>
-        )}
 
-        {/* List view */}
-        {!loading && view === "list" && (
-          <div className="bg-background border border-border overflow-x-auto">
+          {/* Overlay day columns absolutely-positioned blocks */}
+          <div
+            className="grid relative"
+            style={{
+              gridTemplateColumns: `60px repeat(${days.length}, minmax(140px, 1fr))`,
+              marginTop: -HOUR_PX * HOURS.length - 1,
+              pointerEvents: "none",
+            }}
+          >
+            <div />
+            {days.map((d) => {
+              const list = apptsByDay.get(d.toISOString()) || [];
+              return (
+                <div
+                  key={`overlay-${d.toISOString()}`}
+                  className="relative"
+                  style={{ height: HOUR_PX * HOURS.length }}
+                >
+                  {list.map((a) => {
+                    const start = new Date(a.dateTime);
+                    const minutesFromTop =
+                      (start.getHours() - HOURS[0]) * 60 + start.getMinutes();
+                    if (
+                      minutesFromTop < 0 ||
+                      minutesFromTop > HOURS.length * 60
+                    )
+                      return null;
+                    const top = (minutesFromTop / 60) * HOUR_PX;
+                    const height = Math.max(
+                      28,
+                      (a.duration / 60) * HOUR_PX - 2,
+                    );
+                    return (
+                      <button
+                        key={a.id}
+                        onClick={() => openEdit(a)}
+                        style={{
+                          top,
+                          height,
+                          left: 4,
+                          right: 4,
+                          position: "absolute",
+                          pointerEvents: "auto",
+                        }}
+                        className={`text-left text-[11px] px-1.5 py-1 border rounded shadow-sm overflow-hidden ${STATUS_BG[a.status]}`}
+                      >
+                        <div className="font-semibold truncate">
+                          {fmtTime(a.dateTime)} · {a.patient.name}
+                        </div>
+                        <div className="truncate">{a.service.title}</div>
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* List view */}
+      {!loading && view === "list" && (
+        <div className="flex-1 overflow-auto bg-background border-t border-border mx-4 sm:mx-6 lg:mx-8 mb-4 rounded-b-lg border-x border-b">
             {appts.length === 0 ? (
               <p className="p-6 text-sm text-muted-foreground text-center">
                 Nicio programare.
@@ -516,9 +534,8 @@ export default function AdminAppointmentsPage() {
                 </tbody>
               </table>
             )}
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {showForm && (
         <AppointmentForm

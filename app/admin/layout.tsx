@@ -30,9 +30,9 @@ export default function AdminLayout({
       lang="ro"
       className={`${inter.variable} ${playfair.variable} h-full antialiased`}
     >
-      <body className="min-h-screen flex flex-col md:flex-row bg-background text-foreground font-sans">
+      <body className="h-screen flex flex-col md:flex-row bg-background text-foreground font-sans overflow-hidden">
         <AdminNav />
-        <main className="flex-1 min-h-screen overflow-y-auto">{children}</main>
+        <main className="flex-1 h-screen overflow-y-auto">{children}</main>
       </body>
     </html>
   );
