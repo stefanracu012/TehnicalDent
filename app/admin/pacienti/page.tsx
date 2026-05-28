@@ -25,6 +25,17 @@ interface PatientDetail extends PatientListItem {
   appointments: AppointmentHistoryItem[];
 }
 
+interface Service {
+  id: string;
+  title: string;
+  duration: number;
+}
+
+function toLocalInput(d: Date) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 const emptyForm = { name: "", phone: "", email: "", notes: "" };
 
 const statusColor: Record<string, string> = {
@@ -45,6 +56,30 @@ export default function AdminPatientsPage() {
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [detail, setDetail] = useState<PatientDetail | null>(null);
+
+  // Quick schedule
+  const [services, setServices] = useState<Service[]>([]);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [scheduleData, setScheduleData] = useState({
+    serviceId: "",
+    duration: 30,
+    dateTime: toLocalInput(new Date(Date.now() + 60 * 60_000)),
+    notes: "",
+  });
+  const [scheduleSaving, setScheduleSaving] = useState(false);
+  const [scheduleError, setScheduleError] = useState<string | null>(null);
+  const [scheduleSuccess, setScheduleSuccess] = useState(false);
+
+  useEffect(() => {
+    secureFetch("/api/admin/services")
+      .then((r) => r.json())
+      .then((d) => {
+        const list = Array.isArray(d) ? d : [];
+        setServices(list);
+        if (list[0]) setScheduleData((p) => ({ ...p, serviceId: list[0].id, duration: list[0].duration }));
+      })
+      .catch(() => {});
+  }, []);
 
   const fetchPatients = useCallback(async () => {
     setLoading(true);
@@ -70,6 +105,9 @@ export default function AdminPatientsPage() {
     setEditing(null);
     setFormData(emptyForm);
     setErrorMsg(null);
+    setScheduleOpen(false);
+    setScheduleSuccess(false);
+    setScheduleError(null);
     setShowForm(true);
   };
 
@@ -82,6 +120,9 @@ export default function AdminPatientsPage() {
       notes: "",
     });
     setErrorMsg(null);
+    setScheduleOpen(false);
+    setScheduleSuccess(false);
+    setScheduleError(null);
     setShowForm(true);
     // Load full record to get notes
     secureFetch(`/api/admin/patients/${p.id}`)
@@ -106,8 +147,36 @@ export default function AdminPatientsPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Eroare salvare");
-      setShowForm(false);
       fetchPatients();
+      if (scheduleOpen) {
+        // Create appointment for this patient (new or existing)
+        const patientId = editing ? editing.id : data.id;
+        setScheduleSaving(true);
+        setScheduleError(null);
+        try {
+          const r = await secureFetch("/api/admin/appointments", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              patientId,
+              serviceId: scheduleData.serviceId,
+              duration: scheduleData.duration,
+              dateTime: new Date(scheduleData.dateTime).toISOString(),
+              notes: scheduleData.notes,
+            }),
+          });
+          const rd = await r.json();
+          if (!r.ok) throw new Error(rd.error || "Eroare creare programare");
+          setScheduleSuccess(true);
+          setTimeout(() => setShowForm(false), 1500);
+        } catch (err) {
+          setScheduleError(err instanceof Error ? err.message : "Eroare programare");
+        } finally {
+          setScheduleSaving(false);
+        }
+      } else {
+        setShowForm(false);
+      }
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Eroare");
     } finally {
@@ -220,6 +289,20 @@ export default function AdminPatientsPage() {
                         Istoric
                       </button>
                       <button
+                        onClick={() => {
+                          setEditing(p);
+                          setFormData({ name: p.name, phone: p.phone, email: p.email || "", notes: "" });
+                          setScheduleOpen(true);
+                          setScheduleSuccess(false);
+                          setScheduleError(null);
+                          setErrorMsg(null);
+                          setShowForm(true);
+                        }}
+                        className="text-xs px-2 py-1 border border-accent/40 text-accent hover:bg-accent/10"
+                      >
+                        + Programare
+                      </button>
+                      <button
                         onClick={() => openEdit(p)}
                         className="text-xs px-2 py-1 border border-border hover:bg-muted"
                       >
@@ -243,7 +326,7 @@ export default function AdminPatientsPage() {
       {/* Form modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center px-4">
-          <div className="bg-background max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
+          <div className="bg-background max-w-xl w-full p-6 max-h-[90vh] overflow-y-auto">
             <h2 className="font-serif text-xl font-medium mb-4">
               {editing ? "Editează pacient" : "Pacient nou"}
             </h2>
@@ -302,6 +385,87 @@ export default function AdminPatientsPage() {
                 />
               </div>
 
+              {/* Quick schedule toggle — for new patients or from quick-schedule button */}
+              {(!editing || scheduleOpen) && (
+                <div className="border-t border-border pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setScheduleOpen((o) => !o)}
+                    className={`flex items-center gap-2 text-sm font-medium transition-colors ${scheduleOpen ? "text-accent" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    <svg className={`w-4 h-4 transition-transform ${scheduleOpen ? "rotate-90" : ""}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    </svg>
+                    {scheduleOpen ? "Ascunde programare" : "Programează imediat după creare"}
+                  </button>
+
+                  {scheduleOpen && (
+                    <div className="mt-3 space-y-3 bg-muted/40 border border-border rounded p-4">
+                      <p className="text-xs text-muted-foreground">Programarea va fi creată automat după salvarea pacientului.</p>
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">Serviciu *</label>
+                          <select
+                            value={scheduleData.serviceId}
+                            onChange={(e) => {
+                              const svc = services.find((s) => s.id === e.target.value);
+                              setScheduleData({ ...scheduleData, serviceId: e.target.value, duration: svc?.duration || 30 });
+                            }}
+                            className="w-full px-3 py-2 border border-border bg-background text-sm"
+                          >
+                            {services.map((s) => <option key={s.id} value={s.id}>{s.title}</option>)}
+                          </select>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">Durată (min)</label>
+                          <input
+                            type="number"
+                            min={5}
+                            step={5}
+                            value={scheduleData.duration}
+                            onChange={(e) => setScheduleData({ ...scheduleData, duration: Number(e.target.value) })}
+                            className="w-full px-3 py-2 border border-border bg-background text-sm"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">Data și ora *</label>
+                        <input
+                          type="datetime-local"
+                          value={scheduleData.dateTime}
+                          onChange={(e) => setScheduleData({ ...scheduleData, dateTime: e.target.value })}
+                          className="w-full px-3 py-2 border border-border bg-background text-sm"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">Observații programare</label>
+                        <textarea
+                          rows={2}
+                          value={scheduleData.notes}
+                          onChange={(e) => setScheduleData({ ...scheduleData, notes: e.target.value })}
+                          className="w-full px-3 py-2 border border-border bg-background text-sm"
+                        />
+                      </div>
+
+                      {scheduleError && (
+                        <div className="text-sm text-red-700 bg-red-50 border border-red-200 px-3 py-2 rounded">
+                          {scheduleError}
+                        </div>
+                      )}
+                      {scheduleSuccess && (
+                        <div className="text-sm text-green-700 bg-green-50 border border-green-200 px-3 py-2 rounded flex items-center gap-2">
+                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                          Pacient și programare create cu succes!
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {errorMsg && (
                 <div className="text-sm text-red-700 bg-red-50 border border-red-200 px-3 py-2">
                   {errorMsg}
@@ -317,11 +481,15 @@ export default function AdminPatientsPage() {
                   Anulează
                 </button>
                 <button
-                  disabled={saving}
+                  disabled={saving || scheduleSaving}
                   type="submit"
                   className="bg-foreground text-white px-4 py-2 text-sm font-medium hover:bg-foreground/90 disabled:opacity-50"
                 >
-                  {saving ? "Se salvează..." : "Salvează"}
+                  {saving || scheduleSaving
+                    ? "Se salvează..."
+                    : scheduleOpen && !editing
+                    ? "Salvează și programează"
+                    : "Salvează"}
                 </button>
               </div>
             </form>
