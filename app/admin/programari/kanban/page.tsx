@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { secureFetch } from "@/lib/csrf-client";
 import Link from "next/link";
 
@@ -108,6 +108,15 @@ export default function KanbanPage() {
   const [customTo, setCustomTo] = useState(fmtDateInput(new Date()));
   const [dragging, setDragging] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState<Status | null>(null);
+  // Use a ref so handleDrop always reads the latest dragging value (no stale closures)
+  const draggingRef = useRef<string | null>(null);
+
+  // Reset any active drag when filter/search changes
+  useEffect(() => {
+    setDragging(null);
+    setDragOver(null);
+    draggingRef.current = null;
+  }, [preset, customFrom, customTo, search]);
 
   const range = useMemo(() => {
     const now = new Date();
@@ -168,24 +177,38 @@ export default function KanbanPage() {
     return map;
   }, [appts]);
 
-  const changeStatus = useCallback(async (id: string, status: Status) => {
-    setAppts((prev) => prev.map((a) => (a.id === id ? { ...a, status } : a)));
-    await secureFetch(`/api/admin/appointments/${id}`, {
+  const apptStatusRef = useRef<Map<string, Status>>(new Map());
+  useEffect(() => {
+    apptStatusRef.current = new Map(appts.map((a) => [a.id, a.status]));
+  }, [appts]);
+
+  const changeStatus = useCallback(async (id: string, newStatus: Status) => {
+    // Guard: skip if status hasn't actually changed (prevents spurious API calls)
+    const currentStatus = apptStatusRef.current.get(id);
+    if (!currentStatus || currentStatus === newStatus) return;
+    // Optimistic UI update
+    setAppts((prev) =>
+      prev.map((a) => (a.id === id ? { ...a, status: newStatus } : a)),
+    );
+    // Persist to server
+    secureFetch(`/api/admin/appointments/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
-    });
+      body: JSON.stringify({ status: newStatus }),
+    }).catch((e) => console.error("changeStatus:", e));
   }, []);
 
   const handleDrop = useCallback(
     (targetStatus: Status) => {
-      if (dragging && targetStatus !== dragOver) return;
-      if (!dragging) return;
-      changeStatus(dragging, targetStatus);
+      // Use ref to get the latest dragging id (avoids stale closure)
+      const id = draggingRef.current;
+      if (!id) return;
       setDragging(null);
       setDragOver(null);
+      draggingRef.current = null;
+      changeStatus(id, targetStatus);
     },
-    [dragging, dragOver, changeStatus],
+    [changeStatus],
   );
 
   const totalByStatus = (s: Status) => byStatus[s].length;
@@ -311,8 +334,16 @@ export default function KanbanPage() {
                   e.preventDefault();
                   setDragOver(col);
                 }}
-                onDragLeave={() => setDragOver(null)}
-                onDrop={() => handleDrop(col)}
+                onDragLeave={(e) => {
+                  // Only clear dragOver if leaving to outside the column entirely
+                  if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                    setDragOver(null);
+                  }
+                }}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  handleDrop(col);
+                }}
               >
                 {/* Column header */}
                 <div
@@ -338,8 +369,12 @@ export default function KanbanPage() {
                       key={a.id}
                       appt={a}
                       isDragging={dragging === a.id}
-                      onDragStart={() => setDragging(a.id)}
+                      onDragStart={() => {
+                        draggingRef.current = a.id;
+                        setDragging(a.id);
+                      }}
                       onDragEnd={() => {
+                        draggingRef.current = null;
                         setDragging(null);
                         setDragOver(null);
                       }}
