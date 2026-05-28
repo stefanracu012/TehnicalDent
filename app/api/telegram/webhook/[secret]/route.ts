@@ -12,6 +12,7 @@
 
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { AppointmentStatus } from "@prisma/client";
 import {
   isValidPhone,
   normalizePhone,
@@ -46,6 +47,49 @@ async function tgSend(chatId: number | string, text: string) {
     }),
   }).catch(() => {});
 }
+
+async function tgAnswerCallback(callbackId: string, text: string) {
+  if (!TG_TOKEN) return;
+  await fetch(`https://api.telegram.org/bot${TG_TOKEN}/answerCallbackQuery`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ callback_query_id: callbackId, text, show_alert: false }),
+  }).catch(() => {});
+}
+
+async function tgEditMessage(
+  chatId: number | string,
+  messageId: number,
+  text: string,
+) {
+  if (!TG_TOKEN) return;
+  await fetch(`https://api.telegram.org/bot${TG_TOKEN}/editMessageText`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      chat_id: chatId,
+      message_id: messageId,
+      text,
+      parse_mode: "HTML",
+    }),
+  }).catch(() => {});
+}
+
+const STATUS_EMOJI: Record<string, string> = {
+  pending: "🟡",
+  confirmed: "🟢",
+  completed: "✅",
+  cancelled: "❌",
+  noshow: "👤",
+};
+
+const STATUS_LABELS: Record<string, string> = {
+  pending: "Așteptare",
+  confirmed: "Confirmat",
+  completed: "Finalizat",
+  cancelled: "Anulat",
+  noshow: "Neprezent",
+};
 
 const HELP = `<b>Comenzi disponibile</b>
 
@@ -307,10 +351,17 @@ interface TelegramMessage {
   chat: { id: number };
   text?: string;
 }
+interface TelegramCallbackQuery {
+  id: string;
+  from: { id: number };
+  message?: { message_id: number; chat: { id: number }; text?: string };
+  data?: string;
+}
 interface TelegramUpdate {
   update_id: number;
   message?: TelegramMessage;
   edited_message?: TelegramMessage;
+  callback_query?: TelegramCallbackQuery;
 }
 
 export async function POST(request: Request, { params }: RouteParams) {
@@ -326,6 +377,71 @@ export async function POST(request: Request, { params }: RouteParams) {
     update = (await request.json()) as TelegramUpdate;
   } catch {
     return NextResponse.json({ ok: true }); // ignore bad payloads
+  }
+
+  // ---------- callback_query (inline button presses) ----------
+  if (update.callback_query) {
+    const cq = update.callback_query;
+    const data = cq.data || "";
+    const match = data.match(/^status:(.+):(.+)$/);
+
+    if (match) {
+      const [, apptId, newStatus] = match;
+      const validStatuses = ["pending", "confirmed", "completed", "cancelled", "noshow"];
+
+      if (!validStatuses.includes(newStatus)) {
+        await tgAnswerCallback(cq.id, "Status invalid.");
+        return NextResponse.json({ ok: true });
+      }
+
+      try {
+        const typedStatus = newStatus as AppointmentStatus;
+        await prisma.appointment.update({
+          where: { id: apptId },
+          data: { status: typedStatus },
+        });
+
+        // Fetch full appointment for notifications
+        const apptFull = await prisma.appointment.findUnique({
+          where: { id: apptId },
+          include: { patient: true, service: true },
+        });
+        if (!apptFull) throw new Error("Appointment not found");
+
+        // Fire notification
+        const { notifyConfirmed, notifyCancelled, notifyCompleted, notifyNoshow, notifyPending } =
+          await import("@/lib/notifications");
+        if (newStatus === "confirmed") await notifyConfirmed(apptFull);
+        else if (newStatus === "cancelled") await notifyCancelled(apptFull);
+        else if (newStatus === "completed") await notifyCompleted(apptFull);
+        else if (newStatus === "noshow") await notifyNoshow(apptFull);
+        else if (newStatus === "pending") await notifyPending(apptFull);
+
+        await tgAnswerCallback(cq.id, `${STATUS_EMOJI[newStatus]} ${STATUS_LABELS[newStatus]}`);
+
+        // Edit the original message to reflect new status
+        if (cq.message) {
+          const time = new Date(apptFull.dateTime).toLocaleTimeString("ro-RO", {
+            hour: "2-digit",
+            minute: "2-digit",
+            timeZone: "Europe/Chisinau",
+          });
+          const newText =
+            `${STATUS_EMOJI[newStatus]} <b>${time}</b> — ${apptFull.patient.name}\n` +
+            `🦷 ${apptFull.service.title} · ${apptFull.duration} min\n` +
+            `📞 ${apptFull.patient.phone}\n` +
+            `<i>Status: ${STATUS_LABELS[newStatus]}</i>`;
+          await tgEditMessage(cq.message.chat.id, cq.message.message_id, newText);
+        }
+      } catch (err) {
+        console.error("Callback status update error:", err);
+        await tgAnswerCallback(cq.id, "❌ Eroare la actualizare.");
+      }
+    } else {
+      await tgAnswerCallback(cq.id, "");
+    }
+
+    return NextResponse.json({ ok: true });
   }
 
   const msg = update.message || update.edited_message;

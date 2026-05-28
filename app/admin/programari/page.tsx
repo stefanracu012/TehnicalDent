@@ -719,7 +719,9 @@ function AppointmentForm({
               </div>
             ) : creatingNew ? (
               <div className="border border-accent/30 p-3 space-y-2 bg-accent/5 rounded">
-                <p className="text-xs font-semibold text-accent uppercase tracking-wide mb-2">Pacient nou</p>
+                <p className="text-xs font-semibold text-accent uppercase tracking-wide mb-2">
+                  Pacient nou
+                </p>
                 <input
                   required
                   placeholder="Nume complet *"
@@ -796,8 +798,18 @@ function AppointmentForm({
                   onClick={() => setCreatingNew(true)}
                   className="mt-2 flex items-center gap-1.5 px-3 py-1.5 text-xs border border-accent/40 text-accent hover:bg-accent/10 rounded transition-colors"
                 >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+                  <svg
+                    className="w-3.5 h-3.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={2}
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 4.5v15m7.5-7.5h-15"
+                    />
                   </svg>
                   Pacient nou
                 </button>

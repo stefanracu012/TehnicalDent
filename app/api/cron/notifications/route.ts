@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { retryFailed, runRecallScan, runReminderScan } from "@/lib/notifications";
+import { sendDailyBriefing, sendEveningReminder } from "@/lib/daily-briefing";
 
 /**
  * Cron-driven notifications dispatcher.
@@ -7,6 +8,9 @@ import { retryFailed, runRecallScan, runReminderScan } from "@/lib/notifications
  * Protected by CRON_SECRET (header `x-cron-secret` or query `?secret=...`).
  * Should be invoked every ~10 minutes by an external scheduler
  * (Vercel Cron, GitHub Actions, cron-job.org, etc.).
+ *
+ * Daily briefing (Telegram) fires automatically when this cron runs
+ * between 07:25–07:35 Moldova time (once per day).
  */
 async function handle(request: Request) {
   const url = new URL(request.url);
@@ -30,13 +34,34 @@ async function handle(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Check if we're in the 07:25–07:35 Moldova window → send daily briefing
+  const nowMoldova = new Date(
+    new Date().toLocaleString("en-US", { timeZone: "Europe/Chisinau" }),
+  );
+  const h = nowMoldova.getHours();
+  const m = nowMoldova.getMinutes();
+  const inBriefingWindow = h === 7 && m >= 25 && m <= 35;
+  // 20:00–20:10 Moldova → reminder pentru programări nefinalizate
+  const inEveningWindow = h === 20 && m >= 0 && m <= 10;
+
   try {
     const [reminders, recalls, retried] = await Promise.all([
       runReminderScan(),
       runRecallScan(),
       retryFailed(),
     ]);
-    return NextResponse.json({ ok: true, reminders, recalls, retried });
+
+    let briefing: { sent?: number; skipped?: boolean } = { skipped: true };
+    if (inBriefingWindow) {
+      briefing = await sendDailyBriefing();
+    }
+
+    let evening: { sent?: number; skipped?: boolean } = { skipped: true };
+    if (inEveningWindow) {
+      evening = await sendEveningReminder();
+    }
+
+    return NextResponse.json({ ok: true, reminders, recalls, retried, briefing, evening });
   } catch (error) {
     console.error("Cron error:", error);
     return NextResponse.json(
