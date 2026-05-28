@@ -76,7 +76,12 @@ export default function AdminPatientsPage() {
       .then((d) => {
         const list = Array.isArray(d) ? d : [];
         setServices(list);
-        if (list[0]) setScheduleData((p) => ({ ...p, serviceId: list[0].id, duration: list[0].duration }));
+        if (list[0])
+          setScheduleData((p) => ({
+            ...p,
+            serviceId: list[0].id,
+            duration: list[0].duration,
+          }));
       })
       .catch(() => {});
   }, []);
@@ -170,7 +175,9 @@ export default function AdminPatientsPage() {
           setScheduleSuccess(true);
           setTimeout(() => setShowForm(false), 1500);
         } catch (err) {
-          setScheduleError(err instanceof Error ? err.message : "Eroare programare");
+          setScheduleError(
+            err instanceof Error ? err.message : "Eroare programare",
+          );
         } finally {
           setScheduleSaving(false);
         }
@@ -291,7 +298,12 @@ export default function AdminPatientsPage() {
                       <button
                         onClick={() => {
                           setEditing(p);
-                          setFormData({ name: p.name, phone: p.phone, email: p.email || "", notes: "" });
+                          setFormData({
+                            name: p.name,
+                            phone: p.phone,
+                            email: p.email || "",
+                            notes: "",
+                          });
                           setScheduleOpen(true);
                           setScheduleSuccess(false);
                           setScheduleError(null);
@@ -393,59 +405,107 @@ export default function AdminPatientsPage() {
                     onClick={() => setScheduleOpen((o) => !o)}
                     className={`flex items-center gap-2 text-sm font-medium transition-colors ${scheduleOpen ? "text-accent" : "text-muted-foreground hover:text-foreground"}`}
                   >
-                    <svg className={`w-4 h-4 transition-transform ${scheduleOpen ? "rotate-90" : ""}`} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                    <svg
+                      className={`w-4 h-4 transition-transform ${scheduleOpen ? "rotate-90" : ""}`}
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth={2}
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M8.25 4.5l7.5 7.5-7.5 7.5"
+                      />
                     </svg>
-                    {scheduleOpen ? "Ascunde programare" : "Programează imediat după creare"}
+                    {scheduleOpen
+                      ? "Ascunde programare"
+                      : "Programează imediat după creare"}
                   </button>
 
                   {scheduleOpen && (
                     <div className="mt-3 space-y-3 bg-muted/40 border border-border rounded p-4">
-                      <p className="text-xs text-muted-foreground">Programarea va fi creată automat după salvarea pacientului.</p>
+                      <p className="text-xs text-muted-foreground">
+                        Programarea va fi creată automat după salvarea
+                        pacientului.
+                      </p>
 
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">Serviciu *</label>
+                          <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+                            Serviciu *
+                          </label>
                           <select
                             value={scheduleData.serviceId}
                             onChange={(e) => {
-                              const svc = services.find((s) => s.id === e.target.value);
-                              setScheduleData({ ...scheduleData, serviceId: e.target.value, duration: svc?.duration || 30 });
+                              const svc = services.find(
+                                (s) => s.id === e.target.value,
+                              );
+                              setScheduleData({
+                                ...scheduleData,
+                                serviceId: e.target.value,
+                                duration: svc?.duration || 30,
+                              });
                             }}
                             className="w-full px-3 py-2 border border-border bg-background text-sm"
                           >
-                            {services.map((s) => <option key={s.id} value={s.id}>{s.title}</option>)}
+                            {services.map((s) => (
+                              <option key={s.id} value={s.id}>
+                                {s.title}
+                              </option>
+                            ))}
                           </select>
                         </div>
                         <div>
-                          <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">Durată (min)</label>
+                          <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+                            Durată (min)
+                          </label>
                           <input
                             type="number"
                             min={5}
                             step={5}
                             value={scheduleData.duration}
-                            onChange={(e) => setScheduleData({ ...scheduleData, duration: Number(e.target.value) })}
+                            onChange={(e) =>
+                              setScheduleData({
+                                ...scheduleData,
+                                duration: Number(e.target.value),
+                              })
+                            }
                             className="w-full px-3 py-2 border border-border bg-background text-sm"
                           />
                         </div>
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">Data și ora *</label>
+                        <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+                          Data și ora *
+                        </label>
                         <input
                           type="datetime-local"
                           value={scheduleData.dateTime}
-                          onChange={(e) => setScheduleData({ ...scheduleData, dateTime: e.target.value })}
+                          onChange={(e) =>
+                            setScheduleData({
+                              ...scheduleData,
+                              dateTime: e.target.value,
+                            })
+                          }
                           className="w-full px-3 py-2 border border-border bg-background text-sm"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">Observații programare</label>
+                        <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+                          Observații programare
+                        </label>
                         <textarea
                           rows={2}
                           value={scheduleData.notes}
-                          onChange={(e) => setScheduleData({ ...scheduleData, notes: e.target.value })}
+                          onChange={(e) =>
+                            setScheduleData({
+                              ...scheduleData,
+                              notes: e.target.value,
+                            })
+                          }
                           className="w-full px-3 py-2 border border-border bg-background text-sm"
                         />
                       </div>
@@ -457,7 +517,19 @@ export default function AdminPatientsPage() {
                       )}
                       {scheduleSuccess && (
                         <div className="text-sm text-green-700 bg-green-50 border border-green-200 px-3 py-2 rounded flex items-center gap-2">
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth={2}
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M4.5 12.75l6 6 9-13.5"
+                            />
+                          </svg>
                           Pacient și programare create cu succes!
                         </div>
                       )}
@@ -488,8 +560,8 @@ export default function AdminPatientsPage() {
                   {saving || scheduleSaving
                     ? "Se salvează..."
                     : scheduleOpen && !editing
-                    ? "Salvează și programează"
-                    : "Salvează"}
+                      ? "Salvează și programează"
+                      : "Salvează"}
                 </button>
               </div>
             </form>

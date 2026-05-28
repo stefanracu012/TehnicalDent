@@ -8,6 +8,9 @@ import {
 import {
   notifyCancelled,
   notifyConfirmed,
+  notifyCompleted,
+  notifyNoshow,
+  notifyPending,
 } from "@/lib/notifications";
 import type { AppointmentStatus } from "@prisma/client";
 
@@ -130,6 +133,12 @@ export async function PATCH(request: Request, { params }: RouteParams) {
         notifyCancelled(updated, "Anulat din admin").catch((e) =>
           console.error("notifyCancelled:", e),
         );
+      } else if (data.status === "completed") {
+        notifyCompleted(updated).catch((e) => console.error("notifyCompleted:", e));
+      } else if (data.status === "noshow") {
+        notifyNoshow(updated).catch((e) => console.error("notifyNoshow:", e));
+      } else if (data.status === "pending") {
+        notifyPending(updated).catch((e) => console.error("notifyPending:", e));
       }
     }
 

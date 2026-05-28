@@ -423,6 +423,42 @@ export async function notifyCancelled(a: AppointmentFull, reason?: string) {
     });
   }}
 
+export async function notifyCompleted(a: AppointmentFull) {
+  await queueAndSend({
+    type: "confirmed",
+    channel: "telegram",
+    recipient: TELEGRAM_CHAT_ID || "admin",
+    appointmentId: a.id,
+    payload:
+      `✅ <b>Programare finalizată</b>\n${clientLine(a)}\n📞 ${a.patient.phone}` +
+      (a.patient.email ? `\n📧 ${a.patient.email}` : ""),
+  });
+}
+
+export async function notifyNoshow(a: AppointmentFull) {
+  await queueAndSend({
+    type: "confirmed",
+    channel: "telegram",
+    recipient: TELEGRAM_CHAT_ID || "admin",
+    appointmentId: a.id,
+    payload:
+      `👤 <b>Neprezentare</b>\n${clientLine(a)}\n📞 ${a.patient.phone}` +
+      (a.patient.email ? `\n📧 ${a.patient.email}` : ""),
+  });
+}
+
+export async function notifyPending(a: AppointmentFull) {
+  await queueAndSend({
+    type: "created",
+    channel: "telegram",
+    recipient: TELEGRAM_CHAT_ID || "admin",
+    appointmentId: a.id,
+    payload:
+      `⏳ <b>Programare în așteptare</b>\n${clientLine(a)}\n📞 ${a.patient.phone}` +
+      (a.patient.email ? `\n📧 ${a.patient.email}` : ""),
+  });
+}
+
 export async function notifyReminder(a: AppointmentFull, kind: "24h" | "2h") {
   const type: NotificationType = kind === "24h" ? "reminder_24h" : "reminder_2h";
   if (!a.patient.phone && !a.patient.email) return;
