@@ -149,6 +149,15 @@ async function sendWhatsAppRaw(phone: string, payload: string): Promise<void> {
 }
 
 /**
+ * Sends a freeform WhatsApp text message directly (bypassing the Notification
+ * queue). Only valid within the 24h customer-service window — used for the
+ * inbound-chat auto-reply and manual admin replies in the WhatsApp inbox.
+ */
+export async function sendWhatsAppText(phone: string, text: string): Promise<void> {
+  return sendWhatsAppRaw(phone, text);
+}
+
+/**
  * Sends an HTML email via Resend (https://resend.com).
  * The payload format we use is JSON: { subject, html, text }.
  */

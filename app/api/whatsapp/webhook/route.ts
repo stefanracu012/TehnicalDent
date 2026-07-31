@@ -20,12 +20,16 @@ import crypto from "crypto";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { normalizePhone } from "@/lib/appointments";
+import { sendWhatsAppText } from "@/lib/notifications";
 
 const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || "";
 const APP_SECRET = process.env.WHATSAPP_APP_SECRET || "";
 const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
 const TG_CHAT_ID =
   process.env.TELEGRAM_ADMIN_CHAT_ID || process.env.TELEGRAM_CHAT_ID || "";
+
+const AUTO_REPLY =
+  "Bună ziua! Am primit mesajul dvs. Vă vom contacta în cel mai scurt timp posibil. — TechnicalDent";
 
 async function notifyAdmin(text: string) {
   if (!TG_TOKEN || !TG_CHAT_ID) return;
@@ -125,17 +129,44 @@ export async function POST(request: Request) {
       const value = change.value;
 
       for (const msg of value.messages || []) {
+        // Meta retries webhook delivery on failure — skip messages we already stored.
+        const already = await prisma.whatsAppMessage.findFirst({
+          where: { waMessageId: msg.id },
+          select: { id: true },
+        });
+        if (already) continue;
+
         const contact = value.contacts?.find((c) => c.wa_id === msg.from);
         const phone = normalizePhone(`+${msg.from}`);
         const patient = await prisma.patient.findFirst({
           where: { phone: { contains: msg.from.slice(-9) } },
-          select: { name: true },
+          select: { id: true, name: true },
         });
         const who = patient?.name || contact?.profile?.name || phone;
+        const text = messageText(msg);
+
+        await prisma.whatsAppMessage.create({
+          data: {
+            phone,
+            direction: "in",
+            body: text,
+            waMessageId: msg.id,
+            patientId: patient?.id,
+          },
+        });
 
         await notifyAdmin(
-          `💬 <b>Mesaj WhatsApp</b> de la ${who} (<code>${phone}</code>)\n${messageText(msg)}`,
+          `💬 <b>Mesaj WhatsApp</b> de la ${who} (<code>${phone}</code>)\n${text}`,
         );
+
+        try {
+          await sendWhatsAppText(phone, AUTO_REPLY);
+          await prisma.whatsAppMessage.create({
+            data: { phone, direction: "out", body: AUTO_REPLY, patientId: patient?.id },
+          });
+        } catch (err) {
+          console.error("WhatsApp auto-reply error:", err);
+        }
       }
 
       for (const status of value.statuses || []) {

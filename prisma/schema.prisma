@@ -121,10 +121,33 @@ model Patient {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  appointments Appointment[]
+  appointments      Appointment[]
+  whatsappMessages  WhatsAppMessage[]
 
   @@index([phone])
   @@index([name])
+}
+
+enum WhatsAppDirection {
+  in
+  out
+}
+
+// Incoming/outgoing WhatsApp chat messages (separate from the appointment
+// Notification log) — powers the admin WhatsApp inbox.
+model WhatsAppMessage {
+  id          String            @id @default(auto()) @map("_id") @db.ObjectId
+  phone       String            // E.164, e.g. +37360123456
+  direction   WhatsAppDirection
+  body        String
+  waMessageId String?           // Meta's message id, for dedup
+  patientId   String?           @db.ObjectId
+  createdAt   DateTime          @default(now())
+
+  patient     Patient? @relation(fields: [patientId], references: [id], onDelete: SetNull)
+
+  @@index([phone])
+  @@index([createdAt])
 }
 
 enum AppointmentStatus {
