@@ -1,0 +1,83 @@
+import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
+import prisma from "@/lib/prisma";
+import { sanitizeObject, validateNoInjection } from "@/lib/security";
+
+interface RouteParams {
+  params: Promise<{ id: string }>;
+}
+
+export async function GET(request: Request, { params }: RouteParams) {
+  const { id } = await params;
+  
+  try {
+    const service = await prisma.service.findUnique({
+      where: { id },
+    });
+
+    if (!service) {
+      return NextResponse.json(
+        { error: "Service not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(service);
+  } catch (error) {
+    console.error("Error fetching service:", error);
+    return NextResponse.json(
+      { error: "Failed to fetch service" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request: Request, { params }: RouteParams) {
+  const { id } = await params;
+  
+  try {
+    const rawBody = await request.json();
+
+    // Security: validate & sanitize input
+    if (!validateNoInjection(rawBody)) {
+      return NextResponse.json(
+        { error: "Input invalid detectat." },
+        { status: 400 }
+      );
+    }
+    const body = sanitizeObject(rawBody, ["description", "overview", "process", "recovery"]);
+
+    const service = await prisma.service.update({
+      where: { id },
+      data: body,
+    });
+
+    revalidatePath("/", "layout");
+    return NextResponse.json(service);
+  } catch (error) {
+    console.error("Error updating service:", error);
+    return NextResponse.json(
+      { error: "Failed to update service" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: Request, { params }: RouteParams) {
+  const { id } = await params;
+  
+  try {
+    await prisma.service.delete({
+      where: { id },
+    });
+
+    revalidatePath("/", "layout");
+    return NextResponse.json({ message: "Service deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting service:", error);
+    return NextResponse.json(
+      { error: "Failed to delete service" },
+      { status: 500 }
+    );
+  }
+}

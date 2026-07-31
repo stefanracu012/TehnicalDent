@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 375" overflow="hidden">
+
+  <!-- Tooth Crown: bold C-shape, outer and inner arc forming the crown body -->
+  <path fill="#111111" d="
+    M 152 13
+    C 168 8, 190 8, 205 18
+    C 218 27, 218 44, 205 52
+    C 196 58, 180 57, 162 57
+    C 124 57, 88 76, 68 112
+    C 50 145, 53 177, 68 195
+    C 76 205, 90 209, 101 203
+    C 111 197, 112 184, 103 175
+    C 91 162, 85 143, 90 118
+    C 96 91, 118 72, 148 66
+    C 168 62, 190 64, 200 53
+    C 210 43, 207 24, 192 16
+    C 181 10, 166 9, 152 13
+    Z
+  "/>
+
+  <!-- Implant Threads (5 crescent arcs, decreasing in size) -->
+  <path fill="#111111" d="M 38 222 Q 66 210 94 222 Q 66 234 38 222 Z"/>
+  <path fill="#111111" d="M 44 246 Q 69 235 93 246 Q 69 257 44 246 Z"/>
+  <path fill="#111111" d="M 51 268 Q 73 258 92 268 Q 73 278 51 268 Z"/>
+  <path fill="#111111" d="M 58 288 Q 76 279 91 288 Q 76 297 58 288 Z"/>
+  <path fill="#111111" d="M 65 306 Q 80 298 90 306 Q 80 314 65 306 Z"/>
+
+  <!-- T letter (large serif) -->
+  <text
+    x="110"
+    y="210"
+    font-family="Georgia, 'Times New Roman', Times, serif"
+    font-size="162"
+    font-weight="bold"
+    fill="#111111"
+  >T</text>
+
+  <!-- D letter (large serif, lower-right) -->
+  <text
+    x="150"
+    y="300"
+    font-family="Georgia, 'Times New Roman', Times, serif"
+    font-size="158"
+    font-weight="bold"
+    fill="#111111"
+  >D</text>
+
+  <!-- TEHNICAL DENT wordmark -->
+  <text
+    x="160"
+    y="358"
+    font-family="Georgia, 'Times New Roman', Times, serif"
+    font-size="20"
+    font-weight="normal"
+    letter-spacing="5"
+    fill="#111111"
+    text-anchor="middle"
+  >TEHNICAL DENT</text>
+
+</svg>

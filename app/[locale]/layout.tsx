@@ -1,0 +1,127 @@
+import type { Metadata } from "next";
+import { Inter, Playfair_Display } from "next/font/google";
+import "../globals.css";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import TopBar from "@/components/TopBar";
+import WhatsAppButton from "@/components/WhatsAppButton";
+import { NextIntlClientProvider, hasLocale } from "next-intl";
+import {
+  getMessages,
+  getTranslations,
+  setRequestLocale,
+} from "next-intl/server";
+import { routing } from "@/i18n/routing";
+import { notFound } from "next/navigation";
+import { getAlternates, getOgLocale } from "@/lib/seo";
+import { DentistSchema } from "@/components/JsonLd";
+
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin", "cyrillic"],
+  display: "swap",
+});
+
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
+  subsets: ["latin", "cyrillic"],
+  display: "swap",
+});
+
+export function generateStaticParams() {
+  return routing.locales.map((locale) => ({ locale }));
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: "Metadata" });
+
+  return {
+    title: {
+      default: t("title"),
+      template: "%s | TechnicalDent",
+    },
+    description: t("description"),
+    keywords: t("keywords"),
+    authors: [{ name: "TechnicalDent" }],
+    icons: {
+      icon: [
+        { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+        { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+        {
+          url: "/android-chrome-192x192.png",
+          sizes: "192x192",
+          type: "image/png",
+        },
+        {
+          url: "/android-chrome-512x512.png",
+          sizes: "512x512",
+          type: "image/png",
+        },
+      ],
+      apple: "/apple-icon.png",
+    },
+    metadataBase: new URL("https://tehnicaldent.com"),
+    alternates: getAlternates("", locale),
+    openGraph: {
+      type: "website",
+      locale: getOgLocale(locale),
+      siteName: "TechnicalDent",
+      url: `https://tehnicaldent.com/${locale}`,
+      images: [
+        {
+          url: "https://tehnicaldent.com/images/hero-dentist.jpg",
+          width: 1200,
+          height: 630,
+          alt: "TechnicalDent — Clinică Stomatologică",
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: t("title"),
+      description: t("description"),
+      images: ["https://tehnicaldent.com/images/hero-dentist.jpg"],
+    },
+  };
+}
+
+export default async function LocaleLayout({
+  children,
+  params,
+}: {
+  children: React.ReactNode;
+  params: Promise<{ locale: string }>;
+}) {
+  const { locale } = await params;
+
+  if (!hasLocale(routing.locales, locale)) {
+    notFound();
+  }
+
+  setRequestLocale(locale);
+
+  const messages = await getMessages();
+
+  return (
+    <html
+      lang={locale}
+      className={`${inter.variable} ${playfair.variable} h-full antialiased`}
+    >
+      <body className="min-h-full flex flex-col">
+        <DentistSchema locale={locale} />
+        <NextIntlClientProvider messages={messages}>
+          <TopBar />
+          <Header />
+          <main className="flex-1">{children}</main>
+          <Footer />
+          <WhatsAppButton />
+        </NextIntlClientProvider>
+      </body>
+    </html>
+  );
+}
