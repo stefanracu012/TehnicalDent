@@ -76,16 +76,61 @@ async function sendTelegramRaw(text: string): Promise<void> {
 }
 
 /**
+ * Payload shape for business-initiated WhatsApp messages, which Meta requires
+ * to use an approved Message Template outside the 24h customer-service window.
+ * queueAndSend() stores this JSON-encoded in Notification.payload; a plain
+ * string payload (no `template` field) is sent as freeform text instead,
+ * which only works within 24h of the customer's last message (e.g. cancellations).
+ */
+interface WhatsAppTemplatePayload {
+  template: string;
+  language: string;
+  params: string[];
+}
+
+/**
  * Sends a WhatsApp message via Meta WhatsApp Business Cloud API.
  * Phone number must be in E.164 format (e.g. +40712345678).
  * Falls back gracefully if not configured.
  */
-async function sendWhatsAppRaw(phone: string, text: string): Promise<void> {
+async function sendWhatsAppRaw(phone: string, payload: string): Promise<void> {
   if (!WA_TOKEN || !WA_PHONE_ID) {
     throw new Error("WhatsApp not configured (WHATSAPP_TOKEN / WHATSAPP_PHONE_ID)");
   }
   // Meta requires phone in E.164 without leading '+'
   const to = phone.replace(/^\+/, "").replace(/\s/g, "");
+
+  let templatePayload: WhatsAppTemplatePayload | null = null;
+  try {
+    const parsed = JSON.parse(payload);
+    if (parsed && typeof parsed.template === "string") templatePayload = parsed;
+  } catch {
+    templatePayload = null;
+  }
+
+  const body = templatePayload
+    ? {
+        messaging_product: "whatsapp",
+        to,
+        type: "template",
+        template: {
+          name: templatePayload.template,
+          language: { code: templatePayload.language },
+          components: [
+            {
+              type: "body",
+              parameters: templatePayload.params.map((text) => ({ type: "text", text })),
+            },
+          ],
+        },
+      }
+    : {
+        messaging_product: "whatsapp",
+        to,
+        type: "text",
+        text: { body: payload },
+      };
+
   const res = await fetch(
     `https://graph.facebook.com/v20.0/${WA_PHONE_ID}/messages`,
     {
@@ -94,17 +139,12 @@ async function sendWhatsAppRaw(phone: string, text: string): Promise<void> {
         "Content-Type": "application/json",
         Authorization: `Bearer ${WA_TOKEN}`,
       },
-      body: JSON.stringify({
-        messaging_product: "whatsapp",
-        to,
-        type: "text",
-        text: { body: text },
-      }),
+      body: JSON.stringify(body),
     },
   );
   if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`WhatsApp API ${res.status}: ${body.slice(0, 300)}`);
+    const errBody = await res.text();
+    throw new Error(`WhatsApp API ${res.status}: ${errBody.slice(0, 300)}`);
   }
 }
 
@@ -326,7 +366,7 @@ export async function notifyCreated(a: AppointmentFull) {
       (a.notes ? `\n📝 ${a.notes}` : ""),
   });
 
-  // Client: WhatsApp confirmation request
+  // Client: WhatsApp confirmation request (business-initiated -> template required)
   if (a.patient.phone) {
     const url = buildConfirmUrl(a.id);
     await queueAndSend({
@@ -334,10 +374,11 @@ export async function notifyCreated(a: AppointmentFull) {
       channel: "whatsapp",
       recipient: a.patient.phone,
       appointmentId: a.id,
-      payload:
-        `Bună ziua, ${a.patient.name}!\n` +
-        `Programarea dvs. la TechnicalDent:\n${clientLine(a)}\n\n` +
-        `Vă rugăm să confirmați sau să anulați aici:\n${url}`,
+      payload: JSON.stringify({
+        template: "programare_noua",
+        language: "ro",
+        params: [a.patient.name, formatDateTimeRo(a.dateTime), a.service.title, url],
+      } satisfies WhatsAppTemplatePayload),
     });
   }
   // Client: Email with confirm/cancel buttons
@@ -465,15 +506,23 @@ export async function notifyReminder(a: AppointmentFull, kind: "24h" | "2h") {
 
   const lead = kind === "24h" ? "Vă reamintim că mâine aveţi programare" : "Vă reamintim că peste 2 ore aveţi programare";
 
+  // Business-initiated -> template required (programare_reminder_v2: {{1}} maine/peste 2 ore, {{2}} data, {{3}} serviciu, {{4}} link)
   if (a.patient.phone) {
     await queueAndSend({
       type,
       channel: "whatsapp",
       recipient: a.patient.phone,
       appointmentId: a.id,
-      payload:
-        `${lead} la TechnicalDent:\n${clientLine(a)}\n\n` +
-        `Pentru anulare: ${buildConfirmUrl(a.id)}`,
+      payload: JSON.stringify({
+        template: "programare_reminder_v2",
+        language: "ro",
+        params: [
+          kind === "24h" ? "maine" : "peste 2 ore",
+          formatDateTimeRo(a.dateTime),
+          a.service.title,
+          buildConfirmUrl(a.id),
+        ],
+      } satisfies WhatsAppTemplatePayload),
     });
   }
 
@@ -497,16 +546,18 @@ export async function notifyReminder(a: AppointmentFull, kind: "24h" | "2h") {
 export async function notifyRecall(a: AppointmentFull) {
   if (!a.patient.phone && !a.patient.email) return;
 
+  // Business-initiated -> template required (recall_6luni: {{1}} nume pacient, {{2}} serviciu)
   if (a.patient.phone) {
     await queueAndSend({
       type: "recall_6m",
       channel: "whatsapp",
       recipient: a.patient.phone,
       appointmentId: a.id,
-      payload:
-        `Bună ziua, ${a.patient.name}!\n` +
-        `Au trecut 6 luni de la ultima vizită la TechnicalDent (${a.service.title}).\n` +
-        `Vă recomandăm o nouă consultaţie. Vă aşteptăm cu drag!`,
+      payload: JSON.stringify({
+        template: "recall_6luni",
+        language: "ro",
+        params: [a.patient.name, a.service.title],
+      } satisfies WhatsAppTemplatePayload),
     });
   }
 
