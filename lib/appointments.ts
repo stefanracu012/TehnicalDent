@@ -133,5 +133,6 @@ export function formatDateTimeRo(d: Date): string {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Europe/Chisinau",
   });
 }

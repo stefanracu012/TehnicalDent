@@ -446,15 +446,20 @@ export async function notifyCancelled(a: AppointmentFull, reason?: string) {
       (reason ? `\nMotiv: ${reason}` : ""),
   });
 
+  // Business-initiated -> template required (programare_anulata: {{1}} data, {{2}} serviciu).
+  // A cancellation triggered by the admin panel isn't a reply within the patient's
+  // 24h session, so freeform text would silently fail to deliver.
   if (a.patient.phone) {
     await queueAndSend({
       type: "cancelled",
       channel: "whatsapp",
       recipient: a.patient.phone,
       appointmentId: a.id,
-      payload:
-        `Programarea dvs. la TechnicalDent din ${formatDateTimeRo(a.dateTime)} (${a.service.title}) a fost anulată.\n` +
-        `Vă rugăm să ne contactați pentru reprogramare.`,
+      payload: JSON.stringify({
+        template: "programare_anulata",
+        language: "ro",
+        params: [formatDateTimeRo(a.dateTime), a.service.title],
+      } satisfies WhatsAppTemplatePayload),
     });
   }
   if (a.patient.email) {

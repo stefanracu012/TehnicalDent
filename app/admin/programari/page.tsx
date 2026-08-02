@@ -177,32 +177,61 @@ export default function AdminAppointmentsPage() {
       .catch(() => {});
   }, []);
 
+  // Closes the edit modal if it's showing the appointment we just acted on
+  // (its `editing.status` snapshot would otherwise go stale immediately).
+  const closeIfEditing = (id: string) => {
+    setEditing((prev) => (prev?.id === id ? null : prev));
+    if (editing?.id === id) setShowForm(false);
+  };
+
   const onConfirm = async (id: string) => {
-    await secureFetch(`/api/admin/appointments/${id}/confirm`, {
-      method: "POST",
-    });
+    setAppts((prev) => prev.map((a) => (a.id === id ? { ...a, status: "confirmed" } : a)));
+    closeIfEditing(id);
+    try {
+      await secureFetch(`/api/admin/appointments/${id}/confirm`, { method: "POST" });
+    } catch (e) {
+      console.error(e);
+    }
     fetchAppts();
   };
   const onCancel = async (id: string) => {
     if (!confirm("Anulați programarea?")) return;
-    await secureFetch(`/api/admin/appointments/${id}/cancel`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reason: "Anulat din admin" }),
-    });
+    setAppts((prev) => prev.map((a) => (a.id === id ? { ...a, status: "cancelled" } : a)));
+    closeIfEditing(id);
+    try {
+      await secureFetch(`/api/admin/appointments/${id}/cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: "Anulat din admin" }),
+      });
+    } catch (e) {
+      console.error(e);
+    }
     fetchAppts();
   };
   const onDelete = async (id: string) => {
     if (!confirm("Ștergeți definitiv programarea?")) return;
-    await secureFetch(`/api/admin/appointments/${id}`, { method: "DELETE" });
+    setAppts((prev) => prev.filter((a) => a.id !== id));
+    closeIfEditing(id);
+    try {
+      await secureFetch(`/api/admin/appointments/${id}`, { method: "DELETE" });
+    } catch (e) {
+      console.error(e);
+    }
     fetchAppts();
   };
   const onChangeStatus = async (id: string, status: Status) => {
-    await secureFetch(`/api/admin/appointments/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
-    });
+    setAppts((prev) => prev.map((a) => (a.id === id ? { ...a, status } : a)));
+    closeIfEditing(id);
+    try {
+      await secureFetch(`/api/admin/appointments/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+    } catch (e) {
+      console.error(e);
+    }
     fetchAppts();
   };
 
