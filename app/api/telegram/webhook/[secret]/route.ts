@@ -570,9 +570,9 @@ export async function POST(request: Request, { params }: RouteParams) {
           });
           await pinTelegramMessage(m2.message_id);
         }
-        // (Re-)establish the persistent reply keyboard docked above the input box.
+        // (Re-)establish the persistent reply keyboard — always in General, regardless
+        // of which topic /menu was typed in, since the keyboard itself is chat-wide.
         await sendTelegramMessage("⌨️ Tastatură rapidă activă.", {
-          threadId,
           replyMarkup: REPLY_KEYBOARD,
         });
         return NextResponse.json({ ok: true });

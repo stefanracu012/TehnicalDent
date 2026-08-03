@@ -19,10 +19,10 @@ import {
   findOverlappingAppointment,
   generateConfirmToken,
   formatDateTimeRo,
-  getMoldovaDayRangeUTC,
 } from "@/lib/appointments";
 import { notifyCreated } from "@/lib/notifications";
-import { sendTelegramMessage, deleteTelegramMessage } from "@/lib/telegram";
+import { sendTelegramMessage, deleteTelegramMessage, TELEGRAM_TOPICS } from "@/lib/telegram";
+import { refreshDayDigest } from "@/lib/telegram-digest";
 
 type Flow = "pacient_nou" | "programare_noua" | "cauta_pacient";
 
@@ -103,51 +103,13 @@ async function deleteAll(ids: number[]): Promise<void> {
   }
 }
 
-export async function showDayList(key: "azi" | "maine", threadId?: number): Promise<void> {
-  const dayOffset = key === "azi" ? 0 : 1;
-  const { fromUTC, toUTC } = getMoldovaDayRangeUTC(new Date(), dayOffset);
-  const label = key === "azi" ? "Azi" : "Mâine";
-
-  const list = await prisma.appointment.findMany({
-    where: { dateTime: { gte: fromUTC, lte: toUTC }, status: { notIn: ["cancelled", "test"] } },
-    orderBy: { dateTime: "asc" },
-    include: {
-      patient: { select: { name: true, phone: true } },
-      service: { select: { title: true } },
-    },
-  });
-
-  if (!list.length) {
-    await sendTelegramMessage(`📅 <b>${label}</b>\n\nNicio programare.`, { threadId });
-    return;
-  }
-
-  const STATUS: Record<string, string> = {
-    pending: "🟡",
-    confirmed: "🟢",
-    completed: "✅",
-    noshow: "👤",
-  };
-  await sendTelegramMessage(
-    `<b>${label} (${list.length})</b>\n` +
-      list
-        .map((a) => {
-          const time = a.dateTime.toLocaleTimeString("ro-RO", {
-            hour: "2-digit",
-            minute: "2-digit",
-            timeZone: "Europe/Chisinau",
-          });
-          return `${STATUS[a.status] || "⚪"} ${time} · ${a.patient.name} · ${a.service.title}`;
-        })
-        .join("\n"),
-    { threadId },
-  );
-}
-
 /**
  * Handles a tap on the persistent reply keyboard — Telegram sends the
  * button's label back as an ordinary text message, so this just matches on
- * exact text. Returns true if `text` was one of the menu buttons.
+ * exact text. `threadId` here is wherever the tap happened (often General,
+ * since Telegram only reliably shows this keyboard there) and is used only
+ * for cleanup bookkeeping — every action always replies in ITS OWN fixed
+ * topic, never wherever the tap came from, or the topics lose their purpose.
  */
 export async function handleReplyKeyboardButton(
   chatId: string,
@@ -157,22 +119,22 @@ export async function handleReplyKeyboardButton(
 ): Promise<boolean> {
   switch (text) {
     case BTN_VEZI_PACIENTI:
-      await startCautaPacient(chatId, threadId, messageId);
+      await startCautaPacient(chatId, TELEGRAM_TOPICS.pacienti, messageId);
       return true;
     case BTN_PACIENT_NOU:
-      await startPacientNou(chatId, threadId, messageId);
+      await startPacientNou(chatId, TELEGRAM_TOPICS.pacienti, messageId);
       return true;
     case BTN_VEZI_PROGRAMARI:
-      await showProgramariList(threadId);
+      await showProgramariList(TELEGRAM_TOPICS.programariNoi);
       return true;
     case BTN_PROGRAMARE_NOUA:
-      await startProgramareNoua(chatId, threadId, messageId);
+      await startProgramareNoua(chatId, TELEGRAM_TOPICS.programariNoi, messageId);
       return true;
     case BTN_AZI:
-      await showDayList("azi", threadId);
+      await refreshDayDigest("azi");
       return true;
     case BTN_MAINE:
-      await showDayList("maine", threadId);
+      await refreshDayDigest("maine");
       return true;
     default:
       return false;
