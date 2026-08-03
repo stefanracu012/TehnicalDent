@@ -22,17 +22,19 @@ import {
   formatDateTimeRo,
 } from "@/lib/appointments";
 import { notifyCreated } from "@/lib/notifications";
-import { TELEGRAM_TOPICS, answerCallbackQuery, sendTelegramMessage } from "@/lib/telegram";
+import { TELEGRAM_TOPICS, answerCallbackQuery, sendTelegramMessage, pinTelegramMessage } from "@/lib/telegram";
 import { refreshDayDigest, type DigestKey } from "@/lib/telegram-digest";
 import {
   MENU_PACIENTI,
   MENU_PROGRAMARI,
+  REPLY_KEYBOARD,
   startPacientNou,
   startProgramareNoua,
   showPacientiList,
   showProgramariList,
   handleWizardMessage,
   handleWizardCallback,
+  handleReplyKeyboardButton,
 } from "@/lib/telegram-wizard";
 
 const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
@@ -514,10 +516,16 @@ export async function POST(request: Request, { params }: RouteParams) {
   }
 
   const text = msg.text.trim();
+  const chatId = String(msg.chat.id);
+  const threadId = msg.message_thread_id;
+
+  // ---- Persistent reply-keyboard button taps (checked first — restarts any active wizard) ----
+  const keyboardHandled = await handleReplyKeyboardButton(chatId, text, threadId);
+  if (keyboardHandled) return NextResponse.json({ ok: true });
 
   // ---- Active wizard (Pacient nou / Programare nouă) takes priority over slash commands ----
   if (!text.startsWith("/")) {
-    const handled = await handleWizardMessage(String(msg.chat.id), text);
+    const handled = await handleWizardMessage(chatId, text);
     if (handled) return NextResponse.json({ ok: true });
   }
 
@@ -526,7 +534,6 @@ export async function POST(request: Request, { params }: RouteParams) {
 
   const cmd = match[1].toLowerCase();
   const rest = match[2] || "";
-  const threadId = msg.message_thread_id;
 
   let reply = "";
   try {
@@ -537,22 +544,34 @@ export async function POST(request: Request, { params }: RouteParams) {
         break;
       case "menu":
         if (threadId === TELEGRAM_TOPICS.pacienti) {
-          await sendTelegramMessage(MENU_PACIENTI.text, { threadId, replyMarkup: MENU_PACIENTI.keyboard });
+          const m = await sendTelegramMessage(MENU_PACIENTI.text, {
+            threadId,
+            replyMarkup: MENU_PACIENTI.keyboard,
+          });
+          await pinTelegramMessage(m.message_id);
         } else if (threadId === TELEGRAM_TOPICS.programariNoi) {
-          await sendTelegramMessage(MENU_PROGRAMARI.text, {
+          const m = await sendTelegramMessage(MENU_PROGRAMARI.text, {
             threadId,
             replyMarkup: MENU_PROGRAMARI.keyboard,
           });
+          await pinTelegramMessage(m.message_id);
         } else {
-          await sendTelegramMessage(MENU_PACIENTI.text, {
+          const m1 = await sendTelegramMessage(MENU_PACIENTI.text, {
             threadId: TELEGRAM_TOPICS.pacienti,
             replyMarkup: MENU_PACIENTI.keyboard,
           });
-          await sendTelegramMessage(MENU_PROGRAMARI.text, {
+          await pinTelegramMessage(m1.message_id);
+          const m2 = await sendTelegramMessage(MENU_PROGRAMARI.text, {
             threadId: TELEGRAM_TOPICS.programariNoi,
             replyMarkup: MENU_PROGRAMARI.keyboard,
           });
+          await pinTelegramMessage(m2.message_id);
         }
+        // (Re-)establish the persistent reply keyboard docked above the input box.
+        await sendTelegramMessage("⌨️ Tastatură rapidă activă.", {
+          threadId,
+          replyMarkup: REPLY_KEYBOARD,
+        });
         return NextResponse.json({ ok: true });
       case "servicii":
         reply = await cmdServicii();

@@ -61,6 +61,52 @@ export const MENU_PROGRAMARI = {
   },
 };
 
+// ---- Persistent reply keyboard (Telegram ties this to the whole chat, not
+// a single topic, so it's one combined keyboard covering both menus — stays
+// docked above the text input regardless of what scrolls by above it). ----
+
+const BTN_VEZI_PACIENTI = "👥 Vezi pacienți";
+const BTN_PACIENT_NOU = "➕ Pacient nou";
+const BTN_VEZI_PROGRAMARI = "🔎 Vezi programări";
+const BTN_PROGRAMARE_NOUA = "➕ Programare nouă";
+
+export const REPLY_KEYBOARD = {
+  keyboard: [
+    [BTN_VEZI_PACIENTI, BTN_PACIENT_NOU],
+    [BTN_VEZI_PROGRAMARI, BTN_PROGRAMARE_NOUA],
+  ],
+  resize_keyboard: true,
+  is_persistent: true,
+};
+
+/**
+ * Handles a tap on the persistent reply keyboard — Telegram sends the
+ * button's label back as an ordinary text message, so this just matches on
+ * exact text. Returns true if `text` was one of the menu buttons.
+ */
+export async function handleReplyKeyboardButton(
+  chatId: string,
+  text: string,
+  threadId?: number,
+): Promise<boolean> {
+  switch (text) {
+    case BTN_VEZI_PACIENTI:
+      await showPacientiList(threadId);
+      return true;
+    case BTN_PACIENT_NOU:
+      await startPacientNou(chatId, threadId);
+      return true;
+    case BTN_VEZI_PROGRAMARI:
+      await showProgramariList(threadId);
+      return true;
+    case BTN_PROGRAMARE_NOUA:
+      await startProgramareNoua(chatId, threadId);
+      return true;
+    default:
+      return false;
+  }
+}
+
 async function getSession(chatId: string) {
   return prisma.telegramSession.findUnique({ where: { chatId } });
 }

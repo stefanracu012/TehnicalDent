@@ -93,6 +93,19 @@ export async function editTelegramMessage(messageId: number, text: string): Prom
   }
 }
 
+export async function pinTelegramMessage(messageId: number): Promise<void> {
+  if (!TELEGRAM_CHAT_ID) return;
+  try {
+    await telegramCall("pinChatMessage", {
+      chat_id: TELEGRAM_CHAT_ID,
+      message_id: messageId,
+      disable_notification: true,
+    });
+  } catch (e) {
+    console.error("pinTelegramMessage:", e);
+  }
+}
+
 export async function answerCallbackQuery(callbackId: string, text: string = ""): Promise<void> {
   try {
     await telegramCall("answerCallbackQuery", {
