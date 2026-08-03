@@ -46,6 +46,7 @@ const ALLOWED_STATUSES: AppointmentStatus[] = [
   "cancelled",
   "completed",
   "noshow",
+  "test",
 ];
 
 export async function PATCH(request: Request, { params }: RouteParams) {
@@ -140,6 +141,10 @@ export async function PATCH(request: Request, { params }: RouteParams) {
         notifyNoshow(updated).catch((e) => console.error("notifyNoshow:", e));
       } else if (data.status === "pending") {
         notifyPending(updated).catch((e) => console.error("notifyPending:", e));
+      } else if (data.status === "test") {
+        // No notification for a housekeeping status — just make sure it
+        // disappears from Azi/Mâine if it was showing there.
+        refreshDigestIfRelevant(updated.dateTime).catch((e) => console.error("refreshDigest:", e));
       }
     } else if (data.dateTime) {
       // Pure reschedule (no status change) — refresh both the old and new

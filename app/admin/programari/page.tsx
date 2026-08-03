@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState, useCallback } from "react";
 import Link from "next/link";
 import { secureFetch } from "@/lib/csrf-client";
 
-type Status = "pending" | "confirmed" | "cancelled" | "completed" | "noshow";
+type Status = "pending" | "confirmed" | "cancelled" | "completed" | "noshow" | "test";
 
 interface Service {
   id: string;
@@ -32,6 +32,7 @@ const STATUS_LABELS: Record<Status, string> = {
   cancelled: "Anulată",
   completed: "Finalizată",
   noshow: "Neprezentat",
+  test: "Test",
 };
 
 const STATUS_BG: Record<Status, string> = {
@@ -40,6 +41,7 @@ const STATUS_BG: Record<Status, string> = {
   cancelled: "bg-red-100 border-red-300 text-red-900 line-through opacity-70",
   completed: "bg-blue-100 border-blue-300 text-blue-900",
   noshow: "bg-gray-200 border-gray-400 text-gray-700",
+  test: "bg-purple-100 border-purple-300 text-purple-900 opacity-70",
 };
 
 const STATUS_DOT: Record<Status, string> = {
@@ -48,6 +50,7 @@ const STATUS_DOT: Record<Status, string> = {
   cancelled: "bg-red-500",
   completed: "bg-blue-500",
   noshow: "bg-gray-500",
+  test: "bg-purple-500",
 };
 
 function startOfDay(d: Date) {
@@ -965,6 +968,15 @@ function AppointmentForm({
                 >
                   Neprezentat
                 </button>
+                {editing.status !== "test" && (
+                  <button
+                    type="button"
+                    onClick={() => onChangeStatus(editing.id, "test")}
+                    className="text-xs px-3 py-1.5 border border-purple-200 text-purple-700 hover:bg-purple-50"
+                  >
+                    Marchează test
+                  </button>
+                )}
               </div>
             </div>
           )}

@@ -4,6 +4,10 @@
 // /programare_noua slash-command syntax). State lives in TelegramSession,
 // one per chat — the webhook checks for an active session before falling
 // through to normal slash-command parsing.
+//
+// Every prompt/answer message exchanged during a flow is tracked in
+// data.msgIds; once the flow ends (confirm or cancel) they're all deleted,
+// leaving only the final result message — no Q&A clutter left behind.
 // =============================================
 
 import prisma from "@/lib/prisma";
@@ -15,14 +19,16 @@ import {
   findOverlappingAppointment,
   generateConfirmToken,
   formatDateTimeRo,
+  getMoldovaDayRangeUTC,
 } from "@/lib/appointments";
 import { notifyCreated } from "@/lib/notifications";
-import { sendTelegramMessage } from "@/lib/telegram";
+import { sendTelegramMessage, deleteTelegramMessage } from "@/lib/telegram";
 
 type Flow = "pacient_nou" | "programare_noua";
 
 interface SessionData {
   threadId?: number;
+  msgIds: number[];
   name?: string;
   phone?: string;
   email?: string | null;
@@ -63,21 +69,80 @@ export const MENU_PROGRAMARI = {
 
 // ---- Persistent reply keyboard (Telegram ties this to the whole chat, not
 // a single topic, so it's one combined keyboard covering both menus — stays
-// docked above the text input regardless of what scrolls by above it). ----
+// docked above the text input regardless of what scrolls by above it).
+// Telegram only honors one reply_markup per message, so this is reattached
+// on every PLAIN prompt (sendPrompt); messages that need inline buttons
+// (confirm/cancel, pickers) can't carry it at the same time. ----
 
 const BTN_VEZI_PACIENTI = "👥 Vezi pacienți";
 const BTN_PACIENT_NOU = "➕ Pacient nou";
 const BTN_VEZI_PROGRAMARI = "🔎 Vezi programări";
 const BTN_PROGRAMARE_NOUA = "➕ Programare nouă";
+const BTN_AZI = "📅 Azi";
+const BTN_MAINE = "📆 Mâine";
 
 export const REPLY_KEYBOARD = {
   keyboard: [
     [BTN_VEZI_PACIENTI, BTN_PACIENT_NOU],
     [BTN_VEZI_PROGRAMARI, BTN_PROGRAMARE_NOUA],
+    [BTN_AZI, BTN_MAINE],
   ],
   resize_keyboard: true,
   is_persistent: true,
 };
+
+/** Sends a plain (no inline-button) prompt, reattaching the persistent reply keyboard. */
+async function sendPrompt(text: string, threadId?: number): Promise<number> {
+  const msg = await sendTelegramMessage(text, { threadId, replyMarkup: REPLY_KEYBOARD });
+  return msg.message_id;
+}
+
+async function deleteAll(ids: number[]): Promise<void> {
+  for (const id of ids) {
+    await deleteTelegramMessage(id);
+  }
+}
+
+export async function showDayList(key: "azi" | "maine", threadId?: number): Promise<void> {
+  const dayOffset = key === "azi" ? 0 : 1;
+  const { fromUTC, toUTC } = getMoldovaDayRangeUTC(new Date(), dayOffset);
+  const label = key === "azi" ? "Azi" : "Mâine";
+
+  const list = await prisma.appointment.findMany({
+    where: { dateTime: { gte: fromUTC, lte: toUTC }, status: { notIn: ["cancelled", "test"] } },
+    orderBy: { dateTime: "asc" },
+    include: {
+      patient: { select: { name: true, phone: true } },
+      service: { select: { title: true } },
+    },
+  });
+
+  if (!list.length) {
+    await sendTelegramMessage(`📅 <b>${label}</b>\n\nNicio programare.`, { threadId });
+    return;
+  }
+
+  const STATUS: Record<string, string> = {
+    pending: "🟡",
+    confirmed: "🟢",
+    completed: "✅",
+    noshow: "👤",
+  };
+  await sendTelegramMessage(
+    `<b>${label} (${list.length})</b>\n` +
+      list
+        .map((a) => {
+          const time = a.dateTime.toLocaleTimeString("ro-RO", {
+            hour: "2-digit",
+            minute: "2-digit",
+            timeZone: "Europe/Chisinau",
+          });
+          return `${STATUS[a.status] || "⚪"} ${time} · ${a.patient.name} · ${a.service.title}`;
+        })
+        .join("\n"),
+    { threadId },
+  );
+}
 
 /**
  * Handles a tap on the persistent reply keyboard — Telegram sends the
@@ -88,19 +153,26 @@ export async function handleReplyKeyboardButton(
   chatId: string,
   text: string,
   threadId?: number,
+  messageId?: number,
 ): Promise<boolean> {
   switch (text) {
     case BTN_VEZI_PACIENTI:
       await showPacientiList(threadId);
       return true;
     case BTN_PACIENT_NOU:
-      await startPacientNou(chatId, threadId);
+      await startPacientNou(chatId, threadId, messageId);
       return true;
     case BTN_VEZI_PROGRAMARI:
       await showProgramariList(threadId);
       return true;
     case BTN_PROGRAMARE_NOUA:
-      await startProgramareNoua(chatId, threadId);
+      await startProgramareNoua(chatId, threadId, messageId);
+      return true;
+    case BTN_AZI:
+      await showDayList("azi", threadId);
+      return true;
+    case BTN_MAINE:
+      await showDayList("maine", threadId);
       return true;
     default:
       return false;
@@ -127,19 +199,29 @@ function isSkip(text: string): boolean {
   return text.trim() === "-";
 }
 
-// ---- Starting a flow (from a menu button) ----
+// ---- Starting a flow (from a menu button or reply-keyboard tap) ----
 
-export async function startPacientNou(chatId: string, threadId?: number): Promise<void> {
-  await setSession(chatId, "pacient_nou", "name", { threadId });
-  await sendTelegramMessage("👤 Care este <b>numele complet</b> al pacientului?", { threadId });
+export async function startPacientNou(
+  chatId: string,
+  threadId?: number,
+  triggerMsgId?: number,
+): Promise<void> {
+  const promptId = await sendPrompt("👤 Care este <b>numele complet</b> al pacientului?", threadId);
+  const msgIds = [...(triggerMsgId ? [triggerMsgId] : []), promptId];
+  await setSession(chatId, "pacient_nou", "name", { threadId, msgIds });
 }
 
-export async function startProgramareNoua(chatId: string, threadId?: number): Promise<void> {
-  await setSession(chatId, "programare_noua", "search_patient", { threadId });
-  await sendTelegramMessage(
+export async function startProgramareNoua(
+  chatId: string,
+  threadId?: number,
+  triggerMsgId?: number,
+): Promise<void> {
+  const promptId = await sendPrompt(
     "🔎 Scrie <b>numele sau telefonul</b> pacientului pentru care faci programarea.",
-    { threadId },
+    threadId,
   );
+  const msgIds = [...(triggerMsgId ? [triggerMsgId] : []), promptId];
+  await setSession(chatId, "programare_noua", "search_patient", { threadId, msgIds });
 }
 
 export async function showPacientiList(threadId?: number): Promise<void> {
@@ -153,10 +235,11 @@ export async function showPacientiList(threadId?: number): Promise<void> {
     return;
   }
   await sendTelegramMessage(
-    `<b>Pacienți (${patients.length})</b>\n` +
+    `<b>Pacienți recenți (${patients.length})</b>\n` +
       patients
         .map((p) => `• ${p.name} — <code>${p.phone}</code>${p.email ? ` · ${p.email}` : ""}`)
-        .join("\n"),
+        .join("\n") +
+      `\n\n<i>Arată doar cei mai recenți ${patients.length}. Scrie /pacienti nume_sau_telefon pentru căutare.</i>`,
     { threadId },
   );
 }
@@ -197,6 +280,7 @@ export async function showProgramariList(threadId?: number): Promise<void> {
 export async function handleWizardMessage(
   chatId: string,
   text: string,
+  messageId?: number,
 ): Promise<boolean> {
   const session = await getSession(chatId);
   if (!session) return false;
@@ -210,11 +294,13 @@ export async function handleWizardMessage(
 
   const data = session.data as unknown as SessionData;
   const threadId = data.threadId;
+  const msgIds = [...(data.msgIds || []), ...(messageId ? [messageId] : [])];
+  const withMsg: SessionData = { ...data, msgIds };
 
   if (session.flow === "pacient_nou") {
-    await handlePacientNouStep(chatId, session.step, text, data, threadId);
+    await handlePacientNouStep(chatId, session.step, text, withMsg, threadId);
   } else {
-    await handleProgramareNouaStep(chatId, session.step, text, data, threadId);
+    await handleProgramareNouaStep(chatId, session.step, text, withMsg, threadId);
   }
   return true;
 }
@@ -233,9 +319,14 @@ async function handlePacientNouStep(
       await sendTelegramMessage("❌ Numele e prea scurt. Încearcă din nou.", { threadId });
       return;
     }
-    await setSession(chatId, "pacient_nou", "phone", { ...data, name: t });
-    await sendTelegramMessage("📞 Care este <b>telefonul</b>? (scrie „-” dacă nu are)", {
+    const promptId = await sendPrompt(
+      "📞 Care este <b>telefonul</b>? (scrie „-” dacă nu are)",
       threadId,
+    );
+    await setSession(chatId, "pacient_nou", "phone", {
+      ...data,
+      name: t,
+      msgIds: [...data.msgIds, promptId],
     });
     return;
   }
@@ -248,8 +339,12 @@ async function handlePacientNouStep(
       return;
     }
     const phone = isSkip(t) ? "" : normalizePhone(t);
-    await setSession(chatId, "pacient_nou", "email", { ...data, phone });
-    await sendTelegramMessage("📧 <b>Email</b>? (scrie „-” dacă nu are)", { threadId });
+    const promptId = await sendPrompt("📧 <b>Email</b>? (scrie „-” dacă nu are)", threadId);
+    await setSession(chatId, "pacient_nou", "email", {
+      ...data,
+      phone,
+      msgIds: [...data.msgIds, promptId],
+    });
     return;
   }
 
@@ -267,12 +362,10 @@ async function handlePacientNouStep(
       return;
     }
     const email = isSkip(t) ? null : t;
-    const next = { ...data, email };
-    await setSession(chatId, "pacient_nou", "confirm", next);
-    await sendTelegramMessage(
-      `<b>Confirmi crearea pacientului?</b>\n👤 ${next.name}` +
-        (next.phone ? `\n📞 <code>${next.phone}</code>` : "") +
-        (next.email ? `\n📧 ${next.email}` : ""),
+    const confirmMsg = await sendTelegramMessage(
+      `<b>Confirmi crearea pacientului?</b>\n👤 ${data.name}` +
+        (data.phone ? `\n📞 <code>${data.phone}</code>` : "") +
+        (email ? `\n📧 ${email}` : ""),
       {
         threadId,
         replyMarkup: {
@@ -285,6 +378,11 @@ async function handlePacientNouStep(
         },
       },
     );
+    await setSession(chatId, "pacient_nou", "confirm", {
+      ...data,
+      email,
+      msgIds: [...data.msgIds, confirmMsg.message_id],
+    });
     return;
   }
 
@@ -313,6 +411,7 @@ async function handleProgramareNouaStep(
       select: { id: true, name: true, phone: true },
     });
     if (!patients.length) {
+      await deleteAll(data.msgIds);
       await sendTelegramMessage(
         "❌ Niciun pacient găsit. Creează-l întâi din topicul Pacienți (➕ Pacient nou), apoi reia programarea.",
         { threadId },
@@ -320,13 +419,17 @@ async function handleProgramareNouaStep(
       await clearSession(chatId);
       return;
     }
-    await sendTelegramMessage("Alege pacientul:", {
+    const pickerMsg = await sendTelegramMessage("Alege pacientul:", {
       threadId,
       replyMarkup: {
         inline_keyboard: patients.map((p) => [
           { text: `${p.name} — ${p.phone}`, callback_data: `wiz:patient:${p.id}` },
         ]),
       },
+    });
+    await setSession(chatId, "programare_noua", "search_patient", {
+      ...data,
+      msgIds: [...data.msgIds, pickerMsg.message_id],
     });
     return;
   }
@@ -347,17 +450,14 @@ async function handleProgramareNouaStep(
       duration: data.serviceDuration || 30,
     });
     if (overlap) {
-      await sendTelegramMessage(
-        "❌ Se suprapune cu o altă programare. Încearcă o altă oră.",
-        { threadId },
-      );
+      await sendTelegramMessage("❌ Se suprapune cu o altă programare. Încearcă o altă oră.", {
+        threadId,
+      });
       return;
     }
-    const next = { ...data, dateTimeIso: dt.toISOString() };
-    await setSession(chatId, "programare_noua", "confirm", next);
-    await sendTelegramMessage(
-      `<b>Confirmi programarea?</b>\n👤 ${next.patientName} (<code>${next.patientPhone}</code>)\n` +
-        `🦷 ${next.serviceTitle}\n📅 ${formatDateTimeRo(dt)}`,
+    const confirmMsg = await sendTelegramMessage(
+      `<b>Confirmi programarea?</b>\n👤 ${data.patientName} (<code>${data.patientPhone}</code>)\n` +
+        `🦷 ${data.serviceTitle}\n📅 ${formatDateTimeRo(dt)}`,
       {
         threadId,
         replyMarkup: {
@@ -370,6 +470,11 @@ async function handleProgramareNouaStep(
         },
       },
     );
+    await setSession(chatId, "programare_noua", "confirm", {
+      ...data,
+      dateTimeIso: dt.toISOString(),
+      msgIds: [...data.msgIds, confirmMsg.message_id],
+    });
     return;
   }
 
@@ -381,10 +486,15 @@ async function handleProgramareNouaStep(
 export async function handleWizardCallback(
   chatId: string,
   callbackData: string,
+  callbackMessageId?: number,
 ): Promise<string> {
   const session = await getSession(chatId);
 
   if (callbackData === "wiz:cancel") {
+    if (session) {
+      const data = session.data as unknown as SessionData;
+      await deleteAll([...data.msgIds, ...(callbackMessageId ? [callbackMessageId] : [])]);
+    }
     await clearSession(chatId);
     return "Anulat.";
   }
@@ -405,20 +515,24 @@ export async function handleWizardCallback(
       await clearSession(chatId);
       return "Niciun serviciu configurat.";
     }
-    const next: SessionData = {
-      ...data,
-      patientId: patient.id,
-      patientName: patient.name,
-      patientPhone: patient.phone,
-    };
-    await setSession(chatId, "programare_noua", "service", next);
-    await sendTelegramMessage("Alege serviciul:", {
+    const servicePicker = await sendTelegramMessage("Alege serviciul:", {
       threadId: data.threadId,
       replyMarkup: {
         inline_keyboard: services.map((s) => [
           { text: s.title, callback_data: `wiz:service:${s.id}` },
         ]),
       },
+    });
+    await setSession(chatId, "programare_noua", "service", {
+      ...data,
+      patientId: patient.id,
+      patientName: patient.name,
+      patientPhone: patient.phone,
+      msgIds: [
+        ...data.msgIds,
+        ...(callbackMessageId ? [callbackMessageId] : []),
+        servicePicker.message_id,
+      ],
     });
     return `Pacient: ${patient.name}`;
   }
@@ -430,15 +544,16 @@ export async function handleWizardCallback(
     if (!service) return "Serviciu inexistent.";
 
     const data = session.data as unknown as SessionData;
-    const next: SessionData = {
+    const promptId = await sendPrompt(
+      "📅 Scrie <b>data și ora</b> (format: YYYY-MM-DD HH:MM)",
+      data.threadId,
+    );
+    await setSession(chatId, "programare_noua", "datetime", {
       ...data,
       serviceId: service.id,
       serviceTitle: service.title,
       serviceDuration: service.duration || 30,
-    };
-    await setSession(chatId, "programare_noua", "datetime", next);
-    await sendTelegramMessage("📅 Scrie <b>data și ora</b> (format: YYYY-MM-DD HH:MM)", {
-      threadId: data.threadId,
+      msgIds: [...data.msgIds, ...(callbackMessageId ? [callbackMessageId] : []), promptId],
     });
     return `Serviciu: ${service.title}`;
   }
@@ -446,18 +561,25 @@ export async function handleWizardCallback(
   if (callbackData === "wiz:confirm") {
     if (!session) return "Sesiune expirată.";
     const data = session.data as unknown as SessionData;
+    const allMsgIds = [...data.msgIds, ...(callbackMessageId ? [callbackMessageId] : [])];
 
     if (session.flow === "pacient_nou") {
-      return await confirmPacientNou(chatId, data);
+      return await confirmPacientNou(chatId, data, allMsgIds);
     }
-    return await confirmProgramareNoua(chatId, data);
+    return await confirmProgramareNoua(chatId, data, allMsgIds);
   }
 
   return "";
 }
 
-async function confirmPacientNou(chatId: string, data: SessionData): Promise<string> {
+async function confirmPacientNou(
+  chatId: string,
+  data: SessionData,
+  msgIds: number[],
+): Promise<string> {
   await clearSession(chatId);
+  await deleteAll(msgIds);
+
   const orClause = [
     ...(data.phone ? [{ phone: data.phone }] : []),
     ...(data.email ? [{ email: data.email }] : []),
@@ -485,8 +607,14 @@ async function confirmPacientNou(chatId: string, data: SessionData): Promise<str
   return "Creat!";
 }
 
-async function confirmProgramareNoua(chatId: string, data: SessionData): Promise<string> {
+async function confirmProgramareNoua(
+  chatId: string,
+  data: SessionData,
+  msgIds: number[],
+): Promise<string> {
   await clearSession(chatId);
+  await deleteAll(msgIds);
+
   if (!data.patientId || !data.serviceId || !data.dateTimeIso) {
     await sendTelegramMessage("❌ Date incomplete, reia programarea.", { threadId: data.threadId });
     return "Eroare.";

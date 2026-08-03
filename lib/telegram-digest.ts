@@ -50,7 +50,7 @@ export async function refreshDayDigest(key: DigestKey): Promise<void> {
   const label = DIGEST_LABEL[key];
 
   const appts = await prisma.appointment.findMany({
-    where: { dateTime: { gte: fromUTC, lte: toUTC }, status: { notIn: ["cancelled"] } },
+    where: { dateTime: { gte: fromUTC, lte: toUTC }, status: { notIn: ["cancelled", "test"] } },
     orderBy: { dateTime: "asc" },
     include: {
       patient: { select: { name: true, phone: true } },

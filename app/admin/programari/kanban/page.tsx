@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { secureFetch } from "@/lib/csrf-client";
 import Link from "next/link";
 
-type Status = "pending" | "confirmed" | "completed" | "cancelled" | "noshow";
+type Status = "pending" | "confirmed" | "completed" | "cancelled" | "noshow" | "test";
 
 interface Appointment {
   id: string;
@@ -52,6 +52,12 @@ const STATUS_META: Record<
     dot: "bg-gray-400",
     header: "bg-gray-400",
   },
+  test: {
+    label: "Test",
+    color: "border-t-purple-400 bg-purple-50",
+    dot: "bg-purple-400",
+    header: "bg-purple-400",
+  },
 };
 
 const COLUMNS: Status[] = [
@@ -60,6 +66,7 @@ const COLUMNS: Status[] = [
   "completed",
   "cancelled",
   "noshow",
+  "test",
 ];
 
 function startOfDay(d: Date) {

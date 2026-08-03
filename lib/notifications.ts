@@ -650,7 +650,7 @@ export async function runRecallScan() {
 
   const candidates = await prisma.appointment.findMany({
     where: {
-      status: { in: ["confirmed", "completed"] },
+      status: { in: ["confirmed", "completed", "cancelled"] },
       recallSent: false,
       dateTime: { gte: from, lte: to },
     },

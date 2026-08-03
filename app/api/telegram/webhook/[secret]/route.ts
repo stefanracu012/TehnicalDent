@@ -421,7 +421,7 @@ export async function POST(request: Request, { params }: RouteParams) {
         } else if (data === "menu:programare_noua") {
           await startProgramareNoua(chatId, threadId);
         } else {
-          feedback = await handleWizardCallback(chatId, data);
+          feedback = await handleWizardCallback(chatId, data, cq.message?.message_id);
         }
         await answerCallbackQuery(cq.id, feedback);
       } catch (err) {
@@ -520,12 +520,12 @@ export async function POST(request: Request, { params }: RouteParams) {
   const threadId = msg.message_thread_id;
 
   // ---- Persistent reply-keyboard button taps (checked first — restarts any active wizard) ----
-  const keyboardHandled = await handleReplyKeyboardButton(chatId, text, threadId);
+  const keyboardHandled = await handleReplyKeyboardButton(chatId, text, threadId, msg.message_id);
   if (keyboardHandled) return NextResponse.json({ ok: true });
 
   // ---- Active wizard (Pacient nou / Programare nouă) takes priority over slash commands ----
   if (!text.startsWith("/")) {
-    const handled = await handleWizardMessage(chatId, text);
+    const handled = await handleWizardMessage(chatId, text, msg.message_id);
     if (handled) return NextResponse.json({ ok: true });
   }
 

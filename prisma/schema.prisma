@@ -187,6 +187,7 @@ enum AppointmentStatus {
   cancelled
   completed
   noshow
+  test // marks throwaway/test appointments — excluded from reminders, recall, Azi/Mâine digests
 }
 
 model Appointment {
