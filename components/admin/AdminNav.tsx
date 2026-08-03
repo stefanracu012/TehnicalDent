@@ -197,6 +197,25 @@ const navLinks = [
     ),
   },
   {
+    href: "/admin/campanii",
+    label: "Campanii",
+    icon: (
+      <svg
+        className="w-4 h-4"
+        fill="none"
+        viewBox="0 0 24 24"
+        strokeWidth={1.8}
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c2.5.223 4.957.696 7.324 1.39A1.125 1.125 0 0021 16.126V4.874a1.125 1.125 0 00-1.386-1.09A47.63 47.63 0 0110.34 5.06m0 9.18V5.06m0 0V4.5"
+        />
+      </svg>
+    ),
+  },
+  {
     href: "/admin/setari",
     label: "Setări",
     icon: (

@@ -223,6 +223,7 @@ enum NotificationType {
   cancelled
   confirmed
   completed
+  campaign // manual admin broadcast (offer / reminder) to one or more patients
   error
 }
 

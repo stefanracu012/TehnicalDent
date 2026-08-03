@@ -596,6 +596,101 @@ export async function notifyRecall(a: AppointmentFull) {
 }
 
 // =============================================
+// Manual admin campaigns (offers / reminders) — sent on demand from
+// /admin/campanii to one, several, or all patients. Unlike appointment
+// notifications, these aren't tied to a specific appointment.
+// =============================================
+
+export type CampaignPayload =
+  | { templateKey: "oferta_speciala"; service: string; discount: string }
+  | { templateKey: "reminder_control"; detail: string };
+
+function buildCampaignEmailHtml(
+  patientName: string,
+  title: string,
+  bodyText: string,
+): { subject: string; html: string; text: string } {
+  const html = `<!doctype html>
+<html><body style="margin:0;padding:0;background:#f3f4f6;font-family:Arial,Helvetica,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f3f4f6;padding:32px 16px;">
+    <tr><td align="center">
+      <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
+        <tr><td style="padding:24px 28px;border-bottom:1px solid #e5e7eb;background:#0f172a;color:#fff;">
+          <h1 style="margin:0;font-size:20px;font-weight:600;">TechnicalDent</h1>
+        </td></tr>
+        <tr><td style="padding:28px;">
+          <h2 style="margin:0 0 12px;font-size:18px;color:#0f172a;">${title}</h2>
+          <p style="margin:0 0 8px;color:#374151;font-size:14px;line-height:1.5;">Bună ziua, ${patientName}!</p>
+          <p style="margin:0;color:#374151;font-size:14px;line-height:1.5;">${bodyText}</p>
+        </td></tr>
+        <tr><td style="padding:16px 28px;background:#f9fafb;border-top:1px solid #e5e7eb;text-align:center;font-size:12px;color:#6b7280;">
+          TechnicalDent
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body></html>`;
+
+  const text = `${title}\n\nBună ziua, ${patientName}!\n\n${bodyText}`;
+  return { subject: title, html, text };
+}
+
+/**
+ * Sends one campaign message to one patient over the requested channels.
+ * Returns which channels were actually attempted (skipped if the patient
+ * has no phone/email, or that channel wasn't requested).
+ */
+export async function sendCampaignToPatient(
+  patient: Patient,
+  payload: CampaignPayload,
+  channels: { whatsapp: boolean; email: boolean },
+): Promise<{ whatsapp: boolean; email: boolean }> {
+  const result = { whatsapp: false, email: false };
+
+  const waParams =
+    payload.templateKey === "oferta_speciala"
+      ? [patient.name, payload.service, payload.discount]
+      : [patient.name, payload.detail];
+
+  if (channels.whatsapp && patient.phone) {
+    await queueAndSend({
+      type: "campaign",
+      channel: "whatsapp",
+      recipient: patient.phone,
+      payload: JSON.stringify({
+        template: payload.templateKey,
+        language: "ro",
+        params: waParams,
+      } satisfies WhatsAppTemplatePayload),
+    });
+    result.whatsapp = true;
+  }
+
+  if (channels.email && patient.email) {
+    const { title, body } =
+      payload.templateKey === "oferta_speciala"
+        ? {
+            title: "Ofertă specială — TechnicalDent",
+            body: `Avem o ofertă specială pentru dvs.: <b>${payload.service}</b>, cu reducere de <b>${payload.discount}</b>. Vă așteptăm cu drag!`,
+          }
+        : {
+            title: "Reamintire control — TechnicalDent",
+            body: payload.detail,
+          };
+    const email = buildCampaignEmailHtml(patient.name, title, body);
+    await queueAndSend({
+      type: "campaign",
+      channel: "email",
+      recipient: patient.email,
+      payload: JSON.stringify(email),
+    });
+    result.email = true;
+  }
+
+  return result;
+}
+
+// =============================================
 // Cron-driven scans
 // =============================================
 
