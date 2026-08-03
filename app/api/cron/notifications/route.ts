@@ -1,6 +1,21 @@
 import { NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
 import { retryFailed, runRecallScan, runReminderScan } from "@/lib/notifications";
 import { sendDailyBriefing, sendEveningReminder } from "@/lib/daily-briefing";
+
+// Marks `key` as run for `todayStr` ("YYYY-MM-DD") — returns true only the
+// first time it's called for a given day, so repeated cron invocations
+// inside the same time window don't resend the daily briefing/reminder.
+async function claimDailyRun(key: string, todayStr: string): Promise<boolean> {
+  const existing = await prisma.cronState.findUnique({ where: { key } });
+  if (existing?.lastRunDate === todayStr) return false;
+  await prisma.cronState.upsert({
+    where: { key },
+    create: { key, lastRunDate: todayStr },
+    update: { lastRunDate: todayStr },
+  });
+  return true;
+}
 
 /**
  * Cron-driven notifications dispatcher.
@@ -43,6 +58,7 @@ async function handle(request: Request) {
   const inBriefingWindow = h === 7 && m >= 25 && m <= 35;
   // 20:00–20:10 Moldova → reminder pentru programări nefinalizate
   const inEveningWindow = h === 20 && m >= 0 && m <= 10;
+  const todayStr = `${nowMoldova.getFullYear()}-${String(nowMoldova.getMonth() + 1).padStart(2, "0")}-${String(nowMoldova.getDate()).padStart(2, "0")}`;
 
   try {
     const [reminders, recalls, retried] = await Promise.all([
@@ -52,12 +68,12 @@ async function handle(request: Request) {
     ]);
 
     let briefing: { sent?: number; skipped?: boolean } = { skipped: true };
-    if (inBriefingWindow) {
+    if (inBriefingWindow && (await claimDailyRun("daily-briefing", todayStr))) {
       briefing = await sendDailyBriefing();
     }
 
     let evening: { sent?: number; skipped?: boolean } = { skipped: true };
-    if (inEveningWindow) {
+    if (inEveningWindow && (await claimDailyRun("evening-reminder", todayStr))) {
       evening = await sendEveningReminder();
     }
 

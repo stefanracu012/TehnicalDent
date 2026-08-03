@@ -10,6 +10,15 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Singleton-per-key store so the cron dispatcher can tell it already ran
+// today's daily-briefing / evening-reminder — the time-window check alone
+// would otherwise re-fire on every invocation inside that window.
+model CronState {
+  id          String @id @default(auto()) @map("_id") @db.ObjectId
+  key         String @unique
+  lastRunDate String // "YYYY-MM-DD" in Europe/Chisinau
+}
+
 model Service {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   slug         String   @unique
