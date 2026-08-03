@@ -220,8 +220,9 @@ async function tryDispatch(notificationId: string): Promise<void> {
     });
     // Also alert admin via Telegram if it was a non-telegram failure
     if (notif.channel !== "telegram" && isTelegramConfigured()) {
+      const channelLabel = notif.channel === "whatsapp" ? "WhatsApp" : notif.channel === "email" ? "email" : notif.channel;
       await sendTelegramToTopic(
-        `⚠️ Eroare notificare WhatsApp (${notif.type}) către ${notif.recipient}\n${msg}`,
+        `⚠️ Eroare notificare ${channelLabel} (${notif.type}) către ${notif.recipient}\n${msg}`,
         TELEGRAM_TOPICS.erori,
       );
     }
