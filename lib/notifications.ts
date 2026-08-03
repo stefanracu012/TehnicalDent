@@ -455,6 +455,8 @@ export async function notifyCancelled(a: AppointmentFull, reason?: string) {
   await refreshDigestIfRelevant(a.dateTime);
 }
 
+const GOOGLE_REVIEW_URL = "https://g.page/r/CdwzaxKCvF-JEAI/review";
+
 export async function notifyCompleted(a: AppointmentFull) {
   await queueAndSend({
     type: "confirmed",
@@ -465,6 +467,22 @@ export async function notifyCompleted(a: AppointmentFull) {
       `✅ <b>Programare finalizată</b>\n${clientLine(a)}\n📞 ${a.patient.phone}` +
       (a.patient.email ? `\n📧 ${a.patient.email}` : ""),
   });
+
+  // Business-initiated -> template required (programare_finalizata: {{1}} nume, {{2}} link recenzie).
+  if (a.patient.phone) {
+    await queueAndSend({
+      type: "completed",
+      channel: "whatsapp",
+      recipient: a.patient.phone,
+      appointmentId: a.id,
+      payload: JSON.stringify({
+        template: "programare_finalizata",
+        language: "ro",
+        params: [a.patient.name, GOOGLE_REVIEW_URL],
+      } satisfies WhatsAppTemplatePayload),
+    });
+  }
+
   await refreshDigestIfRelevant(a.dateTime);
 }
 

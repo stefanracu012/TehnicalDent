@@ -222,6 +222,7 @@ enum NotificationType {
   recall_6m
   cancelled
   confirmed
+  completed
   error
 }
 
