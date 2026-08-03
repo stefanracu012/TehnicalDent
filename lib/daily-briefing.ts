@@ -5,6 +5,7 @@
 // =============================================
 
 import prisma from "@/lib/prisma";
+import { getMoldovaDayRangeUTC } from "@/lib/appointments";
 
 const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
 const TG_CHAT_ID =
@@ -37,23 +38,8 @@ async function tgPost(method: string, body: object) {
 export async function sendDailyBriefing(): Promise<{ sent: number }> {
   if (!TG_TOKEN || !TG_CHAT_ID) return { sent: 0 };
 
-  // Ora curentă în Moldova
-  const nowMoldova = new Date(
-    new Date().toLocaleString("en-US", { timeZone: "Europe/Chisinau" }),
-  );
-  const from = new Date(nowMoldova);
-  from.setHours(0, 0, 0, 0);
-  const to = new Date(nowMoldova);
-  to.setHours(23, 59, 59, 999);
-
-  // Converție la UTC pentru query DB
-  const offsetMs =
-    new Date().getTime() -
-    new Date(
-      new Date().toLocaleString("en-US", { timeZone: "Europe/Chisinau" }),
-    ).getTime();
-  const fromUTC = new Date(from.getTime() + offsetMs);
-  const toUTC = new Date(to.getTime() + offsetMs);
+  const now = new Date();
+  const { fromUTC, toUTC } = getMoldovaDayRangeUTC(now);
 
   const appts = await prisma.appointment.findMany({
     where: {
@@ -67,10 +53,11 @@ export async function sendDailyBriefing(): Promise<{ sent: number }> {
     },
   });
 
-  const dateLabel = from.toLocaleDateString("ro-RO", {
+  const dateLabel = now.toLocaleDateString("ro-RO", {
     weekday: "long",
     day: "numeric",
     month: "long",
+    timeZone: "Europe/Chisinau",
   });
 
   if (appts.length === 0) {
@@ -128,21 +115,7 @@ export async function sendDailyBriefing(): Promise<{ sent: number }> {
 export async function sendEveningReminder(): Promise<{ sent: number }> {
   if (!TG_TOKEN || !TG_CHAT_ID) return { sent: 0 };
 
-  const nowMoldova = new Date(
-    new Date().toLocaleString("en-US", { timeZone: "Europe/Chisinau" }),
-  );
-  const from = new Date(nowMoldova);
-  from.setHours(0, 0, 0, 0);
-  const to = new Date(nowMoldova);
-  to.setHours(23, 59, 59, 999);
-
-  const offsetMs =
-    new Date().getTime() -
-    new Date(
-      new Date().toLocaleString("en-US", { timeZone: "Europe/Chisinau" }),
-    ).getTime();
-  const fromUTC = new Date(from.getTime() + offsetMs);
-  const toUTC = new Date(to.getTime() + offsetMs);
+  const { fromUTC, toUTC } = getMoldovaDayRangeUTC();
 
   // Doar programările nerezolvate (pending sau confirmed)
   const appts = await prisma.appointment.findMany({

@@ -34,6 +34,20 @@ export function isValidPhone(raw: string): boolean {
   return digits.length >= 7 && digits.length <= 15;
 }
 
+/**
+ * Converts a stored patient phone (often entered in local Moldovan format,
+ * e.g. "068046719") into the full MSISDN WhatsApp's Cloud API requires
+ * (no '+', no leading 0, e.g. "37368046719"). Numbers already in
+ * international form (with '+373...' or '373...') pass through unchanged.
+ * Assumes Moldova as the default country — this clinic has no other market.
+ */
+export function toWhatsAppPhone(raw: string): string {
+  const digits = raw.replace(/\D/g, "");
+  if (digits.startsWith("373")) return digits;
+  if (digits.startsWith("0")) return "373" + digits.slice(1);
+  return digits;
+}
+
 // ---- ISO datetime parsing ----
 
 export function parseDateTime(input: unknown): Date | null {
@@ -135,4 +149,52 @@ export function formatDateTimeRo(d: Date): string {
     minute: "2-digit",
     timeZone: "Europe/Chisinau",
   });
+}
+
+// ---- Moldova day-boundary helper (server-timezone independent) ----
+
+const MOLDOVA_TZ = "Europe/Chisinau";
+
+/**
+ * Returns Moldova's current UTC offset in ms (e.g. +3h in summer/EEST,
+ * +2h in winter/EET) for the given instant, via Intl — never depends on
+ * the runtime's own default timezone (unlike parsing a toLocaleString()
+ * result back through `new Date(...)`, which silently breaks if the
+ * server's default TZ isn't UTC).
+ */
+function moldovaOffsetMs(reference: Date): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: MOLDOVA_TZ,
+    timeZoneName: "shortOffset",
+  }).formatToParts(reference);
+  const tzName = parts.find((p) => p.type === "timeZoneName")?.value || "GMT+0";
+  const hours = parseInt(tzName.replace("GMT", ""), 10) || 0;
+  return hours * 60 * 60_000;
+}
+
+/**
+ * Returns the [00:00, 23:59:59.999] range of "today in Moldova" as real UTC
+ * instants — safe to use directly in Prisma date-range queries regardless
+ * of what timezone the server process itself runs in.
+ */
+export function getMoldovaDayRangeUTC(reference: Date = new Date()): {
+  fromUTC: Date;
+  toUTC: Date;
+} {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: MOLDOVA_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(reference);
+  const get = (type: string) => parts.find((p) => p.type === type)?.value || "0";
+  const year = parseInt(get("year"), 10);
+  const month = parseInt(get("month"), 10);
+  const day = parseInt(get("day"), 10);
+  const offset = moldovaOffsetMs(reference);
+
+  return {
+    fromUTC: new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0) - offset),
+    toUTC: new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999) - offset),
+  };
 }

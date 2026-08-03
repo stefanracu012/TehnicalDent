@@ -12,7 +12,7 @@ import {
   type Patient,
   type Service,
 } from "@prisma/client";
-import { buildConfirmUrl, formatDateTimeRo } from "@/lib/appointments";
+import { buildConfirmUrl, formatDateTimeRo, toWhatsAppPhone } from "@/lib/appointments";
 
 // ---- Env ----
 
@@ -97,8 +97,9 @@ async function sendWhatsAppRaw(phone: string, payload: string): Promise<void> {
   if (!WA_TOKEN || !WA_PHONE_ID) {
     throw new Error("WhatsApp not configured (WHATSAPP_TOKEN / WHATSAPP_PHONE_ID)");
   }
-  // Meta requires phone in E.164 without leading '+'
-  const to = phone.replace(/^\+/, "").replace(/\s/g, "");
+  // Meta requires full international MSISDN, no '+', no leading 0 —
+  // converts local-format numbers (e.g. "068046719") to "37368046719".
+  const to = toWhatsAppPhone(phone);
 
   let templatePayload: WhatsAppTemplatePayload | null = null;
   try {
