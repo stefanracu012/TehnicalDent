@@ -602,7 +602,7 @@ export async function notifyRecall(a: AppointmentFull) {
 // =============================================
 
 export type CampaignPayload =
-  | { templateKey: "oferta_speciala"; service: string; discount: string }
+  | { templateKey: "oferta_promo"; service: string; discount: string }
   | { templateKey: "reminder_control"; detail: string };
 
 function buildCampaignEmailHtml(
@@ -640,6 +640,12 @@ function buildCampaignEmailHtml(
  * Returns which channels were actually attempted (skipped if the patient
  * has no phone/email, or that channel wasn't requested).
  */
+/** "Toate serviciile" (as picked in the UI) reads awkwardly substituted verbatim into the
+ * template sentence — swap it for a phrase that actually fits the surrounding text. */
+function serviceLabel(service: string): string {
+  return service === "Toate serviciile" ? "toate serviciile noastre" : service;
+}
+
 export async function sendCampaignToPatient(
   patient: Patient,
   payload: CampaignPayload,
@@ -648,8 +654,8 @@ export async function sendCampaignToPatient(
   const result = { whatsapp: false, email: false };
 
   const waParams =
-    payload.templateKey === "oferta_speciala"
-      ? [patient.name, payload.service, payload.discount]
+    payload.templateKey === "oferta_promo"
+      ? [patient.name, serviceLabel(payload.service), payload.discount]
       : [patient.name, payload.detail];
 
   if (channels.whatsapp && patient.phone) {
@@ -668,10 +674,10 @@ export async function sendCampaignToPatient(
 
   if (channels.email && patient.email) {
     const { title, body } =
-      payload.templateKey === "oferta_speciala"
+      payload.templateKey === "oferta_promo"
         ? {
             title: "Ofertă specială — TechnicalDent",
-            body: `Avem o ofertă specială pentru dvs.: <b>${payload.service}</b>, cu reducere de <b>${payload.discount}</b>. Vă așteptăm cu drag!`,
+            body: `Avem o ofertă specială pentru dvs.: <b>${serviceLabel(payload.service)}</b>, cu reducere de <b>${payload.discount}</b>. Doriți să vă programăm? Răspundeți la acest email sau sunați-ne!`,
           }
         : {
             title: "Reamintire control — TechnicalDent",
@@ -759,8 +765,11 @@ export async function runReminderScan() {
  */
 export async function runRecallScan() {
   const now = Date.now();
-  const from = new Date(now - 7 * 30 * DAY);
-  const to = new Date(now - 6 * 30 * DAY);
+  const { getSetting } = await import("@/lib/data");
+  const configuredMonths = parseInt((await getSetting("recallMonths")) || "", 10);
+  const months = Number.isFinite(configuredMonths) && configuredMonths > 0 ? configuredMonths : 6;
+  const from = new Date(now - (months + 1) * 30 * DAY);
+  const to = new Date(now - months * 30 * DAY);
 
   const candidates = await prisma.appointment.findMany({
     where: {

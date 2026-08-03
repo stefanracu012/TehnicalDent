@@ -380,6 +380,45 @@ export default function SettingsPage() {
           </p>
         </div>
 
+        {/* -- RECALL AUTOMAT -- */}
+        <div className="bg-background border border-border p-6 sm:p-8 mb-8">
+          <h2 className="font-serif text-lg font-medium text-foreground mb-1">
+            Recall automat
+          </h2>
+          <p className="text-sm text-muted-foreground mb-5">
+            După câte luni fără o nouă programare se trimite automat mesajul de recall
+            (WhatsApp + email) unui pacient.
+          </p>
+          <div className="flex items-end gap-3">
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">
+                Luni
+              </label>
+              <input
+                type="number"
+                min={1}
+                max={24}
+                value={settings.recallMonths ?? ""}
+                onChange={(e) =>
+                  setSettings((prev) => ({ ...prev, recallMonths: e.target.value }))
+                }
+                placeholder="6"
+                className="w-24 border border-border px-3 py-2.5 text-sm focus:border-foreground focus:outline-none bg-muted/30"
+              />
+            </div>
+            <button
+              onClick={() => saveSetting("recallMonths", settings.recallMonths || "6")}
+              disabled={saving === "recallMonths"}
+              className="text-xs font-semibold bg-foreground text-white px-3 py-2.5 hover:bg-foreground/90 transition-colors disabled:opacity-50"
+            >
+              {saving === "recallMonths" ? "Se salvează..." : "Salvează"}
+            </button>
+            {saved === "recallMonths" && (
+              <span className="text-xs text-green-600 font-medium">✓ Salvat</span>
+            )}
+          </div>
+        </div>
+
         {/* -- IMAGES SECTION -- */}
         <div className="mb-4">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground mb-4">

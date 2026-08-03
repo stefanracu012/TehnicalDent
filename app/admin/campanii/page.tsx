@@ -10,16 +10,23 @@ interface Patient {
   email?: string | null;
 }
 
-type TemplateKey = "oferta_speciala" | "reminder_control";
+interface Service {
+  id: string;
+  title: string;
+}
+
+type TemplateKey = "oferta_promo" | "reminder_control";
+
+const ALL_SERVICES_LABEL = "Toate serviciile";
 
 export default function AdminCampaniiPage() {
   const [patients, setPatients] = useState<Patient[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [selectAll, setSelectAll] = useState(false);
 
-  const [templateKey, setTemplateKey] = useState<TemplateKey>("oferta_speciala");
+  const [services, setServices] = useState<Service[]>([]);
+  const [templateKey, setTemplateKey] = useState<TemplateKey>("oferta_promo");
   const [service, setService] = useState("");
   const [discount, setDiscount] = useState("");
   const [detail, setDetail] = useState("");
@@ -34,6 +41,13 @@ export default function AdminCampaniiPage() {
     fetchPatients();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
+
+  useEffect(() => {
+    secureFetch("/api/admin/services")
+      .then((r) => r.json())
+      .then((data) => setServices(Array.isArray(data) ? data : []))
+      .catch(() => {});
+  }, []);
 
   const fetchPatients = async () => {
     setLoading(true);
@@ -50,7 +64,6 @@ export default function AdminCampaniiPage() {
   };
 
   const toggle = (id: string) => {
-    setSelectAll(false);
     setSelected((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
@@ -59,19 +72,24 @@ export default function AdminCampaniiPage() {
     });
   };
 
-  const recipientCount = selectAll ? "toți pacienții" : `${selected.size} pacient${selected.size !== 1 ? "i" : ""}`;
+  const selectAllVisible = () => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      patients.forEach((p) => next.add(p.id));
+      return next;
+    });
+  };
+
+  const deselectAll = () => setSelected(new Set());
 
   const canSend =
-    (selectAll || selected.size > 0) &&
+    selected.size > 0 &&
     (channelWhatsapp || channelEmail) &&
-    (templateKey === "oferta_speciala" ? service.trim() && discount.trim() : detail.trim());
+    (templateKey === "oferta_promo" ? service.trim() && discount.trim() : detail.trim());
 
   const send = async () => {
     if (!canSend) return;
-    const confirmMsg = selectAll
-      ? `Sigur trimiți acest mesaj către TOȚI pacienții (${patients.length}+ posibil, indiferent de filtrul curent)?`
-      : `Trimiți acest mesaj către ${selected.size} pacient${selected.size !== 1 ? "i" : ""}?`;
-    if (!confirm(confirmMsg)) return;
+    if (!confirm(`Trimiți acest mesaj către ${selected.size} pacient${selected.size !== 1 ? "i" : ""}?`)) return;
 
     setSending(true);
     setError(null);
@@ -81,10 +99,10 @@ export default function AdminCampaniiPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          patientIds: selectAll ? "all" : Array.from(selected),
+          patientIds: Array.from(selected),
           templateKey,
-          service: templateKey === "oferta_speciala" ? service.trim() : undefined,
-          discount: templateKey === "oferta_speciala" ? discount.trim() : undefined,
+          service: templateKey === "oferta_promo" ? service.trim() : undefined,
+          discount: templateKey === "oferta_promo" ? discount.trim() : undefined,
           detail: templateKey === "reminder_control" ? detail.trim() : undefined,
           channels: { whatsapp: channelWhatsapp, email: channelEmail },
         }),
@@ -116,25 +134,29 @@ export default function AdminCampaniiPage() {
           <div className="bg-background border border-border p-4 sm:p-6">
             <h2 className="font-serif text-lg font-medium text-foreground mb-4">Destinatari</h2>
 
-            <label className="flex items-center gap-2 mb-3 text-sm font-medium">
-              <input
-                type="checkbox"
-                checked={selectAll}
-                onChange={(e) => {
-                  setSelectAll(e.target.checked);
-                  if (e.target.checked) setSelected(new Set());
-                }}
-              />
-              Toți pacienții (indiferent de căutare)
-            </label>
+            <div className="flex gap-2 mb-3">
+              <button
+                type="button"
+                onClick={selectAllVisible}
+                className="text-xs px-3 py-1.5 border border-border hover:bg-muted"
+              >
+                Selectează toți (din listă)
+              </button>
+              <button
+                type="button"
+                onClick={deselectAll}
+                className="text-xs px-3 py-1.5 border border-border hover:bg-muted"
+              >
+                Deselectează toți
+              </button>
+            </div>
 
             <input
               type="search"
               placeholder="Caută pacient după nume/telefon..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              disabled={selectAll}
-              className="w-full px-3 py-2 border border-border bg-background text-sm mb-3 disabled:opacity-50"
+              className="w-full px-3 py-2 border border-border bg-background text-sm mb-3"
             />
 
             <div className="max-h-80 overflow-y-auto border border-border divide-y divide-border">
@@ -146,16 +168,9 @@ export default function AdminCampaniiPage() {
                 patients.map((p) => (
                   <label
                     key={p.id}
-                    className={`flex items-center gap-3 px-3 py-2 text-sm cursor-pointer hover:bg-muted ${
-                      selectAll ? "opacity-50" : ""
-                    }`}
+                    className="flex items-center gap-3 px-3 py-2 text-sm cursor-pointer hover:bg-muted"
                   >
-                    <input
-                      type="checkbox"
-                      checked={selectAll || selected.has(p.id)}
-                      disabled={selectAll}
-                      onChange={() => toggle(p.id)}
-                    />
+                    <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggle(p.id)} />
                     <span className="flex-1">
                       {p.name} <span className="text-muted-foreground">— {p.phone}</span>
                     </span>
@@ -165,7 +180,11 @@ export default function AdminCampaniiPage() {
             </div>
 
             <p className="text-xs text-muted-foreground mt-2">
-              Selectați: <span className="font-medium text-foreground">{recipientCount}</span>
+              Selectați:{" "}
+              <span className="font-medium text-foreground">
+                {selected.size} pacient{selected.size !== 1 ? "i" : ""}
+              </span>
+              {search && selected.size > 0 ? " (pot include pacienți din căutări anterioare)" : ""}
             </p>
           </div>
 
@@ -176,9 +195,9 @@ export default function AdminCampaniiPage() {
             <div className="flex gap-2 mb-4">
               <button
                 type="button"
-                onClick={() => setTemplateKey("oferta_speciala")}
+                onClick={() => setTemplateKey("oferta_promo")}
                 className={`flex-1 px-3 py-2 text-sm border ${
-                  templateKey === "oferta_speciala"
+                  templateKey === "oferta_promo"
                     ? "bg-foreground text-background border-foreground"
                     : "border-border hover:bg-muted"
                 }`}
@@ -198,19 +217,25 @@ export default function AdminCampaniiPage() {
               </button>
             </div>
 
-            {templateKey === "oferta_speciala" ? (
+            {templateKey === "oferta_promo" ? (
               <div className="space-y-3 mb-4">
                 <div>
                   <label className="block text-xs font-medium text-muted-foreground mb-1">
                     Serviciu
                   </label>
-                  <input
-                    type="text"
+                  <select
                     value={service}
                     onChange={(e) => setService(e.target.value)}
-                    placeholder="ex: Albire dentară"
                     className="w-full px-3 py-2 border border-border bg-background text-sm"
-                  />
+                  >
+                    <option value="">Alege serviciul...</option>
+                    <option value={ALL_SERVICES_LABEL}>Toate serviciile</option>
+                    {services.map((s) => (
+                      <option key={s.id} value={s.title}>
+                        {s.title}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-muted-foreground mb-1">
@@ -226,7 +251,8 @@ export default function AdminCampaniiPage() {
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Previzualizare: „Avem o ofertă specială la TechnicalDent:{" "}
-                  <b>{service || "…"}</b>, cu reducere de <b>{discount || "…"}</b>. Vă așteptăm cu drag!"
+                  <b>{service || "…"}</b>, cu reducere de <b>{discount || "…"}</b>. Doriți să vă
+                  programăm? Răspundeți la acest mesaj sau sunați-ne!"
                 </p>
               </div>
             ) : (
@@ -287,7 +313,7 @@ export default function AdminCampaniiPage() {
               disabled={!canSend || sending}
               className="w-full px-4 py-2.5 bg-foreground text-background text-sm font-medium disabled:opacity-50"
             >
-              {sending ? "Se trimite..." : `Trimite către ${recipientCount}`}
+              {sending ? "Se trimite..." : `Trimite către ${selected.size} pacient${selected.size !== 1 ? "i" : ""}`}
             </button>
           </div>
         </div>

@@ -4,7 +4,7 @@ import { sanitizeObject, validateNoInjection } from "@/lib/security";
 import { sendCampaignToPatient, type CampaignPayload } from "@/lib/notifications";
 
 interface CampaignRequestBody {
-  patientIds: string[] | "all";
+  patientIds: string[];
   templateKey?: string;
   service?: string;
   discount?: string;
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     }
 
     let payload: CampaignPayload;
-    if (body.templateKey === "oferta_speciala") {
+    if (body.templateKey === "oferta_promo") {
       const service = String(body.service || "").trim();
       const discount = String(body.discount || "").trim();
       if (!service || !discount) {
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
           { status: 400 },
         );
       }
-      payload = { templateKey: "oferta_speciala", service, discount };
+      payload = { templateKey: "oferta_promo", service, discount };
     } else if (body.templateKey === "reminder_control") {
       const detail = String(body.detail || "").trim();
       if (!detail) {
@@ -53,12 +53,9 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Șablon necunoscut." }, { status: 400 });
     }
 
-    const patients =
-      body.patientIds === "all"
-        ? await prisma.patient.findMany()
-        : await prisma.patient.findMany({
-            where: { id: { in: Array.isArray(body.patientIds) ? body.patientIds : [] } },
-          });
+    const patients = await prisma.patient.findMany({
+      where: { id: { in: Array.isArray(body.patientIds) ? body.patientIds : [] } },
+    });
 
     if (!patients.length) {
       return NextResponse.json({ error: "Niciun pacient selectat." }, { status: 400 });
