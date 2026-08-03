@@ -170,6 +170,7 @@ export default function KanbanPage() {
       completed: [],
       cancelled: [],
       noshow: [],
+      test: [],
     };
     for (const a of appts) {
       map[a.status]?.push(a);
