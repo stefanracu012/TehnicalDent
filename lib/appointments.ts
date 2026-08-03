@@ -172,6 +172,25 @@ function moldovaOffsetMs(reference: Date): number {
   return hours * 60 * 60_000;
 }
 
+/**
+ * Parses a "YYYY-MM-DD HH:MM" (or with 'T') string typed by an admin as
+ * Moldova wall-clock time, returning the correct UTC instant — unlike
+ * `new Date(string)`, which silently treats the same string as UTC when the
+ * server's runtime default timezone is UTC (true on Vercel), shifting the
+ * stored appointment 2-3h later than intended.
+ */
+export function parseMoldovaDateTime(input: string): Date | null {
+  const m = input.trim().match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})$/);
+  if (!m) return null;
+  const [, y, mo, d, h, mi] = m.map(Number);
+  // Provisional instant (treated as UTC) purely to resolve which DST offset
+  // (EEST/EET) applies on this calendar date — then correct for the real offset.
+  const provisional = new Date(Date.UTC(y, mo - 1, d, h, mi));
+  if (isNaN(provisional.getTime())) return null;
+  const offset = moldovaOffsetMs(provisional);
+  return new Date(provisional.getTime() - offset);
+}
+
 function getMoldovaDateParts(reference: Date): { year: number; month: number; day: number } {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: MOLDOVA_TZ,
