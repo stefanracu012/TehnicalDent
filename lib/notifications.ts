@@ -13,13 +13,12 @@ import {
   type Service,
 } from "@prisma/client";
 import { buildConfirmUrl, formatDateTimeRo, toWhatsAppPhone } from "@/lib/appointments";
+import { TELEGRAM_TOPICS, sendTelegramMessage, sendTelegramToTopic, isTelegramConfigured } from "@/lib/telegram";
+import { refreshDigestIfRelevant } from "@/lib/telegram-digest";
+
+export { TELEGRAM_TOPICS, sendTelegramToTopic };
 
 // ---- Env ----
-
-const TELEGRAM_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
-// Accept either TELEGRAM_ADMIN_CHAT_ID (booking module) or TELEGRAM_CHAT_ID (existing contact form)
-const TELEGRAM_CHAT_ID =
-  process.env.TELEGRAM_ADMIN_CHAT_ID || process.env.TELEGRAM_CHAT_ID || "";
 
 // WhatsApp Business Cloud API (Meta)
 const WA_TOKEN = process.env.WHATSAPP_TOKEN || "";
@@ -53,27 +52,6 @@ function getTransporter(): Transporter {
 const MAX_ATTEMPTS = 3;
 
 // ---- Low-level senders ----
-
-async function sendTelegramRaw(text: string): Promise<void> {
-  if (!TELEGRAM_TOKEN || !TELEGRAM_CHAT_ID) {
-    throw new Error("Telegram not configured (TELEGRAM_BOT_TOKEN / TELEGRAM_ADMIN_CHAT_ID)");
-  }
-  const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
-  const res = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      chat_id: TELEGRAM_CHAT_ID,
-      text,
-      parse_mode: "HTML",
-      disable_web_page_preview: true,
-    }),
-  });
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Telegram API ${res.status}: ${body.slice(0, 200)}`);
-  }
-}
 
 /**
  * Payload shape for business-initiated WhatsApp messages, which Meta requires
@@ -215,7 +193,7 @@ async function tryDispatch(notificationId: string): Promise<void> {
 
   try {
     if (notif.channel === "telegram") {
-      await sendTelegramRaw(notif.payload);
+      await sendTelegramMessage(notif.payload);
     } else if (notif.channel === "whatsapp") {
       await sendWhatsAppRaw(notif.recipient, notif.payload);
     } else if (notif.channel === "email") {
@@ -241,14 +219,11 @@ async function tryDispatch(notificationId: string): Promise<void> {
       data: { status: "failed", attempts: { increment: 1 }, error: msg },
     });
     // Also alert admin via Telegram if it was a non-telegram failure
-    if (notif.channel !== "telegram" && TELEGRAM_TOKEN && TELEGRAM_CHAT_ID) {
-      try {
-        await sendTelegramRaw(
-          `⚠️ Eroare notificare WhatsApp (${notif.type}) către ${notif.recipient}\n${msg}`,
-        );
-      } catch {
-        // ignore
-      }
+    if (notif.channel !== "telegram" && isTelegramConfigured()) {
+      await sendTelegramToTopic(
+        `⚠️ Eroare notificare WhatsApp (${notif.type}) către ${notif.recipient}\n${msg}`,
+        TELEGRAM_TOPICS.erori,
+      );
     }
   }
 }
@@ -364,17 +339,13 @@ function buildEmailHtml(
 }
 
 export async function notifyCreated(a: AppointmentFull) {
-  // Admin: Telegram
-  await queueAndSend({
-    type: "created",
-    channel: "telegram",
-    recipient: TELEGRAM_CHAT_ID || "admin",
-    appointmentId: a.id,
-    payload:
-      `<b>Programare nouă</b>\n${clientLine(a)}\n📞 ${a.patient.phone}` +
+  // Admin: Telegram (topic: Programări noi)
+  await sendTelegramToTopic(
+    `<b>Programare nouă</b>\n${clientLine(a)}\n📞 ${a.patient.phone}` +
       (a.patient.email ? `\n📧 ${a.patient.email}` : "") +
       (a.notes ? `\n📝 ${a.notes}` : ""),
-  });
+    TELEGRAM_TOPICS.programariNoi,
+  );
 
   // Client: WhatsApp confirmation request (business-initiated -> template required)
   if (a.patient.phone) {
@@ -406,13 +377,16 @@ export async function notifyCreated(a: AppointmentFull) {
       appointmentId: a.id,
       payload: JSON.stringify(email),
     });
-  }}
+  }
+
+  await refreshDigestIfRelevant(a.dateTime);
+}
 
 export async function notifyConfirmed(a: AppointmentFull) {
   await queueAndSend({
     type: "confirmed",
     channel: "telegram",
-    recipient: TELEGRAM_CHAT_ID || "admin",
+    recipient: "admin",
     appointmentId: a.id,
     payload: `✅ <b>Programare confirmată</b>\n${clientLine(a)}\n📞 ${a.patient.phone}` +
       (a.patient.email ? `\n📧 ${a.patient.email}` : ""),
@@ -433,19 +407,17 @@ export async function notifyConfirmed(a: AppointmentFull) {
       payload: JSON.stringify(email),
     });
   }
+
+  await refreshDigestIfRelevant(a.dateTime);
 }
 
 export async function notifyCancelled(a: AppointmentFull, reason?: string) {
-  await queueAndSend({
-    type: "cancelled",
-    channel: "telegram",
-    recipient: TELEGRAM_CHAT_ID || "admin",
-    appointmentId: a.id,
-    payload:
-      `❌ <b>Programare anulată</b>\n${clientLine(a)}\n📞 ${a.patient.phone}` +
+  await sendTelegramToTopic(
+    `❌ <b>Programare anulată</b>\n${clientLine(a)}\n📞 ${a.patient.phone}` +
       (a.patient.email ? `\n📧 ${a.patient.email}` : "") +
       (reason ? `\nMotiv: ${reason}` : ""),
-  });
+    TELEGRAM_TOPICS.anulari,
+  );
 
   // Business-initiated -> template required (programare_anulata: {{1}} data, {{2}} serviciu).
   // A cancellation triggered by the admin panel isn't a reply within the patient's
@@ -477,42 +449,48 @@ export async function notifyCancelled(a: AppointmentFull, reason?: string) {
       appointmentId: a.id,
       payload: JSON.stringify(email),
     });
-  }}
+  }
+
+  await refreshDigestIfRelevant(a.dateTime);
+}
 
 export async function notifyCompleted(a: AppointmentFull) {
   await queueAndSend({
     type: "confirmed",
     channel: "telegram",
-    recipient: TELEGRAM_CHAT_ID || "admin",
+    recipient: "admin",
     appointmentId: a.id,
     payload:
       `✅ <b>Programare finalizată</b>\n${clientLine(a)}\n📞 ${a.patient.phone}` +
       (a.patient.email ? `\n📧 ${a.patient.email}` : ""),
   });
+  await refreshDigestIfRelevant(a.dateTime);
 }
 
 export async function notifyNoshow(a: AppointmentFull) {
   await queueAndSend({
     type: "confirmed",
     channel: "telegram",
-    recipient: TELEGRAM_CHAT_ID || "admin",
+    recipient: "admin",
     appointmentId: a.id,
     payload:
       `👤 <b>Neprezentare</b>\n${clientLine(a)}\n📞 ${a.patient.phone}` +
       (a.patient.email ? `\n📧 ${a.patient.email}` : ""),
   });
+  await refreshDigestIfRelevant(a.dateTime);
 }
 
 export async function notifyPending(a: AppointmentFull) {
   await queueAndSend({
     type: "created",
     channel: "telegram",
-    recipient: TELEGRAM_CHAT_ID || "admin",
+    recipient: "admin",
     appointmentId: a.id,
     payload:
       `⏳ <b>Programare în așteptare</b>\n${clientLine(a)}\n📞 ${a.patient.phone}` +
       (a.patient.email ? `\n📧 ${a.patient.email}` : ""),
   });
+  await refreshDigestIfRelevant(a.dateTime);
 }
 
 export async function notifyReminder(a: AppointmentFull, kind: "24h" | "2h") {
@@ -592,13 +570,10 @@ export async function notifyRecall(a: AppointmentFull) {
     });
   }
 
-  await queueAndSend({
-    type: "recall_6m",
-    channel: "telegram",
-    recipient: TELEGRAM_CHAT_ID || "admin",
-    appointmentId: a.id,
-    payload: `🔔 <b>Recall 6 luni trimis</b>\n👤 ${a.patient.name} 📞 ${a.patient.phone}`,
-  });
+  await sendTelegramToTopic(
+    `🔔 <b>Recall 6 luni trimis</b>\n👤 ${a.patient.name} 📞 ${a.patient.phone}`,
+    TELEGRAM_TOPICS.recall,
+  );
 }
 
 // =============================================

@@ -19,6 +19,28 @@ model CronState {
   lastRunDate String // "YYYY-MM-DD" in Europe/Chisinau
 }
 
+// Tracks the Telegram messages currently posted to the "Azi"/"Mâine" forum
+// topics, so a refresh can delete the old set before posting the new one
+// instead of the topic accumulating a duplicate list on every change.
+model TopicDigest {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  key        String   @unique // "azi" | "maine"
+  dateStr    String   // "YYYY-MM-DD" Moldova date this digest represents
+  messageIds Int[]
+  updatedAt  DateTime @updatedAt
+}
+
+// One active multi-step conversation per Telegram chat (creating a patient
+// or an appointment via guided prompts instead of typing a slash command).
+model TelegramSession {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  chatId    String   @unique
+  flow      String   // "pacient_nou" | "programare_noua"
+  step      String   // current step name within the flow
+  data      Json     // partial answers collected so far
+  updatedAt DateTime @updatedAt
+}
+
 model Service {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   slug         String   @unique

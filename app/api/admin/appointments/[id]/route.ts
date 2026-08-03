@@ -12,6 +12,7 @@ import {
   notifyNoshow,
   notifyPending,
 } from "@/lib/notifications";
+import { refreshDigestIfRelevant } from "@/lib/telegram-digest";
 import type { AppointmentStatus } from "@prisma/client";
 
 interface RouteParams {
@@ -140,6 +141,11 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       } else if (data.status === "pending") {
         notifyPending(updated).catch((e) => console.error("notifyPending:", e));
       }
+    } else if (data.dateTime) {
+      // Pure reschedule (no status change) — refresh both the old and new
+      // day's Telegram digest in case the appointment moved in/out of today/tomorrow.
+      refreshDigestIfRelevant(current.dateTime).catch((e) => console.error("refreshDigest:", e));
+      refreshDigestIfRelevant(updated.dateTime).catch((e) => console.error("refreshDigest:", e));
     }
 
     return NextResponse.json(updated);

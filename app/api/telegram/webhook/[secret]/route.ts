@@ -22,6 +22,18 @@ import {
   formatDateTimeRo,
 } from "@/lib/appointments";
 import { notifyCreated } from "@/lib/notifications";
+import { TELEGRAM_TOPICS, answerCallbackQuery, sendTelegramMessage } from "@/lib/telegram";
+import { refreshDayDigest, type DigestKey } from "@/lib/telegram-digest";
+import {
+  MENU_PACIENTI,
+  MENU_PROGRAMARI,
+  startPacientNou,
+  startProgramareNoua,
+  showPacientiList,
+  showProgramariList,
+  handleWizardMessage,
+  handleWizardCallback,
+} from "@/lib/telegram-wizard";
 
 const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
 const ADMIN_CHAT_ID =
@@ -34,7 +46,7 @@ interface RouteParams {
 
 // ---------- Telegram helpers ----------
 
-async function tgSend(chatId: number | string, text: string) {
+async function tgSend(chatId: number | string, text: string, threadId?: number) {
   if (!TG_TOKEN) return;
   await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
     method: "POST",
@@ -44,6 +56,7 @@ async function tgSend(chatId: number | string, text: string) {
       text,
       parse_mode: "HTML",
       disable_web_page_preview: true,
+      ...(threadId ? { message_thread_id: threadId } : {}),
     }),
   }).catch(() => {});
 }
@@ -94,6 +107,7 @@ const STATUS_LABELS: Record<string, string> = {
 const HELP = `<b>Comenzi disponibile</b>
 
 /help — afișează acest mesaj
+/menu — meniu cu butoane (Pacienți / Programări noi)
 /servicii — listă servicii (cu slug + durată)
 /pacienti [text] — caută pacienți după nume sau telefon
 
@@ -350,11 +364,17 @@ interface TelegramMessage {
   from?: { id: number };
   chat: { id: number };
   text?: string;
+  message_thread_id?: number;
 }
 interface TelegramCallbackQuery {
   id: string;
   from: { id: number };
-  message?: { message_id: number; chat: { id: number }; text?: string };
+  message?: {
+    message_id: number;
+    chat: { id: number };
+    text?: string;
+    message_thread_id?: number;
+  };
   data?: string;
 }
 interface TelegramUpdate {
@@ -383,6 +403,45 @@ export async function POST(request: Request, { params }: RouteParams) {
   if (update.callback_query) {
     const cq = update.callback_query;
     const data = cq.data || "";
+    const chatId = String(cq.message?.chat.id ?? "");
+    const threadId = cq.message?.message_thread_id;
+
+    // ---- Menu / wizard button presses ----
+    if (data.startsWith("menu:") || data.startsWith("wiz:")) {
+      try {
+        let feedback = "";
+        if (data === "menu:pacienti_vezi") {
+          await showPacientiList(threadId);
+        } else if (data === "menu:pacient_nou") {
+          await startPacientNou(chatId, threadId);
+        } else if (data === "menu:programari_vezi") {
+          await showProgramariList(threadId);
+        } else if (data === "menu:programare_noua") {
+          await startProgramareNoua(chatId, threadId);
+        } else {
+          feedback = await handleWizardCallback(chatId, data);
+        }
+        await answerCallbackQuery(cq.id, feedback);
+      } catch (err) {
+        console.error("Wizard callback error:", err);
+        await answerCallbackQuery(cq.id, "❌ Eroare.");
+      }
+      return NextResponse.json({ ok: true });
+    }
+
+    // ---- "Arată din nou" on the Azi/Mâine digest ----
+    if (data.startsWith("digest:")) {
+      const key = data.slice("digest:".length) as DigestKey;
+      try {
+        await refreshDayDigest(key);
+        await answerCallbackQuery(cq.id, "Actualizat.");
+      } catch (err) {
+        console.error("Digest refresh error:", err);
+        await answerCallbackQuery(cq.id, "❌ Eroare.");
+      }
+      return NextResponse.json({ ok: true });
+    }
+
     const match = data.match(/^status:(.+):(.+)$/);
 
     if (match) {
@@ -455,11 +514,19 @@ export async function POST(request: Request, { params }: RouteParams) {
   }
 
   const text = msg.text.trim();
+
+  // ---- Active wizard (Pacient nou / Programare nouă) takes priority over slash commands ----
+  if (!text.startsWith("/")) {
+    const handled = await handleWizardMessage(String(msg.chat.id), text);
+    if (handled) return NextResponse.json({ ok: true });
+  }
+
   const match = text.match(/^\/(\w+)(?:@\w+)?\s*([\s\S]*)$/);
   if (!match) return NextResponse.json({ ok: true });
 
   const cmd = match[1].toLowerCase();
   const rest = match[2] || "";
+  const threadId = msg.message_thread_id;
 
   let reply = "";
   try {
@@ -468,6 +535,25 @@ export async function POST(request: Request, { params }: RouteParams) {
       case "help":
         reply = HELP;
         break;
+      case "menu":
+        if (threadId === TELEGRAM_TOPICS.pacienti) {
+          await sendTelegramMessage(MENU_PACIENTI.text, { threadId, replyMarkup: MENU_PACIENTI.keyboard });
+        } else if (threadId === TELEGRAM_TOPICS.programariNoi) {
+          await sendTelegramMessage(MENU_PROGRAMARI.text, {
+            threadId,
+            replyMarkup: MENU_PROGRAMARI.keyboard,
+          });
+        } else {
+          await sendTelegramMessage(MENU_PACIENTI.text, {
+            threadId: TELEGRAM_TOPICS.pacienti,
+            replyMarkup: MENU_PACIENTI.keyboard,
+          });
+          await sendTelegramMessage(MENU_PROGRAMARI.text, {
+            threadId: TELEGRAM_TOPICS.programariNoi,
+            replyMarkup: MENU_PROGRAMARI.keyboard,
+          });
+        }
+        return NextResponse.json({ ok: true });
       case "servicii":
         reply = await cmdServicii();
         break;
@@ -491,7 +577,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     reply = `❌ Eroare server: ${err instanceof Error ? err.message : "necunoscută"}`;
   }
 
-  await tgSend(msg.chat.id, reply);
+  await tgSend(msg.chat.id, reply, threadId);
   return NextResponse.json({ ok: true });
 }
 

@@ -172,15 +172,7 @@ function moldovaOffsetMs(reference: Date): number {
   return hours * 60 * 60_000;
 }
 
-/**
- * Returns the [00:00, 23:59:59.999] range of "today in Moldova" as real UTC
- * instants — safe to use directly in Prisma date-range queries regardless
- * of what timezone the server process itself runs in.
- */
-export function getMoldovaDayRangeUTC(reference: Date = new Date()): {
-  fromUTC: Date;
-  toUTC: Date;
-} {
+function getMoldovaDateParts(reference: Date): { year: number; month: number; day: number } {
   const parts = new Intl.DateTimeFormat("en-US", {
     timeZone: MOLDOVA_TZ,
     year: "numeric",
@@ -188,13 +180,41 @@ export function getMoldovaDayRangeUTC(reference: Date = new Date()): {
     day: "2-digit",
   }).formatToParts(reference);
   const get = (type: string) => parts.find((p) => p.type === type)?.value || "0";
-  const year = parseInt(get("year"), 10);
-  const month = parseInt(get("month"), 10);
-  const day = parseInt(get("day"), 10);
+  return {
+    year: parseInt(get("year"), 10),
+    month: parseInt(get("month"), 10),
+    day: parseInt(get("day"), 10),
+  };
+}
+
+/**
+ * Returns the [00:00, 23:59:59.999] range of a Moldova calendar day as real
+ * UTC instants — safe to use directly in Prisma date-range queries regardless
+ * of what timezone the server process itself runs in. `dayOffset` shifts the
+ * target day (0 = today, 1 = tomorrow, ...); Date.UTC normalises overflow
+ * (e.g. day 32 rolls into next month) so this is safe across month/year ends.
+ */
+export function getMoldovaDayRangeUTC(
+  reference: Date = new Date(),
+  dayOffset: number = 0,
+): { fromUTC: Date; toUTC: Date } {
+  const { year, month, day } = getMoldovaDateParts(reference);
   const offset = moldovaOffsetMs(reference);
 
   return {
-    fromUTC: new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0) - offset),
-    toUTC: new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999) - offset),
+    fromUTC: new Date(Date.UTC(year, month - 1, day + dayOffset, 0, 0, 0, 0) - offset),
+    toUTC: new Date(Date.UTC(year, month - 1, day + dayOffset, 23, 59, 59, 999) - offset),
   };
+}
+
+/** Returns "YYYY-MM-DD" for the Moldova calendar day at `dayOffset` from `reference`. */
+export function getMoldovaDateStr(reference: Date = new Date(), dayOffset: number = 0): string {
+  // Reuse the UTC day-start instant (already offset-adjusted) and re-derive
+  // its Moldova calendar date, so a dayOffset that crosses a month/year
+  // boundary is reflected correctly in the string too.
+  const { fromUTC } = getMoldovaDayRangeUTC(reference, dayOffset);
+  const { year, month, day } = getMoldovaDateParts(
+    new Date(fromUTC.getTime() + 12 * 60 * 60_000), // nudge to midday to avoid any edge rounding
+  );
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }

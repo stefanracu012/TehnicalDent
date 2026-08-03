@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { retryFailed, runRecallScan, runReminderScan } from "@/lib/notifications";
-import { sendDailyBriefing, sendEveningReminder } from "@/lib/daily-briefing";
+import { sendEveningReminder } from "@/lib/daily-briefing";
+import { refreshStaleDigests } from "@/lib/telegram-digest";
 
 // Marks `key` as run for `todayStr` ("YYYY-MM-DD") — returns true only the
 // first time it's called for a given day, so repeated cron invocations
@@ -24,8 +25,9 @@ async function claimDailyRun(key: string, todayStr: string): Promise<boolean> {
  * Should be invoked every ~10 minutes by an external scheduler
  * (Vercel Cron, GitHub Actions, cron-job.org, etc.).
  *
- * Daily briefing (Telegram) fires automatically when this cron runs
- * between 07:25–07:35 Moldova time (once per day).
+ * The "Azi"/"Mâine" Telegram topic digests self-refresh whenever a relevant
+ * appointment changes; this cron only rebuilds them as a safety net once the
+ * calendar day rolls over and nothing else has triggered a refresh yet.
  */
 async function handle(request: Request) {
   const url = new URL(request.url);
@@ -49,13 +51,11 @@ async function handle(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Check if we're in the 07:25–07:35 Moldova window → send daily briefing
   const nowMoldova = new Date(
     new Date().toLocaleString("en-US", { timeZone: "Europe/Chisinau" }),
   );
   const h = nowMoldova.getHours();
   const m = nowMoldova.getMinutes();
-  const inBriefingWindow = h === 7 && m >= 25 && m <= 35;
   // 20:00–20:10 Moldova → reminder pentru programări nefinalizate
   const inEveningWindow = h === 20 && m >= 0 && m <= 10;
   const todayStr = `${nowMoldova.getFullYear()}-${String(nowMoldova.getMonth() + 1).padStart(2, "0")}-${String(nowMoldova.getDate()).padStart(2, "0")}`;
@@ -67,17 +67,14 @@ async function handle(request: Request) {
       retryFailed(),
     ]);
 
-    let briefing: { sent?: number; skipped?: boolean } = { skipped: true };
-    if (inBriefingWindow && (await claimDailyRun("daily-briefing", todayStr))) {
-      briefing = await sendDailyBriefing();
-    }
+    await refreshStaleDigests();
 
     let evening: { sent?: number; skipped?: boolean } = { skipped: true };
     if (inEveningWindow && (await claimDailyRun("evening-reminder", todayStr))) {
       evening = await sendEveningReminder();
     }
 
-    return NextResponse.json({ ok: true, reminders, recalls, retried, briefing, evening });
+    return NextResponse.json({ ok: true, reminders, recalls, retried, evening });
   } catch (error) {
     console.error("Cron error:", error);
     return NextResponse.json(

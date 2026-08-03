@@ -20,25 +20,13 @@ import crypto from "crypto";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { normalizePhone } from "@/lib/appointments";
-import { sendWhatsAppText } from "@/lib/notifications";
+import { sendWhatsAppText, sendTelegramToTopic, TELEGRAM_TOPICS } from "@/lib/notifications";
 
 const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || "";
 const APP_SECRET = process.env.WHATSAPP_APP_SECRET || "";
-const TG_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
-const TG_CHAT_ID =
-  process.env.TELEGRAM_ADMIN_CHAT_ID || process.env.TELEGRAM_CHAT_ID || "";
 
 const AUTO_REPLY =
   "Bună ziua! Am primit mesajul dvs. Vă vom contacta în cel mai scurt timp posibil. — TechnicalDent";
-
-async function notifyAdmin(text: string) {
-  if (!TG_TOKEN || !TG_CHAT_ID) return;
-  await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: TG_CHAT_ID, text, parse_mode: "HTML" }),
-  }).catch(() => {});
-}
 
 // ---------- Meta webhook payload shapes (subset we care about) ----------
 
@@ -155,8 +143,9 @@ export async function POST(request: Request) {
           },
         });
 
-        await notifyAdmin(
+        await sendTelegramToTopic(
           `💬 <b>Mesaj WhatsApp</b> de la ${who} (<code>${phone}</code>)\n${text}`,
+          TELEGRAM_TOPICS.mesaje,
         );
 
         try {
@@ -172,8 +161,9 @@ export async function POST(request: Request) {
       for (const status of value.statuses || []) {
         if (status.status === "failed") {
           const err = status.errors?.[0]?.title || "necunoscută";
-          await notifyAdmin(
+          await sendTelegramToTopic(
             `⚠️ WhatsApp către <code>${status.recipient_id}</code> a eșuat: ${err}`,
+            TELEGRAM_TOPICS.erori,
           );
         }
       }
