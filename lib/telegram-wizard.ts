@@ -51,6 +51,7 @@ export const MENU_PACIENTI = {
         { text: "🔎 Vezi pacienți", callback_data: "menu:pacienti_vezi" },
         { text: "➕ Pacient nou", callback_data: "menu:pacient_nou" },
       ],
+      [{ text: "📋 Toți pacienții", callback_data: "menu:pacienti_toti" }],
     ],
   },
 };

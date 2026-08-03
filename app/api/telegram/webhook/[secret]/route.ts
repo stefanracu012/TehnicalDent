@@ -415,7 +415,7 @@ export async function POST(request: Request, { params }: RouteParams) {
         let feedback = "";
         if (data === "menu:pacienti_vezi") {
           await startCautaPacient(chatId, threadId);
-        } else if (data === "wiz:pacienti_all") {
+        } else if (data === "wiz:pacienti_all" || data === "menu:pacienti_toti") {
           await showAllPacienti(threadId);
         } else if (data === "menu:pacient_nou") {
           await startPacientNou(chatId, threadId);
