@@ -30,7 +30,8 @@ import {
   REPLY_KEYBOARD,
   startPacientNou,
   startProgramareNoua,
-  showPacientiList,
+  startCautaPacient,
+  showAllPacienti,
   showProgramariList,
   handleWizardMessage,
   handleWizardCallback,
@@ -413,7 +414,9 @@ export async function POST(request: Request, { params }: RouteParams) {
       try {
         let feedback = "";
         if (data === "menu:pacienti_vezi") {
-          await showPacientiList(threadId);
+          await startCautaPacient(chatId, threadId);
+        } else if (data === "wiz:pacienti_all") {
+          await showAllPacienti(threadId);
         } else if (data === "menu:pacient_nou") {
           await startPacientNou(chatId, threadId);
         } else if (data === "menu:programari_vezi") {

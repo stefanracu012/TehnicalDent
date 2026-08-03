@@ -24,7 +24,7 @@ import {
 import { notifyCreated } from "@/lib/notifications";
 import { sendTelegramMessage, deleteTelegramMessage } from "@/lib/telegram";
 
-type Flow = "pacient_nou" | "programare_noua";
+type Flow = "pacient_nou" | "programare_noua" | "cauta_pacient";
 
 interface SessionData {
   threadId?: number;
@@ -157,7 +157,7 @@ export async function handleReplyKeyboardButton(
 ): Promise<boolean> {
   switch (text) {
     case BTN_VEZI_PACIENTI:
-      await showPacientiList(threadId);
+      await startCautaPacient(chatId, threadId, messageId);
       return true;
     case BTN_PACIENT_NOU:
       await startPacientNou(chatId, threadId, messageId);
@@ -224,6 +224,18 @@ export async function startProgramareNoua(
   await setSession(chatId, "programare_noua", "search_patient", { threadId, msgIds });
 }
 
+function formatPatientList(
+  title: string,
+  patients: { name: string; phone: string; email?: string | null }[],
+): string {
+  return (
+    `<b>${title} (${patients.length})</b>\n` +
+    patients
+      .map((p) => `• ${p.name} — <code>${p.phone}</code>${p.email ? ` · ${p.email}` : ""}`)
+      .join("\n")
+  );
+}
+
 export async function showPacientiList(threadId?: number): Promise<void> {
   const patients = await prisma.patient.findMany({
     orderBy: { createdAt: "desc" },
@@ -234,14 +246,68 @@ export async function showPacientiList(threadId?: number): Promise<void> {
     await sendTelegramMessage("Niciun pacient găsit.", { threadId });
     return;
   }
-  await sendTelegramMessage(
-    `<b>Pacienți recenți (${patients.length})</b>\n` +
-      patients
-        .map((p) => `• ${p.name} — <code>${p.phone}</code>${p.email ? ` · ${p.email}` : ""}`)
-        .join("\n") +
-      `\n\n<i>Arată doar cei mai recenți ${patients.length}. Scrie /pacienti nume_sau_telefon pentru căutare.</i>`,
-    { threadId },
+  await sendTelegramMessage(formatPatientList("Pacienți recenți", patients), {
+    threadId,
+    replyMarkup: {
+      inline_keyboard: [[{ text: "📋 Arată toți pacienții", callback_data: "wiz:pacienti_all" }]],
+    },
+  });
+}
+
+export async function showAllPacienti(threadId?: number): Promise<void> {
+  const patients = await prisma.patient.findMany({
+    orderBy: { name: "asc" },
+    take: 300,
+    select: { name: true, phone: true, email: true },
+  });
+  if (!patients.length) {
+    await sendTelegramMessage("Niciun pacient găsit.", { threadId });
+    return;
+  }
+  await sendTelegramMessage(formatPatientList("Toți pacienții", patients), { threadId });
+}
+
+/** "Vezi pacienți" now starts a tiny one-step search flow instead of dumping the raw list. */
+export async function startCautaPacient(
+  chatId: string,
+  threadId?: number,
+  triggerMsgId?: number,
+): Promise<void> {
+  const promptId = await sendPrompt(
+    "🔎 Scrie <b>nume sau telefon</b> pentru căutare (sau „-” pentru cei mai recenți 20).",
+    threadId,
   );
+  const msgIds = [...(triggerMsgId ? [triggerMsgId] : []), promptId];
+  await setSession(chatId, "cauta_pacient", "query", { threadId, msgIds });
+}
+
+async function handleCautaPacientStep(
+  chatId: string,
+  text: string,
+  data: SessionData,
+  threadId?: number,
+) {
+  await clearSession(chatId);
+  await deleteAll(data.msgIds);
+
+  if (isSkip(text)) {
+    await showPacientiList(threadId);
+    return;
+  }
+
+  const q = text.trim();
+  const patients = await prisma.patient.findMany({
+    where: {
+      OR: [{ name: { contains: q, mode: "insensitive" } }, { phone: { contains: normalizePhone(q) } }],
+    },
+    take: 30,
+    select: { name: true, phone: true, email: true },
+  });
+  if (!patients.length) {
+    await sendTelegramMessage(`Niciun pacient găsit pentru „${q}”.`, { threadId });
+    return;
+  }
+  await sendTelegramMessage(formatPatientList(`Rezultate „${q}”`, patients), { threadId });
 }
 
 export async function showProgramariList(threadId?: number): Promise<void> {
@@ -299,6 +365,8 @@ export async function handleWizardMessage(
 
   if (session.flow === "pacient_nou") {
     await handlePacientNouStep(chatId, session.step, text, withMsg, threadId);
+  } else if (session.flow === "cauta_pacient") {
+    await handleCautaPacientStep(chatId, text, withMsg, threadId);
   } else {
     await handleProgramareNouaStep(chatId, session.step, text, withMsg, threadId);
   }
