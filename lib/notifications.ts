@@ -724,17 +724,22 @@ export async function runReminderScan() {
   const now = Date.now();
 
   // Day-before reminder: approaching (≤25h out) but not imminent, never reminded.
-  const r24 = await prisma.appointment.findMany({
+  //
+  // `remindedAt` is filtered in JS, not in the query: on MongoDB the field is
+  // absent entirely from documents where it was never written, and Prisma does
+  // not treat an absent field as matching `remindedAt: null` — so filtering it
+  // server-side silently matched nothing at all.
+  const r24Candidates = await prisma.appointment.findMany({
     where: {
       status: { in: ["pending", "confirmed"] },
       dateTime: {
         gt: new Date(now + SHORT_NOTICE),
         lte: new Date(now + 25 * HOUR),
       },
-      remindedAt: null,
     },
     include: { patient: true, service: true },
   });
+  const r24 = r24Candidates.filter((a) => !a.remindedAt);
   for (const a of r24) {
     await notifyReminder(a, "24h");
     await prisma.appointment.update({
