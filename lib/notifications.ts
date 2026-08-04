@@ -706,25 +706,32 @@ export async function sendCampaignToPatient(
 const HOUR = 60 * 60_000;
 const DAY = 24 * HOUR;
 
+// Boundary between "day-before reminder" and "same-day reminder" territory:
+// anything closer than this gets the 2h wording, anything further the 24h one.
+const SHORT_NOTICE = 2.5 * HOUR;
+
 /**
  * Scans for appointments needing 24h / 2h reminders and sends them.
- * Idempotent via `remindedAt` field (we send each reminder window only once).
+ *
+ * Deliberately catch-up rather than point-in-time: an appointment qualifies
+ * for as long as it's approaching and hasn't been reminded yet, instead of
+ * only during a narrow band around the exact -24h / -2h mark. A fixed band
+ * silently loses the reminder forever if the cron misses those few minutes
+ * (downtime, a timed-out run, a redeploy); this way a late cron still sends,
+ * just later than ideal. `remindedAt` keeps it from repeating.
  */
 export async function runReminderScan() {
   const now = Date.now();
 
-  // 24h window: appointments between now+23h and now+25h with remindedAt < now-22h
+  // Day-before reminder: approaching (≤25h out) but not imminent, never reminded.
   const r24 = await prisma.appointment.findMany({
     where: {
       status: { in: ["pending", "confirmed"] },
       dateTime: {
-        gte: new Date(now + 23 * HOUR),
+        gt: new Date(now + SHORT_NOTICE),
         lte: new Date(now + 25 * HOUR),
       },
-      OR: [
-        { remindedAt: null },
-        { remindedAt: { lt: new Date(now - 22 * HOUR) } },
-      ],
+      remindedAt: null,
     },
     include: { patient: true, service: true },
   });
@@ -736,21 +743,23 @@ export async function runReminderScan() {
     });
   }
 
-  // 2h window: appointments between now+90min and now+150min that have NOT been reminded in last 90min
-  const r2 = await prisma.appointment.findMany({
+  // Same-day reminder: imminent and still in the future. Due when nothing has
+  // been sent yet, or when the only thing sent was the day-before reminder —
+  // detected by it predating the appointment by more than 3h. Prisma/Mongo
+  // can't compare two fields in a query, so that check happens in JS (the
+  // candidate set is at most a couple of hours of bookings).
+  const r2Candidates = await prisma.appointment.findMany({
     where: {
       status: { in: ["pending", "confirmed"] },
-      dateTime: {
-        gte: new Date(now + 90 * 60_000),
-        lte: new Date(now + 150 * 60_000),
-      },
-      OR: [
-        { remindedAt: null },
-        { remindedAt: { lt: new Date(now - 90 * 60_000) } },
-      ],
+      dateTime: { gt: new Date(now), lte: new Date(now + SHORT_NOTICE) },
     },
     include: { patient: true, service: true },
   });
+  const r2 = r2Candidates.filter(
+    (a) =>
+      !a.remindedAt ||
+      a.remindedAt.getTime() < a.dateTime.getTime() - 3 * HOUR,
+  );
   for (const a of r2) {
     await notifyReminder(a, "2h");
     await prisma.appointment.update({
