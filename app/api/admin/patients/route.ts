@@ -1,22 +1,14 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sanitizeObject, validateNoInjection } from "@/lib/security";
-import { isValidPhone, normalizePhone } from "@/lib/appointments";
+import { isValidPhone, normalizePhone, patientSearchOr } from "@/lib/appointments";
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const q = searchParams.get("q")?.trim();
 
-    const where = q
-      ? {
-          OR: [
-            { name: { contains: q, mode: "insensitive" as const } },
-            { phone: { contains: normalizePhone(q) } },
-            { email: { contains: q, mode: "insensitive" as const } },
-          ],
-        }
-      : {};
+    const where = q ? { OR: patientSearchOr(q) } : {};
 
     const patients = await prisma.patient.findMany({
       where,

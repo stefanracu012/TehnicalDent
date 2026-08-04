@@ -20,6 +20,7 @@ import {
   findOverlappingAppointment,
   generateConfirmToken,
   formatDateTimeRo,
+  patientSearchOr,
 } from "@/lib/appointments";
 import { notifyCreated } from "@/lib/notifications";
 import { TELEGRAM_TOPICS, answerCallbackQuery, sendTelegramMessage, pinTelegramMessage } from "@/lib/telegram";
@@ -174,14 +175,7 @@ async function cmdServicii(): Promise<string> {
 
 async function cmdPacienti(query: string): Promise<string> {
   const q = query.trim();
-  const where = q
-    ? {
-        OR: [
-          { name: { contains: q, mode: "insensitive" as const } },
-          { phone: { contains: normalizePhone(q) } },
-        ],
-      }
-    : {};
+  const where = q ? { OR: patientSearchOr(q) } : {};
   const patients = await prisma.patient.findMany({
     where,
     orderBy: { createdAt: "desc" },

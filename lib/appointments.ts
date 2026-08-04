@@ -6,7 +6,7 @@
 
 import crypto from "crypto";
 import prisma from "@/lib/prisma";
-import type { AppointmentStatus } from "@prisma/client";
+import type { AppointmentStatus, Prisma } from "@prisma/client";
 
 const TOKEN_SECRET =
   process.env.APPOINTMENT_TOKEN_SECRET ||
@@ -32,6 +32,24 @@ export function isValidPhone(raw: string): boolean {
   // Min 7 digits, max 15 (E.164)
   const digits = norm.replace(/\D/g, "");
   return digits.length >= 7 && digits.length <= 15;
+}
+
+/**
+ * OR clause for a patient search box that accepts a name, phone, or email.
+ *
+ * The phone clause is only included when the query actually contains digits:
+ * normalizePhone() reduces a name to an empty string, and `contains: ""`
+ * matches every record — which silently turned every name search into
+ * "return all patients", making name search look broken while phone worked.
+ */
+export function patientSearchOr(query: string): Prisma.PatientWhereInput[] {
+  const q = query.trim();
+  const digits = normalizePhone(q);
+  return [
+    { name: { contains: q, mode: "insensitive" } },
+    ...(digits ? [{ phone: { contains: digits } }] : []),
+    { email: { contains: q, mode: "insensitive" } },
+  ];
 }
 
 /**

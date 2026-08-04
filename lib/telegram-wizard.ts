@@ -19,6 +19,7 @@ import {
   findOverlappingAppointment,
   generateConfirmToken,
   formatDateTimeRo,
+  patientSearchOr,
 } from "@/lib/appointments";
 import { notifyCreated } from "@/lib/notifications";
 import { sendTelegramMessage, deleteTelegramMessage, TELEGRAM_TOPICS } from "@/lib/telegram";
@@ -261,7 +262,7 @@ async function handleCautaPacientStep(
   const q = text.trim();
   const patients = await prisma.patient.findMany({
     where: {
-      OR: [{ name: { contains: q, mode: "insensitive" } }, { phone: { contains: normalizePhone(q) } }],
+      OR: patientSearchOr(q),
     },
     take: 30,
     select: { name: true, phone: true, email: true },
@@ -432,12 +433,7 @@ async function handleProgramareNouaStep(
 
   if (step === "search_patient") {
     const patients = await prisma.patient.findMany({
-      where: {
-        OR: [
-          { name: { contains: t, mode: "insensitive" } },
-          { phone: { contains: normalizePhone(t) } },
-        ],
-      },
+      where: { OR: patientSearchOr(t) },
       take: 8,
       select: { id: true, name: true, phone: true },
     });
