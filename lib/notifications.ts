@@ -519,9 +519,16 @@ export async function notifyReminder(a: AppointmentFull, kind: "24h" | "2h") {
   const type: NotificationType = kind === "24h" ? "reminder_24h" : "reminder_2h";
   if (!a.patient.phone && !a.patient.email) return;
 
-  const lead = kind === "24h" ? "Vă reamintim că mâine aveţi programare" : "Vă reamintim că peste 2 ore aveţi programare";
+  // "astăzi" rather than "peste 2 ore": the same-day reminder can go out
+  // anywhere inside a ~2.5h stretch, and later still if a cron run was
+  // delayed, so a fixed "in 2 hours" claim is often simply untrue.
+  const when = kind === "24h" ? "maine" : "astazi";
+  const lead =
+    kind === "24h"
+      ? "Vă reamintim că mâine aveţi programare"
+      : "Vă reamintim că astăzi aveţi programare";
 
-  // Business-initiated -> template required (programare_reminder_v2: {{1}} maine/peste 2 ore, {{2}} data, {{3}} serviciu, {{4}} link)
+  // Business-initiated -> template required (programare_reminder_v2: {{1}} maine/astazi, {{2}} data, {{3}} serviciu, {{4}} link)
   if (a.patient.phone) {
     await queueAndSend({
       type,
@@ -532,7 +539,7 @@ export async function notifyReminder(a: AppointmentFull, kind: "24h" | "2h") {
         template: "programare_reminder_v2",
         language: "ro",
         params: [
-          kind === "24h" ? "maine" : "peste 2 ore",
+          when,
           formatDateTimeRo(a.dateTime),
           a.service.title,
           buildConfirmUrl(a.id),
@@ -543,7 +550,7 @@ export async function notifyReminder(a: AppointmentFull, kind: "24h" | "2h") {
 
   if (a.patient.email) {
     const email = buildEmailHtml(a, {
-      title: kind === "24h" ? "Reamintire — programare mâine" : "Reamintire — programare peste 2 ore",
+      title: kind === "24h" ? "Reamintire — programare mâine" : "Reamintire — programare astăzi",
       intro: `${lead} la TechnicalDent.`,
       showActions: true,
       footer: "Dacă nu vă mai puteţi prezenta, anulaţi programarea folosind butonul de mai sus.",
@@ -723,6 +730,12 @@ const SHORT_NOTICE = 2.5 * HOUR;
 export async function runReminderScan() {
   const now = Date.now();
 
+  // A booking made after its own reminder window had already opened was
+  // announced by the "programare nouă" message itself — the patient was told
+  // the time seconds ago, so a reminder on top of it is pure duplication.
+  const bookedBeforeWindow = (a: AppointmentFull, windowMs: number) =>
+    a.createdAt.getTime() < a.dateTime.getTime() - windowMs;
+
   // Day-before reminder: approaching (≤25h out) but not imminent, never reminded.
   //
   // `remindedAt` is filtered in JS, not in the query: on MongoDB the field is
@@ -739,7 +752,9 @@ export async function runReminderScan() {
     },
     include: { patient: true, service: true },
   });
-  const r24 = r24Candidates.filter((a) => !a.remindedAt);
+  const r24 = r24Candidates.filter(
+    (a) => !a.remindedAt && bookedBeforeWindow(a, 25 * HOUR),
+  );
   for (const a of r24) {
     await notifyReminder(a, "24h");
     await prisma.appointment.update({
@@ -762,8 +777,8 @@ export async function runReminderScan() {
   });
   const r2 = r2Candidates.filter(
     (a) =>
-      !a.remindedAt ||
-      a.remindedAt.getTime() < a.dateTime.getTime() - 3 * HOUR,
+      bookedBeforeWindow(a, SHORT_NOTICE) &&
+      (!a.remindedAt || a.remindedAt.getTime() < a.dateTime.getTime() - 3 * HOUR),
   );
   for (const a of r2) {
     await notifyReminder(a, "2h");
