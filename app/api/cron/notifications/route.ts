@@ -18,6 +18,48 @@ async function claimDailyRun(key: string, todayStr: string): Promise<boolean> {
   return true;
 }
 
+const LOCK_KEY = "cron-dispatch-lock";
+const LOCK_TTL = 45_000;
+
+/**
+ * Stops two dispatcher runs from overlapping. Without this, a second run
+ * starting while the first is mid-scan sees the same not-yet-reminded
+ * appointments and sends everything twice — which is exactly what happened
+ * when a manual poll landed on top of the scheduled run.
+ *
+ * Held as a timestamp string in CronState (never null, so no absent-field
+ * ambiguity). The claim is a compare-and-swap: concurrent runs read the same
+ * previous value but only one updateMany matches it, so only one proceeds.
+ * The TTL releases the lock if a run dies without finishing.
+ */
+async function acquireDispatchLock(): Promise<boolean> {
+  const now = Date.now();
+  const existing = await prisma.cronState.findUnique({ where: { key: LOCK_KEY } });
+
+  if (!existing) {
+    try {
+      await prisma.cronState.create({ data: { key: LOCK_KEY, lastRunDate: String(now) } });
+      return true;
+    } catch {
+      return false; // lost the create race against a concurrent run
+    }
+  }
+
+  if (now - (Number(existing.lastRunDate) || 0) < LOCK_TTL) return false;
+
+  const claimed = await prisma.cronState.updateMany({
+    where: { key: LOCK_KEY, lastRunDate: existing.lastRunDate },
+    data: { lastRunDate: String(now) },
+  });
+  return claimed.count === 1;
+}
+
+async function releaseDispatchLock(): Promise<void> {
+  await prisma.cronState
+    .update({ where: { key: LOCK_KEY }, data: { lastRunDate: "0" } })
+    .catch(() => {});
+}
+
 /**
  * Cron-driven notifications dispatcher.
  *
@@ -60,6 +102,10 @@ async function handle(request: Request) {
   const inEveningWindow = h === 20 && m >= 0 && m <= 10;
   const todayStr = `${nowMoldova.getFullYear()}-${String(nowMoldova.getMonth() + 1).padStart(2, "0")}-${String(nowMoldova.getDate()).padStart(2, "0")}`;
 
+  if (!(await acquireDispatchLock())) {
+    return NextResponse.json({ ok: true, skipped: "another run in progress" });
+  }
+
   try {
     const [reminders, recalls, retried] = await Promise.all([
       runReminderScan(),
@@ -81,6 +127,8 @@ async function handle(request: Request) {
       { error: error instanceof Error ? error.message : "Failed" },
       { status: 500 },
     );
+  } finally {
+    await releaseDispatchLock();
   }
 }
 
