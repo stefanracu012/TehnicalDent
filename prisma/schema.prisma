@@ -181,6 +181,28 @@ model WhatsAppMessage {
   @@index([createdAt])
 }
 
+enum SocialChannel {
+  messenger
+  instagram
+}
+
+// Messenger / Instagram DM history. Kept separate from WhatsAppMessage
+// because the identity is a Meta-scoped user id (PSID/IGSID) rather than a
+// phone number, and the two channels have their own inbox pages.
+model SocialMessage {
+  id            String            @id @default(auto()) @map("_id") @db.ObjectId
+  channel       SocialChannel
+  senderId      String            // PSID (Messenger) or IGSID (Instagram)
+  senderName    String?           // profile name, when the API exposes it
+  direction     WhatsAppDirection // same in/out meaning
+  body          String
+  metaMessageId String?           // for dedup across webhook retries
+  createdAt     DateTime          @default(now())
+
+  @@index([channel, senderId])
+  @@index([createdAt])
+}
+
 enum AppointmentStatus {
   pending
   confirmed

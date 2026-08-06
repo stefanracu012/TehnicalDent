@@ -18,6 +18,7 @@
 
 import crypto from "crypto";
 import { NextResponse } from "next/server";
+import prisma from "@/lib/prisma";
 import { sendTelegramToTopic, TELEGRAM_TOPICS } from "@/lib/telegram";
 
 const VERIFY_TOKEN = process.env.MESSENGER_VERIFY_TOKEN || "";
@@ -92,11 +93,32 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  const source = body.object === "instagram" ? "Instagram" : "Messenger";
+  const channel = body.object === "instagram" ? "instagram" : "messenger";
+  const source = channel === "instagram" ? "Instagram" : "Messenger";
 
   for (const entry of body.entry || []) {
     for (const event of entry.messaging || []) {
+      // Meta retries webhook delivery on failure — skip anything already stored.
+      if (event.message?.mid) {
+        const seen = await prisma.socialMessage.findFirst({
+          where: { metaMessageId: event.message.mid },
+          select: { id: true },
+        });
+        if (seen) continue;
+      }
+
       const text = eventText(event);
+
+      await prisma.socialMessage.create({
+        data: {
+          channel,
+          senderId: event.sender.id,
+          direction: "in",
+          body: text,
+          metaMessageId: event.message?.mid,
+        },
+      });
+
       await sendTelegramToTopic(
         `💬 <b>Mesaj ${source}</b> de la <code>${event.sender.id}</code>\n${text}`,
         TELEGRAM_TOPICS.mesaje,
