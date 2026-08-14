@@ -12,6 +12,7 @@ import {
   notifyNoshow,
   notifyPending,
 } from "@/lib/notifications";
+import { releaseSlotByAppointment } from "@/lib/slots";
 import { refreshDigestIfRelevant } from "@/lib/telegram-digest";
 import type { AppointmentStatus } from "@prisma/client";
 
@@ -127,6 +128,14 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       include: { patient: true, service: true },
     });
 
+    // Cancelling frees the hour for someone else; the reservation row is
+    // what booking checks against, so it has to go.
+    if (data.status && data.status !== current.status) {
+      if (data.status === "cancelled" || data.status === "noshow") {
+        await releaseSlotByAppointment(id);
+      }
+    }
+
     // Status-change notifications
     if (data.status && data.status !== current.status) {
       if (data.status === "confirmed") {
@@ -170,6 +179,7 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
     if (!current) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
+    await releaseSlotByAppointment(id);
     await prisma.appointment.delete({ where: { id } });
     notifyCancelled(current, "Șters din admin").catch((e) =>
       console.error("notifyCancelled (delete):", e),

@@ -7,6 +7,7 @@ import {
   parseDateTime,
 } from "@/lib/appointments";
 import { notifyCreated } from "@/lib/notifications";
+import { claimSlot, SlotTakenError } from "@/lib/slots";
 import type { AppointmentStatus } from "@prisma/client";
 
 export async function GET(request: Request) {
@@ -112,12 +113,15 @@ export async function POST(request: Request) {
       );
     }
 
+    const teamMemberId = body.teamMemberId ? String(body.teamMemberId) : null;
+
     const created = await prisma.appointment.create({
       data: {
         patientId,
         serviceId,
         dateTime,
         duration,
+        teamMemberId,
         notes: body.notes ? String(body.notes) : null,
         status: "pending",
       },
@@ -126,6 +130,21 @@ export async function POST(request: Request) {
         service: true,
       },
     });
+
+    // The unique slot reservation — not the overlap check above — is what
+    // actually prevents two concurrent bookings landing on the same hour.
+    if (teamMemberId) {
+      try {
+        await claimSlot(teamMemberId, dateTime, created.id);
+      } catch (err) {
+        await prisma.appointment.delete({ where: { id: created.id } });
+        const status = err instanceof SlotTakenError ? 409 : 400;
+        return NextResponse.json(
+          { error: err instanceof Error ? err.message : "Slot indisponibil." },
+          { status },
+        );
+      }
+    }
 
     // Store confirm token (deterministic from id, kept for audit / future rotation)
     await prisma.appointment.update({

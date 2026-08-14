@@ -41,6 +41,49 @@ model TelegramSession {
   updatedAt DateTime @updatedAt
 }
 
+// Staff accounts for the admin panel. The ADMIN_EMAIL/ADMIN_PASSWORD env
+// pair still works as a permanent owner login, so a broken/empty table can
+// never lock everyone out.
+model AdminUser {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  email        String   @unique
+  name         String
+  passwordHash String // scrypt: "salt:derivedKey", both hex
+  permissions  String[] // page keys from lib/permissions.ts; empty = no access
+  isActive     Boolean  @default(true)
+  teamMemberId String?  @db.ObjectId // set when this account is a doctor
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  teamMember TeamMember? @relation(fields: [teamMemberId], references: [id], onDelete: SetNull)
+}
+
+// One row per doctor per calendar day, holding the hours that doctor is
+// available. Absent row = not working that day.
+model DoctorAvailability {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  teamMemberId String   @db.ObjectId
+  date         String // "YYYY-MM-DD" in Europe/Chisinau
+  hours        Int[] // 8..23
+  updatedAt    DateTime @updatedAt
+
+  teamMember TeamMember @relation(fields: [teamMemberId], references: [id], onDelete: Cascade)
+
+  @@unique([teamMemberId, date])
+  @@index([date])
+}
+
+// Booking lock. slotKey is unique and always written, so two people booking
+// the same doctor-hour race on an index violation rather than silently
+// overwriting each other. Deleted when the appointment is cancelled, which
+// releases the slot.
+model AppointmentSlot {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  slotKey       String   @unique // "{teamMemberId}|{YYYY-MM-DDTHH:mm}"
+  appointmentId String   @unique @db.ObjectId
+  createdAt     DateTime @default(now())
+}
+
 model Service {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   slug         String   @unique
@@ -77,6 +120,10 @@ model TeamMember {
   translations Json?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+
+  adminUsers   AdminUser[]
+  availability DoctorAvailability[]
+  appointments Appointment[]
 }
 
 model Testimonial {
@@ -227,14 +274,18 @@ model Appointment {
   createdAt   DateTime          @default(now())
   updatedAt   DateTime          @updatedAt
 
+  teamMemberId String? @db.ObjectId // assigned doctor
+
   patient       Patient        @relation(fields: [patientId], references: [id], onDelete: Cascade)
   service       Service        @relation(fields: [serviceId], references: [id])
+  teamMember    TeamMember?    @relation(fields: [teamMemberId], references: [id], onDelete: SetNull)
   notifications Notification[]
 
   @@index([dateTime])
   @@index([status])
   @@index([patientId])
   @@index([serviceId])
+  @@index([teamMemberId])
 }
 
 enum NotificationType {
