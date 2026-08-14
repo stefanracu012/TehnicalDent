@@ -10,7 +10,6 @@ import prisma from "@/lib/prisma";
 import type { SocialChannel } from "@prisma/client";
 
 const PAGE_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN || "";
-const PAGE_ID = process.env.FACEBOOK_PAGE_ID || "";
 const GRAPH = "https://graph.facebook.com/v21.0";
 
 /**
@@ -22,7 +21,7 @@ const GRAPH = "https://graph.facebook.com/v21.0";
 const HUMAN_AGENT_WINDOW = 24 * 60 * 60_000;
 
 export function isMessengerConfigured(): boolean {
-  return Boolean(PAGE_TOKEN && PAGE_ID);
+  return Boolean(PAGE_TOKEN);
 }
 
 /** Time of the last inbound message from this person, or null if none. */
@@ -47,9 +46,7 @@ export async function sendSocialReply(
   text: string,
 ): Promise<void> {
   if (!isMessengerConfigured()) {
-    throw new Error(
-      "Messenger not configured (FACEBOOK_PAGE_ACCESS_TOKEN / FACEBOOK_PAGE_ID)",
-    );
+    throw new Error("Messenger not configured (FACEBOOK_PAGE_ACCESS_TOKEN)");
   }
 
   const last = await lastInboundAt(channel, senderId);
@@ -62,7 +59,7 @@ export async function sendSocialReply(
     ...(outsideWindow ? { tag: "HUMAN_AGENT" } : {}),
   };
 
-  const res = await fetch(`${GRAPH}/${PAGE_ID}/messages`, {
+  const res = await fetch(`${GRAPH}/me/messages`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
