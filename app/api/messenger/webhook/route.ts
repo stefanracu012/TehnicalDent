@@ -20,11 +20,13 @@ import crypto from "crypto";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendTelegramToTopic, TELEGRAM_TOPICS } from "@/lib/telegram";
+import type { SocialChannel } from "@prisma/client";
 
 const VERIFY_TOKEN = process.env.MESSENGER_VERIFY_TOKEN || "";
 // Same Meta App as WhatsApp, so the App Secret used to verify
 // X-Hub-Signature-256 is the same value.
 const APP_SECRET = process.env.WHATSAPP_APP_SECRET || "";
+const PAGE_TOKEN = process.env.FACEBOOK_PAGE_ACCESS_TOKEN || "";
 
 interface MessagingEvent {
   sender: { id: string };
@@ -50,6 +52,32 @@ function eventText(m: MessagingEvent): string {
   if (m.message?.attachments?.length) return `[${m.message.attachments[0].type}]`;
   if (m.postback) return m.postback.title;
   return "[mesaj necunoscut]";
+}
+
+// Looks up the sender's display name once per conversation. Reuses whatever
+// was stored on an earlier message instead of calling the Graph API on every
+// inbound message.
+async function resolveSenderName(
+  channel: SocialChannel,
+  senderId: string,
+): Promise<string | null> {
+  const known = await prisma.socialMessage.findFirst({
+    where: { channel, senderId, senderName: { not: null } },
+    select: { senderName: true },
+  });
+  if (known?.senderName) return known.senderName;
+  if (!PAGE_TOKEN) return null;
+
+  try {
+    const res = await fetch(
+      `https://graph.facebook.com/v21.0/${senderId}?fields=name&access_token=${PAGE_TOKEN}`,
+    );
+    if (!res.ok) return null;
+    const data = (await res.json()) as { name?: string };
+    return data.name || null;
+  } catch {
+    return null;
+  }
 }
 
 // ---------- GET: Meta subscription verification handshake ----------
@@ -108,11 +136,13 @@ export async function POST(request: Request) {
       }
 
       const text = eventText(event);
+      const senderName = await resolveSenderName(channel, event.sender.id);
 
       await prisma.socialMessage.create({
         data: {
           channel,
           senderId: event.sender.id,
+          senderName,
           direction: "in",
           body: text,
           metaMessageId: event.message?.mid,
@@ -120,7 +150,7 @@ export async function POST(request: Request) {
       });
 
       await sendTelegramToTopic(
-        `💬 <b>Mesaj ${source}</b> de la <code>${event.sender.id}</code>\n${text}`,
+        `💬 <b>Mesaj ${source}</b> de la <code>${senderName || event.sender.id}</code>\n${text}`,
         TELEGRAM_TOPICS.mesaje,
       );
     }
