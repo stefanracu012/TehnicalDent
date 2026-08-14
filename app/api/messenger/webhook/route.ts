@@ -32,7 +32,12 @@ interface MessagingEvent {
   sender: { id: string };
   recipient: { id: string };
   timestamp: number;
-  message?: { mid: string; text?: string; attachments?: { type: string }[] };
+  message?: {
+    mid: string;
+    text?: string;
+    attachments?: { type: string }[];
+    is_echo?: boolean;
+  };
   postback?: { title: string; payload: string };
 }
 
@@ -126,6 +131,10 @@ export async function POST(request: Request) {
 
   for (const entry of body.entry || []) {
     for (const event of entry.messaging || []) {
+      // Echo of our own outbound message, sent back by Instagram with the
+      // Page as "sender" — not a real inbound message from a patient.
+      if (event.message?.is_echo) continue;
+
       // Meta retries webhook delivery on failure — skip anything already stored.
       if (event.message?.mid) {
         const seen = await prisma.socialMessage.findFirst({
