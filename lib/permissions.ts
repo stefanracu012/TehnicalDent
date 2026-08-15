@@ -28,6 +28,23 @@ export type PermissionKey = (typeof PERMISSIONS)[number]["key"];
 export const ALL_PERMISSION_KEYS: string[] = PERMISSIONS.map((p) => p.key);
 
 /**
+ * The owner account holds this instead of a copy of every key. Permissions
+ * are baked into the session at login, so a static list would silently stop
+ * covering pages added after that session was issued.
+ */
+export const SUPER_ADMIN = "*";
+
+/** Whether a permission list grants a key. Used by the proxy, APIs and nav. */
+export function grantsPermission(
+  perms: readonly string[] | undefined | null,
+  key: string | null,
+): boolean {
+  if (!key) return true;
+  if (!Array.isArray(perms)) return false;
+  return perms.includes(SUPER_ADMIN) || perms.includes(key);
+}
+
+/**
  * Which permission a path needs. Longest path wins so /admin/programari is
  * not matched by the "/admin" dashboard entry.
  */

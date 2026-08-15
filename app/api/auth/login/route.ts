@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyPassword } from "@/lib/password";
 import { signSession, SESSION_COOKIE, SESSION_MAX_AGE } from "@/lib/session";
-import { ALL_PERMISSION_KEYS } from "@/lib/permissions";
+import { SUPER_ADMIN } from "@/lib/permissions";
 
 export async function POST(request: Request) {
   try {
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
         sub: "owner",
         email: ownerEmail,
         name: "Administrator",
-        perms: ALL_PERMISSION_KEYS,
+        perms: [SUPER_ADMIN],
       });
     } else {
       const user = await prisma.adminUser.findUnique({

@@ -10,6 +10,8 @@
 // the reason SESSION_MAX_AGE is kept short-ish.
 // =============================================
 
+import { grantsPermission } from "./permissions";
+
 export const SESSION_COOKIE = "admin_session";
 export const SESSION_MAX_AGE = 7 * 24 * 60 * 60; // seconds
 
@@ -89,6 +91,14 @@ export async function verifySession(
     ) as SessionPayload;
 
     if (!payload.exp || payload.exp * 1000 < Date.now()) return null;
+
+    // Cookies issued before per-page permissions existed carry no perms array.
+    // They verify fine, so without this check the holder stays "logged in"
+    // with an empty permission set — every nav link filtered out and every
+    // permission test throwing. Rejecting them sends the user back to login,
+    // where a current session is issued.
+    if (!Array.isArray(payload.perms)) return null;
+
     return payload;
   } catch {
     return null;
@@ -100,6 +110,5 @@ export function hasPermission(
   permission: string | null,
 ): boolean {
   if (!session) return false;
-  if (!permission) return true;
-  return session.perms.includes(permission);
+  return grantsPermission(session.perms, permission);
 }

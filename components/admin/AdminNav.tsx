@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import LogoutButton from "@/components/admin/LogoutButton";
-import { permissionForPath } from "@/lib/permissions";
+import { grantsPermission, permissionForPath } from "@/lib/permissions";
 
 const allNavLinks = [
   {
@@ -331,18 +331,33 @@ export default function AdminNav() {
   useEffect(() => {
     fetch("/api/auth/check")
       .then((r) => (r.ok ? r.json() : null))
-      .then((data) => setPermissions(data?.permissions ?? []))
-      .catch(() => setPermissions([]));
+      .then((data) => {
+        // A session predating per-page permissions answers without the field;
+        // treat that as "unknown" rather than "none", so the nav explains
+        // itself instead of rendering an empty bar.
+        setPermissions(Array.isArray(data?.permissions) ? data.permissions : null);
+      })
+      .catch(() => setPermissions(null));
   }, []);
 
   // Until permissions load, show nothing rather than flashing links the
   // user may not be allowed to open.
   const navLinks = permissions
-    ? allNavLinks.filter((link) => {
-        const key = permissionForPath(link.href);
-        return !key || permissions.includes(key);
-      })
+    ? allNavLinks.filter((link) =>
+        grantsPermission(permissions, permissionForPath(link.href)),
+      )
     : [];
+
+  // Distinguishes "still loading" from "logged in but nothing to show" —
+  // an empty sidebar is indistinguishable from a broken deploy otherwise.
+  const emptyNavNotice =
+    navLinks.length === 0 ? (
+      <p className="px-3 py-2 text-xs leading-relaxed text-white/50">
+        {permissions === null
+          ? "Se încarcă meniul..."
+          : "Nicio pagină disponibilă pentru contul dumneavoastră. Deconectați-vă și autentificați-vă din nou, iar dacă problema persistă cereți permisiuni administratorului."}
+      </p>
+    ) : null;
 
   if (pathname === "/admin/login") return null;
 
@@ -382,6 +397,7 @@ export default function AdminNav() {
               </Link>
             );
           })}
+          {emptyNavNotice}
         </nav>
 
         {/* Bottom */}
@@ -465,6 +481,7 @@ export default function AdminNav() {
                 </Link>
               );
             })}
+            {emptyNavNotice}
             <Link
               href="/"
               className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-white/60 hover:text-white hover:bg-white/10"

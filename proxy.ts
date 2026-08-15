@@ -106,8 +106,15 @@ export default async function middleware(request: NextRequest) {
     }
   }
 
-  // Protect /admin routes (except /admin/login)
-  if (pathname.startsWith("/admin") && pathname !== "/admin/login") {
+  // Protect /admin routes. The login and access-denied pages are exempt:
+  // acces-interzis sits under /admin, so gating it on the dashboard
+  // permission would bounce anyone who lacks that permission into a
+  // redirect loop with the page meant to explain the problem.
+  if (
+    pathname.startsWith("/admin") &&
+    pathname !== "/admin/login" &&
+    pathname !== "/admin/acces-interzis"
+  ) {
     const session = await verifySession(request.cookies.get(SESSION_COOKIE)?.value);
     if (!session) {
       return NextResponse.redirect(new URL("/admin/login", request.url));
