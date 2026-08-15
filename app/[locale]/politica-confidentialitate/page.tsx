@@ -2,6 +2,12 @@ import { Link } from "@/i18n/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getAlternates } from "@/lib/seo";
 
+// Bumped by hand whenever the policy text changes — a privacy policy that
+// claims "last updated: today" on every page view is worthless as a record.
+const LAST_UPDATED = "2026-08-15";
+
+const CONTACT_EMAIL = "tehnicaldentmd@gmail.com";
+
 export async function generateMetadata({
   params,
 }: {
@@ -57,7 +63,13 @@ export default async function PoliticaConfidentialitate({
             </span>
           </h1>
           <p className="mt-4 text-white/50 text-sm">
-            {t("ultimaActualizare")} {new Date().toLocaleDateString(locale)}
+            {t("ultimaActualizare")}{" "}
+            {new Date(`${LAST_UPDATED}T00:00:00Z`).toLocaleDateString(locale, {
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+              timeZone: "UTC",
+            })}
           </p>
         </div>
       </section>
@@ -121,6 +133,15 @@ export default async function PoliticaConfidentialitate({
                     {t("s2L4Text")}
                   </span>
                 </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-accent mt-1.5">•</span>
+                  <span>
+                    <strong className="text-foreground">
+                      {t("s2L5Label")}
+                    </strong>{" "}
+                    {t("s2L5Text")}
+                  </span>
+                </li>
               </ul>
             </div>
 
@@ -153,6 +174,10 @@ export default async function PoliticaConfidentialitate({
                   <span className="text-accent mt-1.5">•</span>
                   <span>{t("s3L5")}</span>
                 </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-accent mt-1.5">•</span>
+                  <span>{t("s3L6")}</span>
+                </li>
               </ul>
             </div>
 
@@ -166,13 +191,73 @@ export default async function PoliticaConfidentialitate({
               </p>
             </div>
 
-            {/* 5 */}
-            <div>
+            {/* 5 — Meta messaging channels. Anchor is locale-independent so the
+                same URL can be given to Meta and linked from anywhere. */}
+            <div id="messaging" className="scroll-mt-32">
               <h2 className="font-serif text-2xl font-medium text-foreground mb-4">
                 {t("s5Title")}
               </h2>
-              <p className="text-muted-foreground leading-relaxed">
-                {t("s5Text")}
+              <p className="text-muted-foreground leading-relaxed mb-4">
+                {t("s5Intro")}
+              </p>
+              <ul className="space-y-2 text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <span className="text-accent mt-1.5">•</span>
+                  <span>
+                    <strong className="text-foreground">
+                      {t("s5L1Label")}
+                    </strong>{" "}
+                    {t("s5L1Text")}
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-accent mt-1.5">•</span>
+                  <span>
+                    <strong className="text-foreground">
+                      {t("s5L2Label")}
+                    </strong>{" "}
+                    {t("s5L2Text")}
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-accent mt-1.5">•</span>
+                  <span>
+                    <strong className="text-foreground">
+                      {t("s5L3Label")}
+                    </strong>{" "}
+                    {t("s5L3Text")}
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-accent mt-1.5">•</span>
+                  <span>
+                    <strong className="text-foreground">
+                      {t("s5L4Label")}
+                    </strong>{" "}
+                    {t("s5L4Text")}
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-accent mt-1.5">•</span>
+                  <span>
+                    <strong className="text-foreground">
+                      {t("s5L5Label")}
+                    </strong>{" "}
+                    {t("s5L5Text")}
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-accent mt-1.5">•</span>
+                  <span>
+                    <strong className="text-foreground">
+                      {t("s5L6Label")}
+                    </strong>{" "}
+                    {t("s5L6Text")}
+                  </span>
+                </li>
+              </ul>
+              <p className="mt-4 border-l-2 border-accent/40 pl-4 text-sm text-muted-foreground leading-relaxed">
+                {t("s5Note")}
               </p>
             </div>
 
@@ -191,74 +276,51 @@ export default async function PoliticaConfidentialitate({
               <h2 className="font-serif text-2xl font-medium text-foreground mb-4">
                 {t("s7Title")}
               </h2>
+              <p className="text-muted-foreground leading-relaxed">
+                {t("s7Text")}
+              </p>
+            </div>
+
+            {/* 8 — deletion procedure. Meta requires this to be reachable at a
+                stable, clearly marked URL: /politica-confidentialitate#data-deletion */}
+            <div id="data-deletion" className="scroll-mt-32">
+              <h2 className="font-serif text-2xl font-medium text-foreground mb-4">
+                {t("s8Title")}
+              </h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
-                {t("s7Intro")}
+                {t("s8Intro")}
               </p>
               <ul className="space-y-2 text-muted-foreground">
                 <li className="flex items-start gap-2">
                   <span className="text-accent mt-1.5">•</span>
-                  <span>
-                    <strong className="text-foreground">
-                      {t("s7L1Label")}
-                    </strong>{" "}
-                    {t("s7L1Text")}
-                  </span>
+                  <span>{t("s8L1")}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-accent mt-1.5">•</span>
-                  <span>
-                    <strong className="text-foreground">
-                      {t("s7L2Label")}
-                    </strong>{" "}
-                    {t("s7L2Text")}
-                  </span>
+                  <span>{t("s8L2")}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-accent mt-1.5">•</span>
-                  <span>
-                    <strong className="text-foreground">
-                      {t("s7L3Label")}
-                    </strong>{" "}
-                    {t("s7L3Text")}
-                  </span>
+                  <span>{t("s8L3")}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-accent mt-1.5">•</span>
-                  <span>
-                    <strong className="text-foreground">
-                      {t("s7L4Label")}
-                    </strong>{" "}
-                    {t("s7L4Text")}
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-accent mt-1.5">•</span>
-                  <span>
-                    <strong className="text-foreground">
-                      {t("s7L5Label")}
-                    </strong>{" "}
-                    {t("s7L5Text")}
-                  </span>
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-accent mt-1.5">•</span>
-                  <span>
-                    <strong className="text-foreground">
-                      {t("s7L6Label")}
-                    </strong>{" "}
-                    {t("s7L6Text")}
-                  </span>
+                  <span>{t("s8L4")}</span>
                 </li>
               </ul>
-            </div>
-
-            {/* 8 */}
-            <div>
-              <h2 className="font-serif text-2xl font-medium text-foreground mb-4">
-                {t("s8Title")}
-              </h2>
-              <p className="text-muted-foreground leading-relaxed">
-                {t("s8Text")}
+              <div className="mt-4 bg-muted p-6 rounded-lg">
+                <p className="text-foreground font-medium">{t("s8MailCta")}</p>
+                <a
+                  href={`mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent(
+                    t("s8MailSubject"),
+                  )}`}
+                  className="text-accent hover:underline break-all"
+                >
+                  {CONTACT_EMAIL}
+                </a>
+              </div>
+              <p className="mt-4 border-l-2 border-accent/40 pl-4 text-sm text-muted-foreground leading-relaxed">
+                {t("s8Note")}
               </p>
             </div>
 
@@ -267,8 +329,84 @@ export default async function PoliticaConfidentialitate({
               <h2 className="font-serif text-2xl font-medium text-foreground mb-4">
                 {t("s9Title")}
               </h2>
+              <p className="text-muted-foreground leading-relaxed mb-4">
+                {t("s9Intro")}
+              </p>
+              <ul className="space-y-2 text-muted-foreground">
+                <li className="flex items-start gap-2">
+                  <span className="text-accent mt-1.5">•</span>
+                  <span>
+                    <strong className="text-foreground">
+                      {t("s9L1Label")}
+                    </strong>{" "}
+                    {t("s9L1Text")}
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-accent mt-1.5">•</span>
+                  <span>
+                    <strong className="text-foreground">
+                      {t("s9L2Label")}
+                    </strong>{" "}
+                    {t("s9L2Text")}
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-accent mt-1.5">•</span>
+                  <span>
+                    <strong className="text-foreground">
+                      {t("s9L3Label")}
+                    </strong>{" "}
+                    {t("s9L3Text")}
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-accent mt-1.5">•</span>
+                  <span>
+                    <strong className="text-foreground">
+                      {t("s9L4Label")}
+                    </strong>{" "}
+                    {t("s9L4Text")}
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-accent mt-1.5">•</span>
+                  <span>
+                    <strong className="text-foreground">
+                      {t("s9L5Label")}
+                    </strong>{" "}
+                    {t("s9L5Text")}
+                  </span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-accent mt-1.5">•</span>
+                  <span>
+                    <strong className="text-foreground">
+                      {t("s9L6Label")}
+                    </strong>{" "}
+                    {t("s9L6Text")}
+                  </span>
+                </li>
+              </ul>
+            </div>
+
+            {/* 10 */}
+            <div>
+              <h2 className="font-serif text-2xl font-medium text-foreground mb-4">
+                {t("s10Title")}
+              </h2>
               <p className="text-muted-foreground leading-relaxed">
-                {t("s9Text")}
+                {t("s10Text")}
+              </p>
+            </div>
+
+            {/* 11 */}
+            <div>
+              <h2 className="font-serif text-2xl font-medium text-foreground mb-4">
+                {t("s11Title")}
+              </h2>
+              <p className="text-muted-foreground leading-relaxed">
+                {t("s11Text")}
               </p>
               <div className="mt-4 bg-muted p-6 rounded-lg space-y-2">
                 <p className="text-foreground font-medium">TehnicalDent</p>
@@ -278,10 +416,10 @@ export default async function PoliticaConfidentialitate({
                 <p className="text-muted-foreground text-sm">
                   {t("contactEmail")}{" "}
                   <a
-                    href="mailto:tehnicaldentmd@gmail.com"
+                    href={`mailto:${CONTACT_EMAIL}`}
                     className="text-accent hover:underline"
                   >
-                    tehnicaldentmd@gmail.com
+                    {CONTACT_EMAIL}
                   </a>
                 </p>
                 <p className="text-muted-foreground text-sm">
