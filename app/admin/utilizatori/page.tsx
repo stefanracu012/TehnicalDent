@@ -2,7 +2,40 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { secureFetch } from "@/lib/csrf-client";
-import { PERMISSIONS } from "@/lib/permissions";
+import {
+  ACTION_LABELS,
+  ALL_PERMISSION_KEYS,
+  PERMISSIONS,
+  actionLabel,
+  grantsPermission,
+  permissionKey,
+} from "@/lib/permissions";
+
+/**
+ * Stored permissions may be pre-split bare page keys, which grant every
+ * action on that page. Expanding them means the checkboxes show what the
+ * account can really do, and saving rewrites it in the current format.
+ */
+function expandPermissions(perms: string[]): string[] {
+  return ALL_PERMISSION_KEYS.filter((key) => grantsPermission(perms, key));
+}
+
+/** One-line summary of an account's access, for the user list. */
+function describePermissions(perms: string[]): string {
+  const parts = PERMISSIONS.filter((p) =>
+    grantsPermission(perms, permissionKey(p.key, "view")),
+  ).map((p) => {
+    const beyondView = p.actions.filter(
+      (a) => a !== "view" && grantsPermission(perms, permissionKey(p.key, a)),
+    );
+    if (beyondView.length === 0) return `${p.label} (doar vizualizare)`;
+    if (beyondView.length === p.actions.length - 1) return `${p.label} (tot)`;
+    return `${p.label} (${beyondView
+      .map((a) => actionLabel(p, a).toLowerCase())
+      .join(", ")})`;
+  });
+  return parts.length > 0 ? parts.join(" · ") : "Fără permisiuni";
+}
 
 interface AdminUser {
   id: string;
@@ -11,6 +44,7 @@ interface AdminUser {
   permissions: string[];
   isActive: boolean;
   teamMemberId: string | null;
+  isOwner?: boolean;
 }
 
 interface TeamMember {
@@ -72,7 +106,7 @@ export default function AdminUtilizatoriPage() {
       name: user.name,
       password: "",
       teamMemberId: user.teamMemberId || "",
-      permissions: user.permissions,
+      permissions: expandPermissions(user.permissions),
     });
     setError(null);
     setShowForm(true);
@@ -180,19 +214,20 @@ export default function AdminUtilizatoriPage() {
                 <div className="min-w-0">
                   <p className="font-medium text-foreground">
                     {user.name}
+                    {user.isOwner && (
+                      <span className="ml-2 text-xs text-accent">
+                        (cont principal)
+                      </span>
+                    )}
                     {!user.isActive && (
                       <span className="ml-2 text-xs text-red-600">(dezactivat)</span>
                     )}
                   </p>
                   <p className="text-sm text-muted-foreground">{user.email}</p>
                   <p className="text-xs text-muted-foreground mt-2">
-                    {user.permissions.length === 0
-                      ? "Fără permisiuni"
-                      : user.permissions
-                          .map(
-                            (k) => PERMISSIONS.find((p) => p.key === k)?.label || k,
-                          )
-                          .join(", ")}
+                    {user.isOwner
+                      ? "Acces complet la toate paginile, inclusiv la cele adăugate ulterior."
+                      : describePermissions(user.permissions)}
                   </p>
                 </div>
                 <div className="flex gap-2 shrink-0">
@@ -202,18 +237,24 @@ export default function AdminUtilizatoriPage() {
                   >
                     Editează
                   </button>
-                  <button
-                    onClick={() => toggleActive(user)}
-                    className="px-3 py-1.5 border border-border text-sm"
-                  >
-                    {user.isActive ? "Dezactivează" : "Activează"}
-                  </button>
-                  <button
-                    onClick={() => remove(user)}
-                    className="px-3 py-1.5 border border-red-300 text-red-600 text-sm"
-                  >
-                    Șterge
-                  </button>
+                  {/* The owner cannot be disabled or removed — doing so would
+                      lock the clinic out of its own admin. */}
+                  {!user.isOwner && (
+                    <>
+                      <button
+                        onClick={() => toggleActive(user)}
+                        className="px-3 py-1.5 border border-border text-sm"
+                      >
+                        {user.isActive ? "Dezactivează" : "Activează"}
+                      </button>
+                      <button
+                        onClick={() => remove(user)}
+                        className="px-3 py-1.5 border border-red-300 text-red-600 text-sm"
+                      >
+                        Șterge
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             ))}
@@ -286,26 +327,71 @@ export default function AdminUtilizatoriPage() {
                   </p>
                 </div>
 
+                {editing?.isOwner ? (
+                  <p className="text-sm text-muted-foreground border border-border p-3">
+                    Contul principal are automat acces la tot, inclusiv la
+                    paginile adăugate în viitor, deci nu are permisiuni de
+                    configurat. Puteți schimba numele și parola.
+                  </p>
+                ) : (
                 <div>
-                  <label className="block text-sm text-foreground mb-2">
-                    Permisiuni — la ce pagini are acces
-                  </label>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {PERMISSIONS.map((p) => (
-                      <label
-                        key={p.key}
-                        className="flex items-center gap-2 text-sm text-foreground"
+                  <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                    <label className="block text-sm text-foreground">
+                      Permisiuni — ce poate face pe fiecare pagină
+                    </label>
+                    <div className="flex gap-2 text-xs">
+                      <button
+                        type="button"
+                        onClick={() => setForm((f) => ({ ...f, permissions: [...ALL_PERMISSION_KEYS] }))}
+                        className="px-2 py-1 border border-border"
                       >
-                        <input
-                          type="checkbox"
-                          checked={form.permissions.includes(p.key)}
-                          onChange={() => togglePermission(p.key)}
-                        />
-                        {p.label}
-                      </label>
+                        Bifează tot
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setForm((f) => ({ ...f, permissions: [] }))}
+                        className="px-2 py-1 border border-border"
+                      >
+                        Golește
+                      </button>
+                    </div>
+                  </div>
+                  <div className="border border-border divide-y divide-border">
+                    {PERMISSIONS.map((p) => (
+                      <div
+                        key={p.key}
+                        className="p-3 flex flex-wrap items-center gap-x-4 gap-y-2"
+                      >
+                        <span className="text-sm text-foreground w-full sm:w-48 shrink-0">
+                          {p.label}
+                        </span>
+                        <div className="flex flex-wrap gap-x-4 gap-y-2">
+                          {p.actions.map((action) => {
+                            const key = permissionKey(p.key, action);
+                            return (
+                              <label
+                                key={key}
+                                className="flex items-center gap-1.5 text-sm text-muted-foreground"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={form.permissions.includes(key)}
+                                  onChange={() => togglePermission(key)}
+                                />
+                                {actionLabel(p, action)}
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
                     ))}
                   </div>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Fără &laquo;{ACTION_LABELS.view}&raquo; pagina nu apare deloc în
+                    meniu. Acțiunile care nu există pentru o pagină nu sunt afișate.
+                  </p>
                 </div>
+                )}
               </div>
 
               <div className="flex gap-2 mt-8">

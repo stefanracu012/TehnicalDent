@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { verifyPassword } from "@/lib/password";
+import { hashPassword, verifyPassword } from "@/lib/password";
 import { signSession, SESSION_COOKIE, SESSION_MAX_AGE } from "@/lib/session";
 import { SUPER_ADMIN } from "@/lib/permissions";
+import { isOwnerEmail, ownerCredentialsMatch } from "@/lib/owner";
 
 export async function POST(request: Request) {
   try {
@@ -20,31 +21,44 @@ export async function POST(request: Request) {
     }
 
     let token: string | null = null;
+    const normalizedEmail = email.toLowerCase().trim();
 
-    // Owner account from env vars — always full access, so an empty or
-    // misconfigured AdminUser table can never lock everyone out.
-    const ownerEmail = process.env.ADMIN_EMAIL;
-    const ownerPassword = process.env.ADMIN_PASSWORD;
-    if (ownerEmail && ownerPassword && email === ownerEmail && password === ownerPassword) {
+    // Stored accounts are checked first, so a password changed from the admin
+    // UI takes effect for the owner too.
+    const user = await prisma.adminUser.findUnique({
+      where: { email: normalizedEmail },
+    });
+    if (user?.isActive && (await verifyPassword(password, user.passwordHash))) {
       token = await signSession({
-        sub: "owner",
-        email: ownerEmail,
-        name: "Administrator",
+        sub: user.id,
+        email: user.email,
+        name: user.name,
+        perms: isOwnerEmail(user.email) ? [SUPER_ADMIN] : user.permissions,
+        ...(user.teamMemberId ? { doctorId: user.teamMemberId } : {}),
+      });
+    } else if (
+      ownerCredentialsMatch(normalizedEmail, password) &&
+      // A stored owner row with a different password means the password was
+      // deliberately changed; the env pair stays valid as the documented
+      // recovery path only while no such row exists.
+      !user
+    ) {
+      // Give the owner a real row on first login, so the account shows up in
+      // the users screen and its password can be changed like any other.
+      const owner = await prisma.adminUser.create({
+        data: {
+          email: normalizedEmail,
+          name: "Administrator",
+          passwordHash: await hashPassword(password),
+          permissions: [SUPER_ADMIN],
+        },
+      });
+      token = await signSession({
+        sub: owner.id,
+        email: owner.email,
+        name: owner.name,
         perms: [SUPER_ADMIN],
       });
-    } else {
-      const user = await prisma.adminUser.findUnique({
-        where: { email: email.toLowerCase().trim() },
-      });
-      if (user?.isActive && (await verifyPassword(password, user.passwordHash))) {
-        token = await signSession({
-          sub: user.id,
-          email: user.email,
-          name: user.name,
-          perms: user.permissions,
-          ...(user.teamMemberId ? { doctorId: user.teamMemberId } : {}),
-        });
-      }
     }
 
     if (!token) {

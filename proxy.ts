@@ -94,32 +94,42 @@ function validateCsrf(request: NextRequest): boolean {
   return cookieToken === headerToken;
 }
 
+/** Under /admin, but reachable with no session at all. */
+const PUBLIC_ADMIN_PAGES = new Set(["/admin/login", "/admin/recuperare-parola"]);
+
+/**
+ * Signed in is enough — no page permission required. acces-interzis explains
+ * a missing permission, so gating it on one would loop; and every account
+ * must be able to reach its own settings whatever else it can open.
+ */
+const SESSION_ONLY_ADMIN_PAGES = new Set(["/admin/acces-interzis", "/admin/cont"]);
+
 export default async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const method = request.method;
 
-  // Rate limit login attempts
-  if (pathname === "/api/auth/login" && method === "POST") {
+  // Rate limit login and password-reset attempts alike — both take an email
+  // and a secret, and both are worth guessing at.
+  if (
+    ["/api/auth/login", "/api/auth/forgot", "/api/auth/reset"].includes(pathname) &&
+    method === "POST"
+  ) {
     const rateLimitResponse = checkLoginRateLimit(request);
     if (rateLimitResponse) {
       return addSecurityHeaders(rateLimitResponse);
     }
   }
 
-  // Protect /admin routes. The login and access-denied pages are exempt:
-  // acces-interzis sits under /admin, so gating it on the dashboard
-  // permission would bounce anyone who lacks that permission into a
-  // redirect loop with the page meant to explain the problem.
-  if (
-    pathname.startsWith("/admin") &&
-    pathname !== "/admin/login" &&
-    pathname !== "/admin/acces-interzis"
-  ) {
+  // Protect /admin routes.
+  if (pathname.startsWith("/admin") && !PUBLIC_ADMIN_PAGES.has(pathname)) {
     const session = await verifySession(request.cookies.get(SESSION_COOKIE)?.value);
     if (!session) {
       return NextResponse.redirect(new URL("/admin/login", request.url));
     }
-    if (!hasPermission(session, permissionForPath(pathname))) {
+    if (
+      !SESSION_ONLY_ADMIN_PAGES.has(pathname) &&
+      !hasPermission(session, permissionForPath(pathname))
+    ) {
       return NextResponse.redirect(new URL("/admin/acces-interzis", request.url));
     }
   }
@@ -136,7 +146,7 @@ export default async function middleware(request: NextRequest) {
       );
     }
 
-    if (!hasPermission(session, permissionForApiPath(pathname))) {
+    if (!hasPermission(session, permissionForApiPath(pathname, method))) {
       return addSecurityHeaders(
         NextResponse.json(
           { error: "Nu aveți permisiunea necesară." },

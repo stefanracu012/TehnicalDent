@@ -58,6 +58,21 @@ model AdminUser {
   teamMember TeamMember? @relation(fields: [teamMemberId], references: [id], onDelete: SetNull)
 }
 
+// Short-lived codes emailed for "forgot password". The code itself is only
+// ever stored hashed, so a leaked database row can't be used to take over an
+// account.
+model PasswordReset {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  email     String
+  codeHash  String // scrypt, same format as AdminUser.passwordHash
+  expiresAt DateTime
+  attempts  Int       @default(0)
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([email])
+}
+
 // One row per doctor per calendar day, holding the hours that doctor is
 // available. Absent row = not working that day.
 model DoctorAvailability {

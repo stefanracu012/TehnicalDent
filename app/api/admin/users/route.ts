@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
 import { ALL_PERMISSION_KEYS } from "@/lib/permissions";
+import { isOwnerEmail } from "@/lib/owner";
 
 export async function GET() {
   try {
@@ -17,7 +18,9 @@ export async function GET() {
         createdAt: true,
       },
     });
-    return NextResponse.json(users);
+    return NextResponse.json(
+      users.map((u) => ({ ...u, isOwner: isOwnerEmail(u.email) })),
+    );
   } catch (error) {
     console.error("Error fetching admin users:", error);
     return NextResponse.json({ error: "Failed to fetch users" }, { status: 500 });

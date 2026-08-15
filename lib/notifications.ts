@@ -149,6 +149,18 @@ interface EmailPayload {
   text: string;
 }
 
+/**
+ * Sends an email immediately, outside the notification queue. Used for
+ * account mail (password resets) where there is nothing to retry later and
+ * the caller needs to know whether it went out.
+ */
+export async function sendDirectEmail(
+  to: string,
+  payload: EmailPayload,
+): Promise<void> {
+  await sendEmailRaw(to, payload);
+}
+
 async function sendEmailRaw(to: string, payload: EmailPayload): Promise<void> {
   const transporter = getTransporter();
   await transporter.sendMail({

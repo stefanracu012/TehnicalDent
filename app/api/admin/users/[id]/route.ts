@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { hashPassword } from "@/lib/password";
 import { ALL_PERMISSION_KEYS } from "@/lib/permissions";
 import { getSession } from "@/lib/auth-server";
+import { isOwnerEmail } from "@/lib/owner";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -12,19 +13,31 @@ export async function PATCH(request: Request, { params }: RouteParams) {
   const { id } = await params;
 
   try {
+    const target = await prisma.adminUser.findUnique({
+      where: { id },
+      select: { email: true },
+    });
+    if (!target) {
+      return NextResponse.json({ error: "Utilizatorul nu există." }, { status: 404 });
+    }
+    // The owner is defined by the ADMIN_EMAIL env var. Letting its row be
+    // deactivated or stripped of permissions here would lock the clinic out
+    // of its own admin, so those two fields are simply not editable.
+    const isOwner = isOwnerEmail(target.email);
+
     const body = await request.json();
     const data: Record<string, unknown> = {};
 
     if (typeof body.name === "string" && body.name.trim()) {
       data.name = body.name.trim();
     }
-    if (typeof body.isActive === "boolean") {
+    if (typeof body.isActive === "boolean" && !isOwner) {
       data.isActive = body.isActive;
     }
     if ("teamMemberId" in body) {
       data.teamMemberId = body.teamMemberId ? String(body.teamMemberId) : null;
     }
-    if (Array.isArray(body.permissions)) {
+    if (Array.isArray(body.permissions) && !isOwner) {
       data.permissions = body.permissions.filter(
         (p: unknown): p is string =>
           typeof p === "string" && ALL_PERMISSION_KEYS.includes(p),
@@ -63,6 +76,17 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
     if (session?.sub === id) {
       return NextResponse.json(
         { error: "Nu vă puteți șterge propriul cont." },
+        { status: 400 },
+      );
+    }
+
+    const target = await prisma.adminUser.findUnique({
+      where: { id },
+      select: { email: true },
+    });
+    if (target && isOwnerEmail(target.email)) {
+      return NextResponse.json(
+        { error: "Contul principal de administrator nu poate fi șters." },
         { status: 400 },
       );
     }

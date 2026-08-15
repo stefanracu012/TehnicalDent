@@ -1,11 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { secureFetch } from "@/lib/csrf-client";
 
 export default function AdminLoginPage() {
   const router = useRouter();
+  // Read from the URL after mount rather than with useSearchParams, which
+  // would opt this page out of static prerendering for a cosmetic banner.
+  const [justReset, setJustReset] = useState(false);
+  useEffect(() => {
+    setJustReset(new URLSearchParams(window.location.search).get("resetat") === "1");
+  }, []);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -71,6 +78,12 @@ export default function AdminLoginPage() {
           onSubmit={handleSubmit}
           className="bg-background border border-border p-8 space-y-6"
         >
+          {justReset && !error && (
+            <div className="bg-green-50 border border-green-200 text-green-800 text-sm px-4 py-3 rounded">
+              Parola a fost schimbată. Autentificați-vă cu parola nouă.
+            </div>
+          )}
+
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded">
               {error}
@@ -98,12 +111,20 @@ export default function AdminLoginPage() {
           </div>
 
           <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-foreground mb-2"
-            >
-              Parolă
-            </label>
+            <div className="flex items-baseline justify-between mb-2">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-foreground"
+              >
+                Parolă
+              </label>
+              <Link
+                href="/admin/recuperare-parola"
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                Am uitat parola
+              </Link>
+            </div>
             <input
               id="password"
               type="password"
