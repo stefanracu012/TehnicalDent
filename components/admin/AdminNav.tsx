@@ -437,9 +437,11 @@ export default function AdminNav() {
           <LogoutButton />
         </div>
 
-        {/* Mobile dropdown */}
+        {/* Mobile dropdown — max-h is the remaining viewport height below the
+            top bar (h-13 = 3.25rem), with its own scroll so every page stays
+            reachable no matter how many nav links get added. */}
         <div
-          className={`overflow-hidden transition-all duration-300 ${mobileOpen ? "max-h-[500px] border-t border-white/10" : "max-h-0"}`}
+          className={`transition-all duration-300 ${mobileOpen ? "max-h-[calc(100dvh-3.25rem)] overflow-y-auto border-t border-white/10" : "max-h-0 overflow-hidden"}`}
         >
           <nav className="px-3 py-3 space-y-0.5">
             {navLinks.map((link) => {

@@ -53,21 +53,19 @@ export async function GET(request: Request) {
 export async function PUT(request: Request) {
   try {
     const session = await getSession();
-    const body = await request.json();
+    const body = (await request.json()) as Record<string, unknown>;
     const teamMemberId = String(body.teamMemberId || "");
     const date = String(body.date || "");
-    const hours: number[] = Array.isArray(body.hours)
-      ? [
-          ...new Set(
-            body.hours
-              .map((h: unknown) => Number(h))
-              .filter(
-                (h: number) =>
-                  Number.isInteger(h) && h >= WORK_HOUR_START && h <= WORK_HOUR_END,
-              ),
+    const rawHours = Array.isArray(body.hours) ? body.hours : [];
+    const hours: number[] = [
+      ...new Set(
+        rawHours
+          .map((h) => Number(h))
+          .filter(
+            (h) => Number.isInteger(h) && h >= WORK_HOUR_START && h <= WORK_HOUR_END,
           ),
-        ].sort((a, b) => a - b)
-      : [];
+      ),
+    ].sort((a, b) => a - b);
 
     if (!teamMemberId || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       return NextResponse.json(

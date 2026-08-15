@@ -73,7 +73,21 @@ export async function sendSocialReply(
     throw new Error(`Send API ${res.status}: ${err.slice(0, 300)}`);
   }
 
+  // Carry the name we already know onto the outbound row. Without this the
+  // reply becomes the newest message for this sender with a null name, and
+  // the conversation list falls back to showing the raw PSID/IGSID.
+  const known = await prisma.socialMessage.findFirst({
+    where: { channel, senderId, senderName: { not: null } },
+    select: { senderName: true },
+  });
+
   await prisma.socialMessage.create({
-    data: { channel, senderId, direction: "out", body: text },
+    data: {
+      channel,
+      senderId,
+      senderName: known?.senderName ?? null,
+      direction: "out",
+      body: text,
+    },
   });
 }

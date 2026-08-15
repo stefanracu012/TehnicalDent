@@ -71,16 +71,44 @@ async function resolveSenderName(
     select: { senderName: true },
   });
   if (known?.senderName) return known.senderName;
-  if (!PAGE_TOKEN) return null;
+  if (!PAGE_TOKEN) {
+    console.warn("resolveSenderName: FACEBOOK_PAGE_ACCESS_TOKEN is not set");
+    return null;
+  }
+
+  // Instagram profiles expose a handle too, and it's often the only thing
+  // set; asking for "username" on a Messenger PSID would fail the request,
+  // so the field list is per channel.
+  const fields = channel === "instagram" ? "name,username" : "name";
 
   try {
     const res = await fetch(
-      `https://graph.facebook.com/v21.0/${senderId}?fields=name&access_token=${PAGE_TOKEN}`,
+      `https://graph.facebook.com/v21.0/${senderId}?fields=${fields}&access_token=${PAGE_TOKEN}`,
     );
-    if (!res.ok) return null;
-    const data = (await res.json()) as { name?: string };
-    return data.name || null;
-  } catch {
+    if (!res.ok) {
+      // Until Business Asset User Profile Access is granted, this returns a
+      // permission error for anyone without a role on the app — logged so
+      // the cause is visible instead of silently showing raw ids.
+      const detail = await res.text().catch(() => "");
+      console.warn(
+        `resolveSenderName ${channel} ${res.status}: ${detail.slice(0, 300)}`,
+      );
+      return null;
+    }
+    const data = (await res.json()) as { name?: string; username?: string };
+    const name = data.name || data.username || null;
+
+    // Name arriving late (permission just granted, or first successful call)
+    // retro-labels the whole conversation, not just messages from here on.
+    if (name) {
+      await prisma.socialMessage.updateMany({
+        where: { channel, senderId, senderName: null },
+        data: { senderName: name },
+      });
+    }
+    return name;
+  } catch (error) {
+    console.warn(`resolveSenderName ${channel} failed:`, error);
     return null;
   }
 }

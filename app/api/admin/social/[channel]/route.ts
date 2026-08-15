@@ -50,8 +50,14 @@ export async function GET(_request: Request, { params }: RouteParams) {
           lastAt: m.createdAt.toISOString(),
           inboundCount: m.direction === "in" ? 1 : 0,
         });
-      } else if (m.direction === "in") {
-        existing.inboundCount += 1;
+      } else {
+        // The newest message is not necessarily the one carrying the name —
+        // older rows predating a successful profile lookup, or rows written
+        // before the name was stored, still identify the conversation.
+        if (!existing.senderName && m.senderName) {
+          existing.senderName = m.senderName;
+        }
+        if (m.direction === "in") existing.inboundCount += 1;
       }
     }
 
