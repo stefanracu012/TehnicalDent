@@ -360,6 +360,7 @@ export default function AdminAdsPage() {
                       <th className="text-right font-medium px-5 py-3.5">Cheltuit</th>
                       <th className="text-right font-medium px-5 py-3.5">CTR</th>
                       <th className="text-right font-medium px-5 py-3.5">Conv.</th>
+                      <th className="text-right font-medium px-5 py-3.5">Cost/conv.</th>
                       <th className="text-right font-medium px-5 py-3.5">Adânc.</th>
                       <th className="text-right font-medium px-5 py-3.5">Contacte</th>
                       <th className="text-right font-medium px-5 py-3.5">
@@ -384,6 +385,11 @@ export default function AdminAdsPage() {
                         </td>
                         <td className="px-5 py-4 text-right tabular-nums text-muted-foreground">
                           {ad.connections}
+                        </td>
+                        <td className="px-5 py-4 text-right tabular-nums text-muted-foreground">
+                          {ad.costPerConnection
+                            ? money(ad.costPerConnection, currency)
+                            : "—"}
                         </td>
                         <td className="px-5 py-4 text-right tabular-nums text-muted-foreground">
                           {ad.deep}

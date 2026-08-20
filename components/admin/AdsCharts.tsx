@@ -267,8 +267,15 @@ export default function AdsCharts({ report }: { report: AdsReport }) {
   const daily = report.daily ?? [];
   const currency = report.currency;
 
+  // Efficiency over time, computed here rather than charted raw: a day with
+  // spend but no conversation has no cost per conversation, and drawing it as
+  // zero would say the opposite of what happened.
+  const spent = daily.reduce((s, d) => s + d.spend, 0);
+  const conversations = daily.reduce((s, d) => s + d.connections, 0);
+  const per90 = conversations > 0 ? spent / conversations : null;
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-px bg-border border border-border">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-px bg-border border border-border">
       <div className="bg-background">
         <DailyChart
           points={daily.map((d) => ({ date: d.date, value: d.spend }))}
@@ -283,6 +290,20 @@ export default function AdsCharts({ report }: { report: AdsReport }) {
       </div>
       <div className="bg-background">
         <DailyChart
+          points={daily.map((d) => ({ date: d.date, value: d.connections }))}
+          color={AMBER}
+          kind="bars"
+          format={(n) => `${n} conversații`}
+          title="Conversații pe zi"
+          subtitle={
+            per90
+              ? `Câte o conversație la ${per90.toLocaleString("ro-RO", { maximumFractionDigits: 2 })} ${currency}`
+              : "Ultimele 90 de zile"
+          }
+        />
+      </div>
+      <div className="bg-background">
+        <DailyChart
           points={daily.map((d) => ({ date: d.date, value: d.leads }))}
           color={EMERALD}
           kind="bars"
@@ -291,7 +312,7 @@ export default function AdsCharts({ report }: { report: AdsReport }) {
           subtitle="Ultimele 90 de zile"
         />
       </div>
-      <div className="bg-background lg:col-span-2">
+      <div className="bg-background lg:col-span-3">
         <CostPerLead report={report} />
       </div>
     </div>
