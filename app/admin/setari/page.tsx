@@ -65,7 +65,7 @@ const HERO_TEXT_FIELDS = [
     key: "heroDescription",
     label: "Descriere Hero (paragraf sub titlu)",
     defaultValue:
-      "La TechnicalDent, combinam experien?a medicala de inalta clasa cu tehnologia de ultima genera?ie pentru a va oferi tratamente stomatologice personalizate. Fiecare pacient beneficiaza de aten?ie individualizata ?i un plan de tratament adaptat nevoilor sale specifice, intr-un mediu confortabil ?i primitor.",
+      "La TehnicalDent, combinam experien?a medicala de inalta clasa cu tehnologia de ultima genera?ie pentru a va oferi tratamente stomatologice personalizate. Fiecare pacient beneficiaza de aten?ie individualizata ?i un plan de tratament adaptat nevoilor sale specifice, intr-un mediu confortabil ?i primitor.",
     multiline: true,
   },
 ];
@@ -87,7 +87,7 @@ const STORY_TEXT_FIELDS = [
     key: "aboutStoryP1",
     label: "Paragraf 1",
     defaultValue:
-      "TechnicalDent a luat na?tere in 2024 din dorin?a de a crea un spa?iu in care medicina dentara de inalta calitate sa intalneasca grija autentica pentru pacient. Fondatorul nostru a pus bazele unei clinici unde fiecare tratament este realizat cu precizie, fiecare pacient este ascultat ?i fiecare zambet conteaza.",
+      "TehnicalDent a luat na?tere in 2024 din dorin?a de a crea un spa?iu in care medicina dentara de inalta calitate sa intalneasca grija autentica pentru pacient. Fondatorul nostru a pus bazele unei clinici unde fiecare tratament este realizat cu precizie, fiecare pacient este ascultat ?i fiecare zambet conteaza.",
     multiline: true,
   },
   {
@@ -101,7 +101,7 @@ const STORY_TEXT_FIELDS = [
     key: "aboutStoryP3",
     label: "Paragraf 3",
     defaultValue:
-      "Astazi, TechnicalDent este recunoscuta ca una dintre clinicile de referin?a din Moldova, cu mii de pacien?i mul?umi?i ?i o reputa?ie construita pe rezultate concrete ?i rela?ii de incredere.",
+      "Astazi, TehnicalDent este recunoscuta ca una dintre clinicile de referin?a din Moldova, cu mii de pacien?i mul?umi?i ?i o reputa?ie construita pe rezultate concrete ?i rela?ii de incredere.",
     multiline: true,
   },
   {
@@ -172,7 +172,7 @@ const ABOUT_TEXT_FIELDS = [
     key: "aboutPreviewP1",
     label: "Paragraf 1",
     defaultValue:
-      "TechnicalDent este mai mult decat o clinica stomatologica ? este un loc unde tehnologia avansata intalne?te grija autentica pentru pacient. Cu o echipa de speciali?ti dedica?i ?i echipamente de ultima genera?ie, oferim tratamente personalizate pentru fiecare nevoie.",
+      "TehnicalDent este mai mult decat o clinica stomatologica ? este un loc unde tehnologia avansata intalne?te grija autentica pentru pacient. Cu o echipa de speciali?ti dedica?i ?i echipamente de ultima genera?ie, oferim tratamente personalizate pentru fiecare nevoie.",
     multiline: true,
   },
   {

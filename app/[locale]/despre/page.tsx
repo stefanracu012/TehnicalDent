@@ -6,6 +6,11 @@ import { getTeamMembers, getSetting, getAllSettings } from "@/lib/data";
 import { localizeTeamMember } from "@/lib/localize";
 import { getAlternates } from "@/lib/seo";
 
+// Prerendered at build time. Next does not infer this on its own here because
+// next-intl reads the locale from request context; every admin mutation calls
+// revalidatePath("/", "layout"), so edits still go live immediately.
+export const dynamic = "force-static";
+
 export async function generateMetadata({
   params,
 }: {
@@ -129,7 +134,7 @@ export default async function AboutPage({
         <div className="absolute inset-0 overflow-hidden">
           <Image
             src={aboutStoryImage}
-            alt="Clinica TechnicalDent"
+            alt="Clinica TehnicalDent"
             fill
             priority
             sizes="100vw"

@@ -12,7 +12,7 @@ import {
   notifyNoshow,
   notifyPending,
 } from "@/lib/notifications";
-import { releaseSlotByAppointment } from "@/lib/slots";
+import { claimSlot, releaseSlotByAppointment, SlotTakenError } from "@/lib/slots";
 import { refreshDigestIfRelevant } from "@/lib/telegram-digest";
 import type { AppointmentStatus } from "@prisma/client";
 
@@ -100,6 +100,41 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
     if (body.notes !== undefined) {
       data.notes = body.notes ? String(body.notes) : null;
+    }
+
+    if (body.teamMemberId !== undefined) {
+      data.teamMemberId = body.teamMemberId ? String(body.teamMemberId) : null;
+    }
+
+    // Moving the appointment to a different doctor or hour means the old
+    // reservation must be released and the new one claimed — otherwise the
+    // vacated hour stays blocked and the new one stays bookable by others.
+    const nextDoctor =
+      body.teamMemberId !== undefined
+        ? (data.teamMemberId as string | null)
+        : current.teamMemberId;
+    const nextDateTime = (data.dateTime as Date) || current.dateTime;
+    const slotChanged =
+      nextDoctor !== current.teamMemberId ||
+      nextDateTime.getTime() !== current.dateTime.getTime();
+
+    if (slotChanged) {
+      await releaseSlotByAppointment(id);
+      if (nextDoctor) {
+        try {
+          await claimSlot(nextDoctor, nextDateTime, id);
+        } catch (err) {
+          // Put the original reservation back so a failed edit doesn't
+          // silently free the slot the patient already had.
+          if (current.teamMemberId) {
+            await claimSlot(current.teamMemberId, current.dateTime, id).catch(() => {});
+          }
+          return NextResponse.json(
+            { error: err instanceof Error ? err.message : "Slot indisponibil." },
+            { status: err instanceof SlotTakenError ? 409 : 400 },
+          );
+        }
+      }
     }
 
     // overlap check if dateTime/duration/serviceId changed

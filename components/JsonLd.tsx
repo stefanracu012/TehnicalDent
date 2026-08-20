@@ -3,6 +3,8 @@
  * Renders a <script type="application/ld+json"> tag in the page head.
  */
 
+import { CLINIC } from "@/lib/seo";
+
 interface JsonLdProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: Record<string, any>;
@@ -22,38 +24,57 @@ export default function JsonLd({ data }: JsonLdProps) {
  */
 export function DentistSchema({ locale }: { locale: string }) {
   const names: Record<string, string> = {
-    ro: "TechnicalDent — Clinică Stomatologică",
-    en: "TechnicalDent — Dental Clinic",
-    ru: "TechnicalDent — Стоматологическая клиника",
-    it: "TechnicalDent — Clinica Odontoiatrica",
+    ro: "TehnicalDent — Clinică Stomatologică",
+    en: "TehnicalDent — Dental Clinic",
+    ru: "TehnicalDent — Стоматологическая клиника",
+    it: "TehnicalDent — Clinica Odontoiatrica",
   };
   const descriptions: Record<string, string> = {
-    ro: "Clinica stomatologică TechnicalDent din Chișinău oferă servicii de înaltă calitate: implant dentar, estetică dentară, ortodonție, chirurgie orală și tratamente moderne.",
-    en: "TechnicalDent dental clinic in Chisinau offers high-quality services: dental implants, cosmetic dentistry, orthodontics, oral surgery and modern treatments.",
-    ru: "Стоматологическая клиника TechnicalDent в Кишинёве предлагает высококачественные услуги: зубные импланты, эстетическую стоматологию, ортодонтию, хирургию и современные методы лечения.",
-    it: "La clinica odontoiatrica TechnicalDent a Chisinau offre servizi di alta qualità: impianti dentali, odontoiatria estetica, ortodonzia, chirurgia orale e trattamenti moderni.",
+    ro: "Clinică stomatologică în Chișinău, sectorul Botanica. Implantologie, ortodonție, estetică dentară, tratament de canal, protetică și stomatologie pentru copii.",
+    en: "Dental clinic in Chisinau, Botanica district. Dental implants, orthodontics, cosmetic dentistry, root canal treatment, prosthetics and pediatric dentistry.",
+    ru: "Стоматологическая клиника в Кишинёве, сектор Ботаника. Имплантация, ортодонтия, эстетическая стоматология, лечение каналов, протезирование и детская стоматология.",
+    it: "Clinica odontoiatrica a Chisinau, settore Botanica. Implantologia, ortodonzia, odontoiatria estetica, devitalizzazione, protesi e odontoiatria pediatrica.",
+  };
+  const areaServed: Record<string, string> = {
+    ro: "Chișinău, Republica Moldova",
+    en: "Chisinau, Republic of Moldova",
+    ru: "Кишинёв, Республика Молдова",
+    it: "Chisinau, Repubblica di Moldova",
   };
 
   const data = {
     "@context": "https://schema.org",
     "@type": ["Dentist", "MedicalBusiness", "LocalBusiness"],
-    name: "TechnicalDent",
-    alternateName: names[locale] || names.ro,
+    "@id": "https://tehnicaldent.com/#clinic",
+    name: CLINIC.name,
+    // "Tehnical Dent" is how the Google Business Profile spells it and by far
+    // the most common way people search for us — declare both so the entity
+    // resolves to one business instead of two.
+    alternateName: ["Tehnical Dent", names[locale] || names.ro],
     description: descriptions[locale] || descriptions.ro,
     url: "https://tehnicaldent.com",
     logo: "https://tehnicaldent.com/images/logo.png",
     image: "https://tehnicaldent.com/images/hero-dentist.jpg",
-    telephone: "+37379950008",
-    email: "tehnicaldentmd@gmail.com",
+    telephone: CLINIC.telephone,
+    email: CLINIC.email,
+    // Mirrors the Google Business Profile listing field for field — a mismatch
+    // splits the business into two entities in local search.
     address: {
       "@type": "PostalAddress",
-      addressLocality: "Chișinău",
-      addressCountry: "MD",
+      streetAddress: CLINIC.streetAddress,
+      addressLocality: CLINIC.locality,
+      postalCode: CLINIC.postalCode,
+      addressCountry: CLINIC.country,
     },
     geo: {
       "@type": "GeoCoordinates",
-      latitude: 47.0105,
-      longitude: 28.8638,
+      latitude: CLINIC.latitude,
+      longitude: CLINIC.longitude,
+    },
+    hasMap: CLINIC.mapsUrl,
+    areaServed: {
+      "@type": "City",
+      name: areaServed[locale] || areaServed.ro,
     },
     openingHoursSpecification: [
       {
@@ -70,10 +91,9 @@ export function DentistSchema({ locale }: { locale: string }) {
       },
     ],
     priceRange: "$$",
-    sameAs: [
-      "https://www.facebook.com/TechnicalDent",
-      "https://www.instagram.com/TechnicalDent",
-    ],
+    // Only verified profiles belong here — a sameAs pointing at a URL we do not
+    // control weakens entity resolution instead of strengthening it.
+    sameAs: [CLINIC.mapsUrl],
     medicalSpecialty: [
       "Dentistry",
       "Orthodontics",
@@ -118,7 +138,7 @@ export function ServiceSchema({
     category,
     provider: {
       "@type": "Dentist",
-      name: "TechnicalDent",
+      name: "TehnicalDent",
       url: "https://tehnicaldent.com",
     },
     ...(image ? { image } : {}),
@@ -154,11 +174,11 @@ export function ArticleSchema({
     datePublished,
     author: {
       "@type": "Organization",
-      name: author || "TechnicalDent",
+      name: author || "TehnicalDent",
     },
     publisher: {
       "@type": "Organization",
-      name: "TechnicalDent",
+      name: "TehnicalDent",
       logo: {
         "@type": "ImageObject",
         url: "https://tehnicaldent.com/images/logo.png",

@@ -46,8 +46,9 @@ export default function NewBlogPostPage() {
     coverImage: "",
     category: "igiena-orala",
     tags: "",
-    author: "TechnicalDent",
+    author: "TehnicalDent",
     isPublished: false,
+    shareToSocial: false,
   });
   const [sections, setSections] = useState<BlogSection[]>([
     createEmptySection(),
@@ -418,6 +419,28 @@ export default function NewBlogPostPage() {
                     className="text-sm text-foreground"
                   >
                     Publică imediat
+                  </label>
+                </div>
+
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    id="shareToSocial"
+                    checked={formData.shareToSocial}
+                    onChange={(e) =>
+                      setFormData((p) => ({
+                        ...p,
+                        shareToSocial: e.target.checked,
+                      }))
+                    }
+                    className="w-4 h-4 mt-0.5"
+                  />
+                  <label htmlFor="shareToSocial" className="text-sm text-foreground">
+                    Publică și pe Facebook și Instagram
+                    <span className="block text-xs text-foreground/50 mt-0.5">
+                      Se trimite o singură dată, când articolul devine public.
+                      Instagram are nevoie de imagine de copertă.
+                    </span>
                   </label>
                 </div>
               </>

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { sanitizeObject, validateNoInjection } from "@/lib/security";
+import { shareBlogPostById } from "@/lib/social-publish";
 
 export async function GET() {
   try {
@@ -59,15 +60,24 @@ export async function POST(request: Request) {
         coverImage: body.coverImage || "",
         category: body.category || "General",
         tags: body.tags || [],
-        author: body.author || "TechnicalDent",
+        author: body.author || "TehnicalDent",
         isPublished: body.isPublished ?? false,
         publishedAt: body.isPublished ? new Date() : null,
         translations: body.translations || null,
+        shareToSocial: body.shareToSocial ?? false,
       },
     });
 
     revalidatePath("/", "layout");
-    return NextResponse.json(post, { status: 201 });
+
+    // The article is already saved, so a Meta outage must not turn this into a
+    // failed request — the error is recorded on the post instead.
+    const social = await shareBlogPostById(post.id).catch((error) => {
+      console.error("Auto-share failed:", error);
+      return null;
+    });
+
+    return NextResponse.json({ ...post, social }, { status: 201 });
   } catch (error) {
     console.error("Error creating blog post:", error);
     return NextResponse.json(

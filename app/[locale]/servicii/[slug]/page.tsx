@@ -5,8 +5,13 @@ import Button from "@/components/Button";
 import { getServiceBySlug, getServices } from "@/lib/data";
 import { localizeService } from "@/lib/localize";
 import { getTranslations, setRequestLocale } from "next-intl/server";
-import { getAlternates, getKeywords } from "@/lib/seo";
+import { getAlternates, getKeywords, withLocation } from "@/lib/seo";
 import { ServiceSchema, BreadcrumbSchema } from "@/components/JsonLd";
+
+// Prerendered at build time. Next does not infer this on its own here because
+// next-intl reads the locale from request context; every admin mutation calls
+// revalidatePath("/", "layout"), so edits still go live immediately.
+export const dynamic = "force-static";
 
 interface ServicePageProps {
   params: Promise<{ slug: string; locale: string }>;
@@ -19,9 +24,10 @@ export async function generateMetadata({ params }: ServicePageProps) {
   const service = await getServiceBySlug(slug);
   if (!service) return { title: t("serviciuNegasit") };
   const localized = localizeService(service, locale);
+  const description = withLocation(localized.shortDesc as string, locale);
   return {
     title: localized.title as string,
-    description: localized.shortDesc as string,
+    description,
     keywords: getKeywords(
       [
         localized.title as string,
@@ -32,8 +38,8 @@ export async function generateMetadata({ params }: ServicePageProps) {
     ),
     alternates: getAlternates(`/servicii/${slug}`, locale),
     openGraph: {
-      title: `${localized.title} | TechnicalDent`,
-      description: localized.shortDesc as string,
+      title: `${localized.title} | TehnicalDent Chișinău`,
+      description,
       type: "article",
       images: service.images?.[0] ? [{ url: service.images[0] as string }] : [],
     },
@@ -89,7 +95,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
       />
       <BreadcrumbSchema
         items={[
-          { name: "TechnicalDent", url: `https://tehnicaldent.com/${locale}` },
+          { name: "TehnicalDent", url: `https://tehnicaldent.com/${locale}` },
           {
             name: tNav("servicii"),
             url: `https://tehnicaldent.com/${locale}/servicii`,

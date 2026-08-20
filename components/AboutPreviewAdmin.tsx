@@ -10,7 +10,7 @@ const DEFAULTS = {
   badge: "Ani de experiență în stomatologie",
   subtitle: "Despre noi",
   title: "O clinică dedicată sănătății și frumuseții zâmbetului dumneavoastră",
-  p1: "TechnicalDent este mai mult decât o clinică stomatologică – este un loc unde tehnologia avansată întâlnește grija autentică pentru pacient. Cu o echipă de specialiști dedicați și echipamente de ultimă generație, oferim tratamente personalizate pentru fiecare nevoie.",
+  p1: "TehnicalDent este mai mult decât o clinică stomatologică – este un loc unde tehnologia avansată întâlnește grija autentică pentru pacient. Cu o echipă de specialiști dedicați și echipamente de ultimă generație, oferim tratamente personalizate pentru fiecare nevoie.",
   p2: "Echipa noastră de medici specialiști aduce împreună decenii de experiență și o pasiune comună pentru excelență. De la consultații detaliate la proceduri complexe, fiecare pas este ghidat de angajamentul nostru față de rezultatele perfecte.",
   stat1Value: "Modern",
   stat1Label: "Echipamente de ultimă generație",
@@ -57,7 +57,7 @@ export default function AboutPreviewAdmin(props: AboutPreviewAdminProps) {
         <div className="aspect-[4/3] relative overflow-hidden rounded-xl shadow-xl">
           <Image
             src={v("image")}
-            alt="Clinică stomatologică TechnicalDent"
+            alt="Clinică stomatologică TehnicalDent"
             fill
             sizes="(max-width: 1024px) 100vw, 50vw"
             className="object-cover"

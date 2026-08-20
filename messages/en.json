@@ -1,8 +1,8 @@
 {
   "Metadata": {
-    "title": "TehnicalDent | Dental Clinic of Excellence",
-    "description": "TehnicalDent dental clinic offers high-quality dental care services, from consultations and preventive treatments to complex implantology and cosmetic dentistry procedures.",
-    "keywords": "dental clinic, dentist, dental implant, cosmetic dentistry, orthodontics, dental treatment, dental prosthetics, teeth, dental cleaning, teeth whitening, dental crown, dental veneers, oral surgery, periodontics, endodontics, root canal, tooth extraction, dental office, Chisinau, TechnicalDent, oral hygiene, dental consultation, pediatric dentistry, children dentist, toothache, perfect smile, oral rehabilitation"
+    "title": "Dental Clinic in Chisinau, Botanica | TehnicalDent",
+    "description": "Dental clinic in Chisinau, Botanica district — Str. Sarmizegetusa 24/1. Dental implants, orthodontics, cosmetic dentistry, root canal treatment. Book online.",
+    "keywords": "dental clinic, dentist, dental implant, cosmetic dentistry, orthodontics, dental treatment, dental prosthetics, teeth, dental cleaning, teeth whitening, dental crown, dental veneers, oral surgery, periodontics, endodontics, root canal, tooth extraction, dental office, Chisinau, TehnicalDent, oral hygiene, dental consultation, pediatric dentistry, children dentist, toothache, perfect smile, oral rehabilitation"
   },
   "Nav": {
     "servicii": "Services",
@@ -32,8 +32,8 @@
     "galeriTitle": "Gallery"
   },
   "Home": {
-    "heroTitle": "Excellence in modern dentistry",
-    "heroDescription": "At TechnicalDent, we combine top-tier medical expertise with cutting-edge technology to deliver personalized dental treatments. Each patient receives individualized attention and a treatment plan tailored to their specific needs, in a comfortable and welcoming environment.",
+    "heroTitle": "Modern dentistry in Chisinau",
+    "heroDescription": "At TehnicalDent, we combine top-tier medical expertise with cutting-edge technology to deliver personalized dental treatments. Each patient receives individualized attention and a treatment plan tailored to their specific needs, in a comfortable and welcoming environment.",
     "heroImgAlt": "Professional dentist",
     "programeazaConsultatie": "Schedule a consultation",
     "exploreaServiciile": "Explore services",
@@ -113,21 +113,21 @@
   },
   "About": {
     "metaTitle": "About Us",
-    "metaDescription": "Discover the story of TechnicalDent clinic, our philosophy, and the team of specialists dedicated to your smile's health and beauty.",
+    "metaDescription": "Discover the story of TehnicalDent clinic, our philosophy, and the team of specialists dedicated to your smile's health and beauty.",
     "breadcrumbAbout": "About Us",
     "heroSubtitle": "Our story",
-    "heroTitle": "About TechnicalDent",
+    "heroTitle": "About TehnicalDent",
     "heroDescription": "A clinic founded on principles of excellence, integrity, and genuine care for every patient.",
     "storySubtitle": "Our story",
     "storyTitle": "Over 2 years of excellence in dentistry",
-    "storyP1": "TechnicalDent was born in 2024 from the desire to create a space where high-quality dental medicine meets genuine patient care. Our founder laid the foundation for a clinic where every treatment is performed with precision, every patient is heard, and every smile matters.",
+    "storyP1": "TehnicalDent was born in 2024 from the desire to create a space where high-quality dental medicine meets genuine patient care. Our founder laid the foundation for a clinic where every treatment is performed with precision, every patient is heard, and every smile matters.",
     "storyP2": "Over the years, we have consistently invested in cutting-edge technology and continuous training of our team. We have brought to Chișinău techniques and equipment that were previously available only in Western European clinics.",
-    "storyP3": "Today, TechnicalDent is recognized as one of the leading clinics in Moldova, with thousands of satisfied patients and a reputation built on concrete results and trust-based relationships.",
+    "storyP3": "Today, TehnicalDent is recognized as one of the leading clinics in Moldova, with thousands of satisfied patients and a reputation built on concrete results and trust-based relationships.",
     "statFondare": "Year founded",
     "statExperienta": "Years of experience",
     "statPacienti": "Patients",
     "badge": "Years",
-    "clinicaImgAlt": "TechnicalDent clinic interior",
+    "clinicaImgAlt": "TehnicalDent clinic interior",
     "valuesSubtitle": "Our philosophy",
     "valuesTitle": "Principles that guide us",
     "valuesDescription": "Every decision and every treatment is rooted in the values that define who we are.",
@@ -153,7 +153,7 @@
     "veziGaleria": "View photo gallery",
     "ctaSubtitle": "Come meet us",
     "ctaTitle": "The first step toward a healthy smile",
-    "ctaDescription": "We are happy to answer your questions and show you the clinic. Schedule a visit and discover the TechnicalDent difference.",
+    "ctaDescription": "We are happy to answer your questions and show you the clinic. Schedule a visit and discover the TehnicalDent difference.",
     "programeazaVizita": "Schedule a visit",
     "cabinetConsultatie": "Consultation room",
     "echipamentModern": "Modern equipment"
@@ -199,7 +199,7 @@
   },
   "Services": {
     "metaTitle": "Dental Services",
-    "metaDescription": "Discover the full range of dental services offered by TechnicalDent: implantology, orthodontics, cosmetic dentistry, oral surgery, and more.",
+    "metaDescription": "Discover the full range of dental services offered by TehnicalDent: implantology, orthodontics, cosmetic dentistry, oral surgery, and more.",
     "breadcrumbServicii": "Services",
     "heroSubtitle": "What we offer",
     "heroTitle": "Our Services",
@@ -278,11 +278,11 @@
     "termeniConditii": "Terms & Conditions"
   },
   "AboutPreview": {
-    "imgAlt": "TechnicalDent dental clinic",
+    "imgAlt": "TehnicalDent dental clinic",
     "badge": "Years of experience in dentistry",
     "subtitle": "About us",
     "title": "A clinic dedicated to the health and beauty of your smile",
-    "p1": "TechnicalDent is more than a dental clinic — it's a place where advanced technology meets genuine patient care. With a team of dedicated specialists and cutting-edge equipment, we offer personalized treatments for every need.",
+    "p1": "TehnicalDent is more than a dental clinic — it's a place where advanced technology meets genuine patient care. With a team of dedicated specialists and cutting-edge equipment, we offer personalized treatments for every need.",
     "p2": "Our team of specialist doctors brings together decades of experience and a shared passion for excellence. From detailed consultations to complex procedures, every step is guided by our commitment to perfect results.",
     "stat1Value": "Modern",
     "stat1Label": "State-of-the-art equipment",

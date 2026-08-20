@@ -43,11 +43,13 @@ export async function generateMetadata({
   return {
     title: {
       default: t("title"),
-      template: "%s | TechnicalDent",
+      // The city rides along in every sub-page title — service pages compete on
+      // "<serviciu> Chișinău", not on the bare service name.
+      template: "%s | TehnicalDent Chișinău",
     },
     description: t("description"),
     keywords: t("keywords"),
-    authors: [{ name: "TechnicalDent" }],
+    authors: [{ name: "TehnicalDent" }],
     icons: {
       icon: [
         { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
@@ -70,14 +72,14 @@ export async function generateMetadata({
     openGraph: {
       type: "website",
       locale: getOgLocale(locale),
-      siteName: "TechnicalDent",
+      siteName: "TehnicalDent",
       url: `https://tehnicaldent.com/${locale}`,
       images: [
         {
           url: "https://tehnicaldent.com/images/hero-dentist.jpg",
           width: 1200,
           height: 630,
-          alt: "TechnicalDent — Clinică Stomatologică",
+          alt: "TehnicalDent — Clinică Stomatologică",
         },
       ],
     },

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { sanitizeObject, validateNoInjection } from "@/lib/security";
+import { shareBlogPostById } from "@/lib/social-publish";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -61,7 +62,15 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       data: body,
     });
     revalidatePath("/", "layout");
-    return NextResponse.json(post);
+
+    // Runs on every save but only acts the first time an article is both
+    // published and marked for sharing, so editing a live post never reposts it.
+    const social = await shareBlogPostById(post.id).catch((error) => {
+      console.error("Auto-share failed:", error);
+      return null;
+    });
+
+    return NextResponse.json({ ...post, social });
   } catch (error) {
     console.error("Error updating blog post:", error);
     return NextResponse.json(

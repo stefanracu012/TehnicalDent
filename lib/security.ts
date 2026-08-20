@@ -1,5 +1,5 @@
 // =============================================
-// Security utilities for TechnicalDent
+// Security utilities for TehnicalDent
 // CSRF, XSS sanitization, input validation,
 // rate limiting
 // =============================================

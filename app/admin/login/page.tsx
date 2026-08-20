@@ -172,7 +172,7 @@ export default function AdminLoginPage() {
         </form>
 
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          TechnicalDent — Panou de administrare
+          TehnicalDent — Panou de administrare
         </p>
       </div>
     </div>

@@ -1,8 +1,6 @@
 import Button from "@/components/Button";
 import Section from "@/components/Section";
 import SectionHeader from "@/components/SectionHeader";
-
-export const dynamic = "force-dynamic";
 import ServiceBentoGrid from "@/components/ServiceBentoGrid";
 import TestimonialsCarousel from "@/components/TestimonialsCarousel";
 import GalleryPreview from "@/components/GalleryPreview";
@@ -16,6 +14,11 @@ import HeroSlideshow from "@/components/HeroSlideshow";
 import AboutPreview from "@/components/AboutPreview";
 import ReviewsSection from "@/components/ReviewsSection";
 import { getTranslations, setRequestLocale } from "next-intl/server";
+
+// Prerendered at build time. Next does not infer this on its own here because
+// next-intl reads the locale from request context; every admin mutation calls
+// revalidatePath("/", "layout"), so edits still go live immediately.
+export const dynamic = "force-static";
 
 export default async function HomePage({
   params,

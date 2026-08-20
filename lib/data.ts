@@ -260,7 +260,7 @@ const mockTeamMembers: TeamMember[] = [
     id: "1",
     name: "Dr. Maria Ionescu",
     role: "Medic Primar Stomatolog, Fondator",
-    description: "Cu peste 20 de ani de experiență în stomatologie, Dr. Ionescu a fondat TechnicalDent cu viziunea de a oferi servicii stomatologice de excelență. Specializată în implantologie și estetică dentară, este recunoscută pentru atenția la detalii și abordarea personalizată a fiecărui caz.",
+    description: "Cu peste 20 de ani de experiență în stomatologie, Dr. Ionescu a fondat TehnicalDent cu viziunea de a oferi servicii stomatologice de excelență. Specializată în implantologie și estetică dentară, este recunoscută pentru atenția la detalii și abordarea personalizată a fiecărui caz.",
     image: "/images/team/doctor-1.jpg",
     order: 1,
     isActive: true
@@ -298,7 +298,7 @@ const mockTestimonials: Testimonial[] = [
   {
     id: "1",
     name: "Andreea M.",
-    content: "Am venit la TechnicalDent pentru un tratament de implant după ce am pierdut un dinte într-un accident. De la prima consultație, echipa m-a făcut să mă simt în siguranță și mi-a explicat fiecare pas al procedurii. Rezultatul a depășit așteptările mele - nimeni nu își dă seama că am un implant. Recomand cu încredere această clinică oricui caută profesionalism și empatie.",
+    content: "Am venit la TehnicalDent pentru un tratament de implant după ce am pierdut un dinte într-un accident. De la prima consultație, echipa m-a făcut să mă simt în siguranță și mi-a explicat fiecare pas al procedurii. Rezultatul a depășit așteptările mele - nimeni nu își dă seama că am un implant. Recomand cu încredere această clinică oricui caută profesionalism și empatie.",
     image: "/images/testimonials/patient-1.jpg",
     service: "Implantologie dentară",
     isActive: true
@@ -306,7 +306,7 @@ const mockTestimonials: Testimonial[] = [
   {
     id: "2",
     name: "Mihai și Ana T.",
-    content: "Întreaga noastră familie se tratează la TechnicalDent de peste 5 ani. Copiii noștri, inițial speriați de dentist, acum se bucură să meargă la controale. Atmosfera prietenoasă și răbdarea echipei au făcut diferența. Pentru noi, aceasta nu este doar o clinică stomatologică, ci un loc unde ne simțim cu adevărat îngrijiți.",
+    content: "Întreaga noastră familie se tratează la TehnicalDent de peste 5 ani. Copiii noștri, inițial speriați de dentist, acum se bucură să meargă la controale. Atmosfera prietenoasă și răbdarea echipei au făcut diferența. Pentru noi, aceasta nu este doar o clinică stomatologică, ci un loc unde ne simțim cu adevărat îngrijiți.",
     image: "/images/testimonials/patient-2.jpg",
     service: "Pedodonție și stomatologie generală",
     isActive: true
@@ -314,7 +314,7 @@ const mockTestimonials: Testimonial[] = [
   {
     id: "3",
     name: "Constantin D.",
-    content: "La 62 de ani, credeam că zâmbetul meu nu mai poate fi recuperat. Aveam dinți lipsa și cei rămași erau într-o stare precară. Echipa TechnicalDent mi-a propus un plan de tratament complex, realizat etapizat pe parcursul a 8 luni. Astăzi am un zâmbet complet, funcțional și estetic. Recunoștința mea este imensă.",
+    content: "La 62 de ani, credeam că zâmbetul meu nu mai poate fi recuperat. Aveam dinți lipsa și cei rămași erau într-o stare precară. Echipa TehnicalDent mi-a propus un plan de tratament complex, realizat etapizat pe parcursul a 8 luni. Astăzi am un zâmbet complet, funcțional și estetic. Recunoștința mea este imensă.",
     image: "/images/testimonials/patient-3.jpg",
     service: "Reabilitare orală completă",
     isActive: true

@@ -292,8 +292,8 @@ function dbPostToBlogPost(dbPost: {
     readTime: estimateReadTime(post.content as string),
     date: ((dbPost.publishedAt || dbPost.createdAt) as Date).toISOString().split("T")[0],
     author: {
-      name: (post.author as string) || "TechnicalDent",
-      role: "Echipa TechnicalDent",
+      name: (post.author as string) || "TehnicalDent",
+      role: "Echipa TehnicalDent",
     },
     tags: post.tags as string[],
   };

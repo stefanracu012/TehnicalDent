@@ -250,7 +250,7 @@ export default function AdminCampaniiPage() {
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Previzualizare: „Avem o ofertă specială la TechnicalDent:{" "}
+                  Previzualizare: „Avem o ofertă specială la TehnicalDent:{" "}
                   <b>{service || "…"}</b>, cu reducere de <b>{discount || "…"}</b>. Doriți să vă
                   programăm? Răspundeți la acest mesaj sau sunați-ne!"
                 </p>
@@ -270,7 +270,7 @@ export default function AdminCampaniiPage() {
                   />
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Previzualizare: „Vă reamintim de un control recomandat la TechnicalDent.{" "}
+                  Previzualizare: „Vă reamintim de un control recomandat la TehnicalDent.{" "}
                   {detail || "…"}. Vă așteptăm!"
                 </p>
               </div>

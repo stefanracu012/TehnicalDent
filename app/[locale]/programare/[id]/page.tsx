@@ -86,7 +86,7 @@ export default function PublicAppointmentPage({
         <h1 className="font-serif text-2xl font-medium text-foreground mb-1">
           Programarea dvs.
         </h1>
-        <p className="text-sm text-muted-foreground mb-6">TechnicalDent</p>
+        <p className="text-sm text-muted-foreground mb-6">TehnicalDent</p>
 
         {loading && <p className="text-muted-foreground">Se încarcă...</p>}
 

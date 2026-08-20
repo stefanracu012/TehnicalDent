@@ -11,6 +11,11 @@ import {
 import { getAlternates, getKeywords } from "@/lib/seo";
 import { ArticleSchema, BreadcrumbSchema } from "@/components/JsonLd";
 
+// Prerendered at build time. Next does not infer this on its own here because
+// next-intl reads the locale from request context; every admin mutation calls
+// revalidatePath("/", "layout"), so edits still go live immediately.
+export const dynamic = "force-static";
+
 function getYouTubeId(url: string): string | null {
   const match = url.match(
     /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/,
@@ -94,7 +99,7 @@ export default async function BlogPostPage({ params }: Props) {
       />
       <BreadcrumbSchema
         items={[
-          { name: "TechnicalDent", url: `https://tehnicaldent.com/${locale}` },
+          { name: "TehnicalDent", url: `https://tehnicaldent.com/${locale}` },
           {
             name: "Recomandări",
             url: `https://tehnicaldent.com/${locale}/recomandari`,

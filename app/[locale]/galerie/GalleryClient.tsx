@@ -485,7 +485,7 @@ export default function GalleryClient({ images: rawImages, ctaImage }: Props) {
         <div className="absolute inset-0">
           <Image
             src={ctaImage || images[1]?.url || "/images/gallery/clinic-2.jpg"}
-            alt="Cabinet TechnicalDent"
+            alt="Cabinet TehnicalDent"
             fill
             sizes="100vw"
             className="object-cover"

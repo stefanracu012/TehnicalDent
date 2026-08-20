@@ -36,6 +36,10 @@ interface BlogPost {
   publishedAt: string | null;
   translations?: Translations | null;
   sections?: BlogSection[] | null;
+  shareToSocial: boolean;
+  facebookPostId: string | null;
+  instagramPostId: string | null;
+  socialError: string | null;
 }
 
 export default function EditBlogPostPage({
@@ -60,9 +64,16 @@ export default function EditBlogPostPage({
     coverImage: "",
     category: "igiena-orala",
     tags: "",
-    author: "TechnicalDent",
+    author: "TehnicalDent",
     isPublished: false,
+    shareToSocial: false,
   });
+  // Read-only outcome of past sharing, so the form can say what already went out.
+  const [socialStatus, setSocialStatus] = useState<{
+    facebookPostId: string | null;
+    instagramPostId: string | null;
+    socialError: string | null;
+  }>({ facebookPostId: null, instagramPostId: null, socialError: null });
 
   useEffect(() => {
     const fetchPost = async () => {
@@ -84,6 +95,12 @@ export default function EditBlogPostPage({
           tags: post.tags.join(", "),
           author: post.author,
           isPublished: post.isPublished,
+          shareToSocial: post.shareToSocial ?? false,
+        });
+        setSocialStatus({
+          facebookPostId: post.facebookPostId ?? null,
+          instagramPostId: post.instagramPostId ?? null,
+          socialError: post.socialError ?? null,
         });
         setTranslations((post.translations as Translations) || {});
         // Load sections or convert old content to sections
@@ -476,6 +493,50 @@ export default function EditBlogPostPage({
                     Publicat
                   </label>
                 </div>
+
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    id="shareToSocial"
+                    checked={formData.shareToSocial}
+                    onChange={(e) =>
+                      setFormData((p) => ({
+                        ...p,
+                        shareToSocial: e.target.checked,
+                      }))
+                    }
+                    className="w-4 h-4 mt-0.5"
+                  />
+                  <label htmlFor="shareToSocial" className="text-sm text-foreground">
+                    Publică și pe Facebook și Instagram
+                    <span className="block text-xs text-foreground/50 mt-0.5">
+                      Se trimite o singură dată, când articolul devine public.
+                      Instagram are nevoie de imagine de copertă.
+                    </span>
+                  </label>
+                </div>
+
+                {(socialStatus.facebookPostId ||
+                  socialStatus.instagramPostId ||
+                  socialStatus.socialError) && (
+                  <div className="border border-border bg-muted/40 px-4 py-3 text-xs space-y-1">
+                    {socialStatus.facebookPostId && (
+                      <p className="text-foreground/70">
+                        ✓ Publicat pe Facebook
+                      </p>
+                    )}
+                    {socialStatus.instagramPostId && (
+                      <p className="text-foreground/70">
+                        ✓ Publicat pe Instagram
+                      </p>
+                    )}
+                    {socialStatus.socialError && (
+                      <p className="text-red-600">
+                        Nereușit: {socialStatus.socialError}
+                      </p>
+                    )}
+                  </div>
+                )}
               </>
             )}
 

@@ -32,7 +32,7 @@ const SMTP_USER = process.env.SMTP_USER || "";
 const SMTP_PASS = process.env.SMTP_PASS || "";
 const SMTP_SECURE =
   process.env.SMTP_SECURE === "true" || SMTP_PORT === 465;
-const EMAIL_FROM = process.env.EMAIL_FROM || "TechnicalDent <noreply@tehnicaldent.md>";
+const EMAIL_FROM = process.env.EMAIL_FROM || "TehnicalDent <noreply@tehnicaldent.md>";
 
 let _transporter: Transporter | null = null;
 function getTransporter(): Transporter {
@@ -313,7 +313,7 @@ function buildEmailHtml(
     <tr><td align="center">
       <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
         <tr><td style="padding:24px 28px;border-bottom:1px solid #e5e7eb;background:#0f172a;color:#fff;">
-          <h1 style="margin:0;font-size:20px;font-weight:600;">TechnicalDent</h1>
+          <h1 style="margin:0;font-size:20px;font-weight:600;">TehnicalDent</h1>
         </td></tr>
         <tr><td style="padding:28px;">
           <h2 style="margin:0 0 12px;font-size:18px;color:#0f172a;">${opts.title}</h2>
@@ -336,7 +336,7 @@ function buildEmailHtml(
           ${opts.footer ? `<p style="margin:20px 0 0;color:#6b7280;font-size:13px;line-height:1.5;">${opts.footer}</p>` : ""}
         </td></tr>
         <tr><td style="padding:16px 28px;background:#f9fafb;border-top:1px solid #e5e7eb;text-align:center;font-size:12px;color:#6b7280;">
-          TechnicalDent · Acest mesaj este automat, nu răspundeţi.
+          TehnicalDent · Acest mesaj este automat, nu răspundeţi.
         </td></tr>
       </table>
     </td></tr>
@@ -563,7 +563,7 @@ export async function notifyReminder(a: AppointmentFull, kind: "24h" | "2h") {
   if (a.patient.email) {
     const email = buildEmailHtml(a, {
       title: kind === "24h" ? "Reamintire — programare mâine" : "Reamintire — programare astăzi",
-      intro: `${lead} la TechnicalDent.`,
+      intro: `${lead} la TehnicalDent.`,
       showActions: true,
       footer: "Dacă nu vă mai puteţi prezenta, anulaţi programarea folosind butonul de mai sus.",
     });
@@ -597,7 +597,7 @@ export async function notifyRecall(a: AppointmentFull) {
 
   if (a.patient.email) {
     const email = buildEmailHtml(a, {
-      title: "V-aă şteaptă o nouă vizită la TechnicalDent",
+      title: "V-aă şteaptă o nouă vizită la TehnicalDent",
       intro: `Bună ziua, ${a.patient.name}! Au trecut 6 luni de la ultima dvs. vizită. Vă recomandăm o nouă consultaţie.`,
       showActions: false,
       footer: "Pentru a vă programa, ne puteţi contacta telefonic sau prin formularul de pe site.",
@@ -638,7 +638,7 @@ function buildCampaignEmailHtml(
     <tr><td align="center">
       <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
         <tr><td style="padding:24px 28px;border-bottom:1px solid #e5e7eb;background:#0f172a;color:#fff;">
-          <h1 style="margin:0;font-size:20px;font-weight:600;">TechnicalDent</h1>
+          <h1 style="margin:0;font-size:20px;font-weight:600;">TehnicalDent</h1>
         </td></tr>
         <tr><td style="padding:28px;">
           <h2 style="margin:0 0 12px;font-size:18px;color:#0f172a;">${title}</h2>
@@ -646,7 +646,7 @@ function buildCampaignEmailHtml(
           <p style="margin:0;color:#374151;font-size:14px;line-height:1.5;">${bodyText}</p>
         </td></tr>
         <tr><td style="padding:16px 28px;background:#f9fafb;border-top:1px solid #e5e7eb;text-align:center;font-size:12px;color:#6b7280;">
-          TechnicalDent
+          TehnicalDent
         </td></tr>
       </table>
     </td></tr>
@@ -698,11 +698,11 @@ export async function sendCampaignToPatient(
     const { title, body } =
       payload.templateKey === "oferta_promo"
         ? {
-            title: "Ofertă specială — TechnicalDent",
+            title: "Ofertă specială — TehnicalDent",
             body: `Avem o ofertă specială pentru dvs.: <b>${serviceLabel(payload.service)}</b>, cu reducere de <b>${payload.discount}</b>. Doriți să vă programăm? Răspundeți la acest email sau sunați-ne!`,
           }
         : {
-            title: "Reamintire control — TechnicalDent",
+            title: "Reamintire control — TehnicalDent",
             body: payload.detail,
           };
     const email = buildCampaignEmailHtml(patient.name, title, body);

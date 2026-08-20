@@ -63,7 +63,7 @@ export default function AdminDashboard() {
             Panou de administrare
           </h1>
           <p className="mt-1 sm:mt-2 text-sm sm:text-base text-muted-foreground">
-            Gestionați conținutul site-ului TechnicalDent
+            Gestionați conținutul site-ului TehnicalDent
           </p>
         </div>
 

@@ -2,6 +2,11 @@ import { Link } from "@/i18n/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getAlternates } from "@/lib/seo";
 
+// Prerendered at build time. Next does not infer this on its own here because
+// next-intl reads the locale from request context; every admin mutation calls
+// revalidatePath("/", "layout"), so edits still go live immediately.
+export const dynamic = "force-static";
+
 // Bumped by hand whenever the policy text changes — a privacy policy that
 // claims "last updated: today" on every page view is worthless as a record.
 const LAST_UPDATED = "2026-08-15";

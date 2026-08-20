@@ -2,7 +2,7 @@
   "Metadata": {
     "title": "TehnicalDent | Clinica Odontoiatrica d'Eccellenza",
     "description": "La clinica odontoiatrica TehnicalDent offre servizi di alta qualità in odontoiatria, dalle consultazioni e trattamenti preventivi agli interventi complessi di implantologia e odontoiatria estetica.",
-    "keywords": "clinica odontoiatrica, dentista, impianto dentale, odontoiatria estetica, ortodonzia, trattamento dentale, protesi dentali, denti, pulizia dentale, sbiancamento denti, corona dentale, faccette dentali, chirurgia orale, parodontologia, endodonzia, cura canalare, estrazione dentale, studio dentistico, Chisinau, TechnicalDent, igiene orale, consulto dentistico, odontoiatria pediatrica, dentista per bambini, mal di denti, sorriso perfetto, riabilitazione orale"
+    "keywords": "clinica odontoiatrica, dentista, impianto dentale, odontoiatria estetica, ortodonzia, trattamento dentale, protesi dentali, denti, pulizia dentale, sbiancamento denti, corona dentale, faccette dentali, chirurgia orale, parodontologia, endodonzia, cura canalare, estrazione dentale, studio dentistico, Chisinau, TehnicalDent, igiene orale, consulto dentistico, odontoiatria pediatrica, dentista per bambini, mal di denti, sorriso perfetto, riabilitazione orale"
   },
   "Nav": {
     "servicii": "Servizi",
@@ -33,7 +33,7 @@
   },
   "Home": {
     "heroTitle": "Eccellenza nell'odontoiatria moderna",
-    "heroDescription": "Da TechnicalDent, combiniamo competenza medica di alto livello con tecnologia all'avanguardia per offrire trattamenti odontoiatrici personalizzati. Ogni paziente riceve attenzione individualizzata e un piano di trattamento adattato alle sue esigenze specifiche, in un ambiente confortevole e accogliente.",
+    "heroDescription": "Da TehnicalDent, combiniamo competenza medica di alto livello con tecnologia all'avanguardia per offrire trattamenti odontoiatrici personalizzati. Ogni paziente riceve attenzione individualizzata e un piano di trattamento adattato alle sue esigenze specifiche, in un ambiente confortevole e accogliente.",
     "heroImgAlt": "Dentista professionista",
     "programeazaConsultatie": "Prenota una consulenza",
     "exploreaServiciile": "Esplora i servizi",
@@ -113,21 +113,21 @@
   },
   "About": {
     "metaTitle": "Chi siamo",
-    "metaDescription": "Scopri la storia della clinica TechnicalDent, la nostra filosofia e il team di specialisti dedicati alla salute e bellezza del tuo sorriso.",
+    "metaDescription": "Scopri la storia della clinica TehnicalDent, la nostra filosofia e il team di specialisti dedicati alla salute e bellezza del tuo sorriso.",
     "breadcrumbAbout": "Chi siamo",
     "heroSubtitle": "La nostra storia",
-    "heroTitle": "Su TechnicalDent",
+    "heroTitle": "Su TehnicalDent",
     "heroDescription": "Una clinica fondata sui principi dell'eccellenza, dell'integrità e della cura autentica per ogni paziente.",
     "storySubtitle": "La nostra storia",
     "storyTitle": "Oltre 2 anni di eccellenza in odontoiatria",
-    "storyP1": "TechnicalDent è nata nel 2024 dal desiderio di creare uno spazio dove l'odontoiatria di alta qualità incontra la cura autentica del paziente. Il nostro fondatore ha gettato le basi di una clinica dove ogni trattamento è eseguito con precisione, ogni paziente viene ascoltato e ogni sorriso conta.",
+    "storyP1": "TehnicalDent è nata nel 2024 dal desiderio di creare uno spazio dove l'odontoiatria di alta qualità incontra la cura autentica del paziente. Il nostro fondatore ha gettato le basi di una clinica dove ogni trattamento è eseguito con precisione, ogni paziente viene ascoltato e ogni sorriso conta.",
     "storyP2": "Nel corso degli anni, abbiamo costantemente investito in tecnologie all'avanguardia e nella formazione continua del nostro team. Abbiamo portato a Chișinău tecniche e attrezzature che in precedenza erano disponibili solo nelle cliniche dell'Europa occidentale.",
-    "storyP3": "Oggi, TechnicalDent è riconosciuta come una delle cliniche di riferimento in Moldova, con migliaia di pazienti soddisfatti e una reputazione costruita su risultati concreti e relazioni di fiducia.",
+    "storyP3": "Oggi, TehnicalDent è riconosciuta come una delle cliniche di riferimento in Moldova, con migliaia di pazienti soddisfatti e una reputazione costruita su risultati concreti e relazioni di fiducia.",
     "statFondare": "Anno di fondazione",
     "statExperienta": "Anni di esperienza",
     "statPacienti": "Pazienti",
     "badge": "Anni",
-    "clinicaImgAlt": "Interno della clinica TechnicalDent",
+    "clinicaImgAlt": "Interno della clinica TehnicalDent",
     "valuesSubtitle": "La nostra filosofia",
     "valuesTitle": "Principi che ci guidano",
     "valuesDescription": "Ogni decisione e ogni trattamento sono fondati sui valori che definiscono chi siamo.",
@@ -153,7 +153,7 @@
     "veziGaleria": "Vedi la galleria fotografica",
     "ctaSubtitle": "Vieni a conoscerci",
     "ctaTitle": "Il primo passo verso un sorriso sano",
-    "ctaDescription": "Siamo felici di rispondere alle tue domande e mostrarti la clinica. Prenota una visita e scopri la differenza TechnicalDent.",
+    "ctaDescription": "Siamo felici di rispondere alle tue domande e mostrarti la clinica. Prenota una visita e scopri la differenza TehnicalDent.",
     "programeazaVizita": "Prenota una visita",
     "cabinetConsultatie": "Studio di consultazione",
     "echipamentModern": "Attrezzature moderne"
@@ -199,7 +199,7 @@
   },
   "Services": {
     "metaTitle": "Servizi Odontoiatrici",
-    "metaDescription": "Scopri la gamma completa di servizi odontoiatrici offerti da TechnicalDent: implantologia, ortodonzia, odontoiatria estetica, chirurgia orale e molto altro.",
+    "metaDescription": "Scopri la gamma completa di servizi odontoiatrici offerti da TehnicalDent: implantologia, ortodonzia, odontoiatria estetica, chirurgia orale e molto altro.",
     "breadcrumbServicii": "Servizi",
     "heroSubtitle": "Cosa offriamo",
     "heroTitle": "I Nostri Servizi",
@@ -278,11 +278,11 @@
     "termeniConditii": "Termini e condizioni"
   },
   "AboutPreview": {
-    "imgAlt": "Clinica odontoiatrica TechnicalDent",
+    "imgAlt": "Clinica odontoiatrica TehnicalDent",
     "badge": "Anni di esperienza in odontoiatria",
     "subtitle": "Chi siamo",
     "title": "Una clinica dedicata alla salute e bellezza del tuo sorriso",
-    "p1": "TechnicalDent è più di una clinica odontoiatrica — è un luogo dove la tecnologia avanzata incontra la cura autentica del paziente. Con un team di specialisti dedicati e attrezzature di ultima generazione, offriamo trattamenti personalizzati per ogni esigenza.",
+    "p1": "TehnicalDent è più di una clinica odontoiatrica — è un luogo dove la tecnologia avanzata incontra la cura autentica del paziente. Con un team di specialisti dedicati e attrezzature di ultima generazione, offriamo trattamenti personalizzati per ogni esigenza.",
     "p2": "Il nostro team di medici specialisti unisce decenni di esperienza e una passione comune per l'eccellenza. Dalle consultazioni dettagliate alle procedure complesse, ogni passo è guidato dal nostro impegno per risultati perfetti.",
     "stat1Value": "Moderno",
     "stat1Label": "Attrezzature di ultima generazione",

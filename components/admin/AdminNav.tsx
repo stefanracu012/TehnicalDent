@@ -335,7 +335,7 @@ export default function AdminNav() {
         {/* Logo */}
         <div className="px-5 py-5 border-b border-white/10">
           <span className="font-serif text-lg font-semibold tracking-tight">
-            TechnicalDent
+            TehnicalDent
           </span>
           <p className="text-[10px] text-white/40 uppercase tracking-widest mt-0.5">
             Admin
@@ -438,7 +438,7 @@ export default function AdminNav() {
             </div>
           </button>
           <span className="font-serif text-sm font-semibold">
-            TechnicalDent Admin
+            TehnicalDent Admin
           </span>
           <LogoutButton />
         </div>

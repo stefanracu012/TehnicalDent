@@ -26,7 +26,7 @@ const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || "";
 const APP_SECRET = process.env.WHATSAPP_APP_SECRET || "";
 
 const AUTO_REPLY =
-  "Bună ziua! Am primit mesajul dvs. Vă vom contacta în cel mai scurt timp posibil. — TechnicalDent";
+  "Bună ziua! Am primit mesajul dvs. Vă vom contacta în cel mai scurt timp posibil. — TehnicalDent";
 
 // ---------- Meta webhook payload shapes (subset we care about) ----------
 

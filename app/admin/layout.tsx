@@ -16,7 +16,7 @@ const playfair = Playfair_Display({
 });
 
 export const metadata: Metadata = {
-  title: "Admin | TechnicalDent",
+  title: "Admin | TehnicalDent",
   robots: "noindex, nofollow",
 };
 

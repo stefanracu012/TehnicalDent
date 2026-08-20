@@ -22,6 +22,7 @@ interface Appointment {
   duration: number;
   status: Status;
   notes?: string | null;
+  teamMemberId?: string | null;
   patient: { id: string; name: string; phone: string };
   service: { id: string; title: string; duration: number };
 }
@@ -629,6 +630,11 @@ function AppointmentForm({
   const [dateTime, setDateTime] = useState(initialDate);
   const [notes, setNotes] = useState(editing?.notes || "");
 
+  const [doctors, setDoctors] = useState<{ id: string; name: string; role: string }[]>([]);
+  const [freeSlots, setFreeSlots] = useState<Record<string, number[]>>({});
+  const [teamMemberId, setTeamMemberId] = useState(editing?.teamMemberId || "");
+  const [slotsLoading, setSlotsLoading] = useState(false);
+
   const [patientQuery, setPatientQuery] = useState(editing?.patient.name || "");
   const [patientResults, setPatientResults] = useState<Patient[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(
@@ -657,6 +663,23 @@ function AppointmentForm({
       if (svc) setDuration(svc.duration);
     }
   }, [serviceId, services, editing]);
+
+  // Doctors + their free hours for the chosen day
+  useEffect(() => {
+    const day = dateTime.slice(0, 10);
+    if (!day) return;
+    setSlotsLoading(true);
+    const qs = new URLSearchParams({ date: day });
+    if (editing) qs.set("excludeAppointmentId", editing.id);
+    secureFetch(`/api/admin/appointments/free-slots?${qs}`)
+      .then((r) => r.json())
+      .then((d) => {
+        setDoctors(Array.isArray(d.doctors) ? d.doctors : []);
+        setFreeSlots(d.slots || {});
+      })
+      .catch(() => {})
+      .finally(() => setSlotsLoading(false));
+  }, [dateTime, editing]);
 
   // Patient search
   useEffect(() => {
@@ -712,6 +735,7 @@ function AppointmentForm({
         serviceId,
         duration,
         dateTime: new Date(dateTime).toISOString(),
+        teamMemberId: teamMemberId || null,
         notes,
       };
       const r = await secureFetch(url, {
@@ -880,6 +904,70 @@ function AppointmentForm({
               ))}
             </select>
           </div>
+
+          {/* Doctor */}
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+              Doctor
+            </label>
+            <select
+              value={teamMemberId}
+              onChange={(e) => setTeamMemberId(e.target.value)}
+              className="w-full px-3 py-2 border border-border bg-background text-sm"
+            >
+              <option value="">— fără doctor alocat —</option>
+              {doctors.map((d) => (
+                <option key={d.id} value={d.id}>
+                  {d.name} — {d.role}
+                  {freeSlots[d.id]?.length === 0 ? " (indisponibil)" : ""}
+                </option>
+              ))}
+            </select>
+            <p className="text-[11px] text-muted-foreground mt-1">
+              Alocarea unui doctor rezervă intervalul, astfel încât altcineva
+              să nu poată programa în același timp.
+            </p>
+          </div>
+
+          {/* Free hours for the selected doctor */}
+          {teamMemberId && (
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+                Ore libere
+              </label>
+              {slotsLoading ? (
+                <p className="text-sm text-muted-foreground">Se încarcă...</p>
+              ) : (freeSlots[teamMemberId]?.length ?? 0) === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  Doctorul nu are ore disponibile în această zi.
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {freeSlots[teamMemberId].map((h) => {
+                    const active = Number(dateTime.slice(11, 13)) === h;
+                    return (
+                      <button
+                        key={h}
+                        type="button"
+                        onClick={() =>
+                          setDateTime(
+                            `${dateTime.slice(0, 11)}${String(h).padStart(2, "0")}:00`,
+                          )
+                        }
+                        className={`px-3 py-1.5 text-sm border transition-colors ${
+                          active
+                            ? "bg-foreground text-background border-foreground"
+                            : "bg-background border-border hover:border-foreground/50"
+                        }`}
+                      >
+                        {String(h).padStart(2, "0")}:00
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Date / Duration */}
           <div className="grid grid-cols-2 gap-3">

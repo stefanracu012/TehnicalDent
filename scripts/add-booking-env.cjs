@@ -19,7 +19,7 @@ const additions = [
   "# 2. After approval, copy the auth token from your bot dashboard.",
   "# 3. Leave empty to disable Viber (Telegram still works).",
   'VIBER_BOT_TOKEN=""',
-  'VIBER_SENDER_NAME="TechnicalDent"',
+  'VIBER_SENDER_NAME="TehnicalDent"',
   "",
   "# Secret used to sign public confirm/cancel links (HMAC). Auto-generated.",
   `APPOINTMENT_TOKEN_SECRET="${apptSecret}"`,

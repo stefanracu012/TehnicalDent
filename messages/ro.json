@@ -1,8 +1,8 @@
 {
   "Metadata": {
-    "title": "TehnicalDent | Clinică Stomatologică de Excelență",
-    "description": "Clinica stomatologică TehnicalDent oferă servicii de înaltă calitate în medicina dentară, de la consultații și tratamente preventive până la intervenții complexe de implantologie și estetică dentară.",
-    "keywords": "clinică stomatologică, dentist, implant dentar, estetică dentară, ortodonție, tratament dentar, proteze dentare, dinți, curățare dentară, albire dentară, coroana dentară, fațete dentare, chirurgie orală, parodontologie, endodonție, tratament de canal, extracție dentară, stomatolog, cabinet stomatologic, Chișinău, TechnicalDent, igienă orală, consultație stomatologică, pedodonție, stomatologie pentru copii, durere de dinți, zâmbet perfect, reabilitare orală"
+    "title": "Stomatologie Chișinău, Botanica | TehnicalDent",
+    "description": "Clinică stomatologică în Chișinău, sectorul Botanica — Str. Sarmizegetusa 24/1. Implantologie, ortodonție, estetică dentară, tratament de canal. Programare online.",
+    "keywords": "clinică stomatologică, dentist, implant dentar, estetică dentară, ortodonție, tratament dentar, proteze dentare, dinți, curățare dentară, albire dentară, coroana dentară, fațete dentare, chirurgie orală, parodontologie, endodonție, tratament de canal, extracție dentară, stomatolog, cabinet stomatologic, Chișinău, TehnicalDent, igienă orală, consultație stomatologică, pedodonție, stomatologie pentru copii, durere de dinți, zâmbet perfect, reabilitare orală"
   },
   "Nav": {
     "servicii": "Servicii",
@@ -30,8 +30,8 @@
     "veziToateServiciile": "Vezi toate serviciile"
   },
   "Home": {
-    "heroTitle": "Excelență în medicina dentară modernă",
-    "heroDescription": "La TechnicalDent, combinăm experiența medicală de înaltă clasă cu tehnologia de ultimă generație pentru a vă oferi tratamente stomatologice personalizate. Fiecare pacient beneficiază de atenție individualizată și un plan de tratament adaptat nevoilor sale specifice, într-un mediu confortabil și primitor.",
+    "heroTitle": "Stomatologie de excelență în Chișinău",
+    "heroDescription": "La TehnicalDent, combinăm experiența medicală de înaltă clasă cu tehnologia de ultimă generație pentru a vă oferi tratamente stomatologice personalizate. Fiecare pacient beneficiază de atenție individualizată și un plan de tratament adaptat nevoilor sale specifice, într-un mediu confortabil și primitor.",
     "heroImgAlt": "Medic stomatolog profesionist",
     "programeazaConsultatie": "Programează o consultație",
     "exploreaServiciile": "Explorează serviciile",
@@ -111,21 +111,21 @@
   },
   "About": {
     "metaTitle": "Despre Noi",
-    "metaDescription": "Descoperiți povestea clinicii TechnicalDent, filosofia noastră și echipa de specialiști dedicați sănătății și frumuseții zâmbetului dumneavoastră.",
+    "metaDescription": "Descoperiți povestea clinicii TehnicalDent, filosofia noastră și echipa de specialiști dedicați sănătății și frumuseții zâmbetului dumneavoastră.",
     "breadcrumbAbout": "Despre Noi",
     "heroSubtitle": "Povestea noastră",
-    "heroTitle": "Despre TechnicalDent",
+    "heroTitle": "Despre TehnicalDent",
     "heroDescription": "O clinică fondată pe principiile excelenței, integrității și grijii autentice pentru fiecare pacient.",
     "storySubtitle": "Povestea noastră",
     "storyTitle": "Peste 2 ani de excelență în stomatologie",
-    "storyP1": "TechnicalDent a luat naștere în 2024 din dorința de a crea un spațiu în care medicina dentară de înaltă calitate să întâlnească grija autentică pentru pacient. Fondatorul nostru a pus bazele unei clinici unde fiecare tratament este realizat cu precizie, fiecare pacient este ascultat și fiecare zâmbet contează.",
+    "storyP1": "TehnicalDent a luat naștere în 2024 din dorința de a crea un spațiu în care medicina dentară de înaltă calitate să întâlnească grija autentică pentru pacient. Fondatorul nostru a pus bazele unei clinici unde fiecare tratament este realizat cu precizie, fiecare pacient este ascultat și fiecare zâmbet contează.",
     "storyP2": "De-a lungul anilor, am investit constant în tehnologie de ultimă generație și în formarea continuă a echipei noastre. Am adus în Chișinău tehnici și echipamente care anterior erau disponibile doar în clinicile din Europa de Vest.",
-    "storyP3": "Astăzi, TechnicalDent este recunoscută ca una dintre clinicile de referință din Moldova, cu mii de pacienți mulțumiți și o reputație construită pe rezultate concrete și relații de încredere.",
+    "storyP3": "Astăzi, TehnicalDent este recunoscută ca una dintre clinicile de referință din Moldova, cu mii de pacienți mulțumiți și o reputație construită pe rezultate concrete și relații de încredere.",
     "statFondare": "An fondare",
     "statExperienta": "Ani experiență",
     "statPacienti": "Pacienți",
     "badge": "Ani",
-    "clinicaImgAlt": "Interior clinică TechnicalDent",
+    "clinicaImgAlt": "Interior clinică TehnicalDent",
     "valuesSubtitle": "Filosofia noastră",
     "valuesTitle": "Principii care ne ghidează",
     "valuesDescription": "Fiecare decizie și fiecare tratament sunt fundamentate pe valori care definesc cine suntem.",
@@ -151,7 +151,7 @@
     "veziGaleria": "Vezi galeria foto",
     "ctaSubtitle": "Vino să ne cunoști",
     "ctaTitle": "Primul pas spre un zâmbet sănătos",
-    "ctaDescription": "Suntem bucuroși să răspundem întrebărilor tale și să îți prezentăm clinica. Programează o vizită și descoperă diferența TechnicalDent.",
+    "ctaDescription": "Suntem bucuroși să răspundem întrebărilor tale și să îți prezentăm clinica. Programează o vizită și descoperă diferența TehnicalDent.",
     "programeazaVizita": "Programează o vizită",
     "cabinetConsultatie": "Cabinet consultație",
     "echipamentModern": "Echipament modern"
@@ -197,7 +197,7 @@
   },
   "Services": {
     "metaTitle": "Servicii Stomatologice",
-    "metaDescription": "Descoperiți gama completă de servicii stomatologice oferite de TechnicalDent: implantologie, ortodonție, estetică dentară, chirurgie orală și multe altele.",
+    "metaDescription": "Descoperiți gama completă de servicii stomatologice oferite de TehnicalDent: implantologie, ortodonție, estetică dentară, chirurgie orală și multe altele.",
     "breadcrumbServicii": "Servicii",
     "heroSubtitle": "Ce oferim",
     "heroTitle": "Serviciile Noastre",
@@ -276,11 +276,11 @@
     "termeniConditii": "Termeni și condiții"
   },
   "AboutPreview": {
-    "imgAlt": "Clinică stomatologică TechnicalDent",
+    "imgAlt": "Clinică stomatologică TehnicalDent",
     "badge": "Ani de experiență în stomatologie",
     "subtitle": "Despre noi",
     "title": "O clinică dedicată sănătății și frumuseții zâmbetului dumneavoastră",
-    "p1": "TechnicalDent este mai mult decât o clinică stomatologică – este un loc unde tehnologia avansată întâlnește grija autentică pentru pacient. Cu o echipă de specialiști dedicați și echipamente de ultimă generație, oferim tratamente personalizate pentru fiecare nevoie.",
+    "p1": "TehnicalDent este mai mult decât o clinică stomatologică – este un loc unde tehnologia avansată întâlnește grija autentică pentru pacient. Cu o echipă de specialiști dedicați și echipamente de ultimă generație, oferim tratamente personalizate pentru fiecare nevoie.",
     "p2": "Echipa noastră de medici specialiști aduce împreună decenii de experiență și o pasiune comună pentru excelență. De la consultații detaliate la proceduri complexe, fiecare pas este ghidat de angajamentul nostru față de rezultatele perfecte.",
     "stat1Value": "Modern",
     "stat1Label": "Echipamente de ultimă generație",

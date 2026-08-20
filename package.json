@@ -7,7 +7,10 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
-    "set-webhook": "node scripts/set-webhook.mjs"
+    "set-webhook": "node scripts/set-webhook.mjs",
+    "check-meta": "node scripts/check-meta-access.mjs",
+    "create-admin": "node scripts/create-admin.mjs",
+    "get-page-token": "node scripts/get-page-token.mjs"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
@@ -21,7 +24,8 @@
     "nodemailer": "^8.0.7",
     "prisma": "6.19",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "sharp": "^0.34.5"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

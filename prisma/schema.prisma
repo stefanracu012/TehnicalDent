@@ -193,12 +193,21 @@ model BlogPost {
   coverImage   String
   category     String
   tags         String[]
-  author       String   @default("TechnicalDent")
+  author       String   @default("TehnicalDent")
   isPublished  Boolean  @default(false)
   translations Json?
   publishedAt DateTime?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  // Auto-sharing to the clinic's own Facebook Page and Instagram account.
+  // The two ids double as "already posted" markers, so re-saving a published
+  // article never posts it twice; socialError carries the last failure so the
+  // admin can see why a share did not go out.
+  shareToSocial   Boolean @default(false)
+  facebookPostId  String?
+  instagramPostId String?
+  socialError     String?
 }
 
 // =============================================
