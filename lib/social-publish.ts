@@ -70,7 +70,7 @@ function instagramCta(): string {
   return [
     "———",
     "📅 Programează-te — linkul e în bio",
-    `💬 Scrie-ne pe WhatsApp: ${CLINIC.telephone}`,
+    `💬 Scrie-ne pe WhatsApp: ${CLINIC.telephoneDisplay}`,
     `📍 ${CLINIC.streetAddress}, ${CLINIC.locality}`,
   ].join("\n");
 }

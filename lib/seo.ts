@@ -18,6 +18,9 @@ const CLINIC = {
   postalCode: "MD-2032",
   country: "MD",
   telephone: "+37379950008",
+  // Same number, spaced for reading. Schema.org wants the compact form; people
+  // reading a social post want this one.
+  telephoneDisplay: "+373 799 500 08",
   email: "tehnicaldentmd@gmail.com",
   // Marker coordinates of the Google Maps listing, not the city centroid.
   latitude: 46.9856776,
