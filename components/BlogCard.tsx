@@ -24,7 +24,7 @@ export default function BlogCard({ post, featured = false }: BlogCardProps) {
       <Link href={`/recomandari/${post.slug}`} className="group block">
         <article className="grid grid-cols-1 lg:grid-cols-2 gap-0 bg-background border border-border overflow-hidden hover:border-foreground/20 transition-colors duration-300">
           {/* Image */}
-          <div className="relative aspect-[16/10] lg:aspect-auto overflow-hidden">
+          <div className="relative aspect-square overflow-hidden">
             <Image
               src={post.image}
               alt={post.title}
@@ -113,7 +113,7 @@ export default function BlogCard({ post, featured = false }: BlogCardProps) {
     <Link href={`/recomandari/${post.slug}`} className="group block h-full">
       <article className="h-full bg-background border border-border overflow-hidden hover:border-foreground/20 transition-colors duration-300 flex flex-col">
         {/* Image */}
-        <div className="relative aspect-[16/10] overflow-hidden">
+        <div className="relative aspect-square overflow-hidden">
           <Image
             src={post.image}
             alt={post.title}

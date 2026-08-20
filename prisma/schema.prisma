@@ -211,6 +211,12 @@ model BlogPost {
   facebookCaption  String?
   instagramCaption String?
 
+  // 1200x630 rendering of coverImage for link previews, which crop to 1.91:1
+  // and would otherwise cut the top and bottom off a square cover. Regenerated
+  // whenever coverImage changes; ogImageFor records what it was built from.
+  ogImage    String?
+  ogImageFor String?
+
   // Auto-sharing to the clinic's own Facebook Page and Instagram account.
   // The two ids double as "already posted" markers, so re-saving a published
   // article never posts it twice; socialError carries the last failure so the

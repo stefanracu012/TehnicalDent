@@ -28,6 +28,8 @@ export interface BlogPost {
   /** Search snippet overrides. Fall back to title/excerpt when unset. */
   metaTitle?: string;
   metaDescription?: string;
+  /** 1200x630 rendering for link previews; falls back to the cover. */
+  ogImage?: string;
 }
 
 export const categories = [
@@ -263,6 +265,7 @@ function dbPostToBlogPost(dbPost: {
   translations?: TranslationsMap | null;
   metaTitle?: string | null;
   metaDescription?: string | null;
+  ogImage?: string | null;
 }, locale?: string): BlogPost {
   // Localize before transforming if locale provided
   const post = locale ? localizeBlogPost(dbPost, locale) : dbPost;
@@ -301,6 +304,7 @@ function dbPostToBlogPost(dbPost: {
       role: "Echipa TehnicalDent",
     },
     tags: post.tags as string[],
+    ogImage: dbPost.ogImage ?? undefined,
     // Only the Romanian originals — a translated article should not inherit a
     // Romanian search snippet, so these stay undefined for other locales.
     ...(!locale || locale === "ro"

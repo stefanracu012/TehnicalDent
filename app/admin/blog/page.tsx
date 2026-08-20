@@ -158,9 +158,11 @@ export default function AdminBlogPage() {
                 key={post.id}
                 className="bg-background border border-border p-4 sm:p-6 flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-6"
               >
-                {/* Cover Image Thumbnail */}
+                {/* Square, so the list shows the same framing the article and
+                    the social post use. */}
                 {post.coverImage && (
-                  <div className="flex-shrink-0 w-full sm:w-32 h-40 sm:h-20 bg-muted overflow-hidden rounded sm:rounded-none">
+                  <div className="flex-shrink-0 w-24 aspect-square bg-muted overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={post.coverImage}
                       alt={post.title}

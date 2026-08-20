@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { sanitizeObject, validateNoInjection } from "@/lib/security";
-import { shareBlogPostById } from "@/lib/social-publish";
+import { shareBlogPostById, ensureOgImage } from "@/lib/social-publish";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -61,6 +61,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       where: { id },
       data: body,
     });
+    await ensureOgImage(post.id);
     revalidatePath("/", "layout");
 
     // Runs on every save but only acts the first time an article is both

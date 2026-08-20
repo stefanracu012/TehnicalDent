@@ -50,7 +50,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: post.title,
       description: post.excerpt,
       type: "article",
-      ...(post.image ? { images: [{ url: post.image }] } : {}),
+      // Link previews crop to 1.91:1, so use the rendering built for that
+      // shape rather than the square cover, which would lose its top and bottom.
+      ...(post.ogImage || post.image
+        ? { images: [{ url: post.ogImage || post.image }] }
+        : {}),
     },
   };
 }
@@ -112,24 +116,16 @@ export default async function BlogPostPage({ params }: Props) {
           },
         ]}
       />
-      {/* Hero Image */}
-      <section className="relative pt-[11rem]">
-        <div className="relative aspect-[21/9] max-h-[500px] w-full overflow-hidden">
-          <Image
-            src={post.image}
-            alt={post.title}
-            fill
-            className="object-cover"
-            sizes="100vw"
-            priority
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-black/10" />
-
-          {/* Back button */}
-          <div className="absolute top-6 left-6 z-10">
+      {/* Hero Image — square, matching the format the article is published in
+          on social. Width tracks the article column below so the two align. */}
+      <section className="pt-[11rem]">
+        <div className="mx-auto max-w-3xl px-6 lg:px-8">
+          {/* Above the image rather than over it, so it needs no scrim to stay
+              readable and cannot cover part of the photo. */}
+          <div className="mb-5">
             <Link
               href="/recomandari"
-              className="inline-flex items-center gap-2 bg-white/90 backdrop-blur-sm px-4 py-2.5 text-xs font-medium uppercase tracking-widest text-foreground hover:bg-background transition-colors duration-200"
+              className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-medium uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors duration-200"
             >
               <svg
                 className="w-4 h-4"
@@ -146,6 +142,17 @@ export default async function BlogPostPage({ params }: Props) {
               </svg>
               {t("inapoiLaBlog")}
             </Link>
+          </div>
+
+          <div className="relative aspect-square w-full overflow-hidden bg-muted">
+            <Image
+              src={post.image}
+              alt={post.title}
+              fill
+              className="object-cover"
+              sizes="(max-width: 768px) 100vw, 768px"
+              priority
+            />
           </div>
         </div>
       </section>
@@ -241,7 +248,7 @@ export default async function BlogPostPage({ params }: Props) {
                       {/* Section image */}
                       {section.imageUrl && (
                         <figure className="my-6">
-                          <div className="relative aspect-[16/10] w-full overflow-hidden rounded-xl">
+                          <div className="relative aspect-square w-full overflow-hidden rounded-xl">
                             <Image
                               src={section.imageUrl}
                               alt={

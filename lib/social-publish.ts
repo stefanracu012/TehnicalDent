@@ -30,7 +30,8 @@ const SITE_URL = (
 const IG_CAPTION_LIMIT = 2200;
 
 export function isFacebookPublishConfigured(): boolean {
-  return Boolean(PAGE_TOKEN && PAGE_ID);
+  // Blob storage included: the cover is re-rendered square before posting.
+  return Boolean(PAGE_TOKEN && PAGE_ID && BLOB_TOKEN);
 }
 
 export function isInstagramPublishConfigured(): boolean {
@@ -57,9 +58,12 @@ export interface ShareablePost {
  * without a role on the app never reach the inbox, so inviting them would
  * send patients into silence.
  */
-function facebookCta(): string {
+function facebookCta(slug: string): string {
   return [
     "———",
+    // Photo posts carry no preview card, so the article link has to be spelled
+    // out here. Facebook makes bare URLs in post text clickable.
+    `📖 Articolul complet: ${articleUrl(slug)}`,
     `📅 Programează-te: ${SITE_URL}/ro/contact`,
     `💬 WhatsApp: https://wa.me/${CLINIC.telephone.replace("+", "")}`,
     `📍 ${CLINIC.streetAddress}, ${CLINIC.locality}`,
@@ -106,9 +110,12 @@ async function graphPost(
 // ── Facebook ────────────────────────────────────────────────────────────────
 
 /**
- * Posts the article as a link share. Facebook builds the preview card from the
- * page's OpenGraph tags, so the post stays clickable and drives traffic back to
- * the site — which a photo post would not.
+ * Posts the article as a square photo.
+ *
+ * A link share would be more clickable, but Facebook crops preview cards to
+ * 1.91:1 and the covers are designed square — the crop cut the headline off the
+ * top and the logo off the bottom. A photo post shows the image whole, matching
+ * Instagram, and the links live in the caption instead.
  */
 export async function publishToFacebook(post: ShareablePost): Promise<string> {
   if (!isFacebookPublishConfigured()) {
@@ -116,52 +123,98 @@ export async function publishToFacebook(post: ShareablePost): Promise<string> {
       "Facebook publishing not configured (FACEBOOK_PAGE_ACCESS_TOKEN, FACEBOOK_PAGE_ID)",
     );
   }
+  if (!post.coverImage) {
+    throw new Error("the article has no cover image to post");
+  }
 
-  const body = await graphPost(`${PAGE_ID}/feed`, {
-    message: [
+  const body = await graphPost(`${PAGE_ID}/photos`, {
+    // Larger than Instagram's 1080 because Facebook renders photos bigger on
+    // desktop and will downscale, never upscale.
+    url: await toSquareImage(post.coverImage, 1440),
+    caption: [
       post.facebookCaption?.trim() || [post.title, post.excerpt].join("\n\n"),
       "",
-      facebookCta(),
+      facebookCta(post.slug),
     ].join("\n"),
-    link: articleUrl(post.slug),
   });
 
-  return body.id;
+  // /photos returns the photo id plus the id of the post wrapping it; the post
+  // id is what identifies the thing on the page.
+  return body.post_id || body.id;
 }
 
 // ── Instagram ───────────────────────────────────────────────────────────────
 
 /**
- * Instagram only accepts JPEG, and rejects anything outside a 4:5–1.91:1 aspect
- * ratio. Cover images are uploaded as PNG/WebP/AVIF at arbitrary sizes, so they
- * are normalised to a padded 1080×1080 JPEG — always a valid ratio, and padding
- * rather than cropping keeps the whole image visible.
+ * Normalises a cover to a square JPEG for both networks.
+ *
+ * Instagram accepts JPEG only and rejects anything outside 4:5–1.91:1, while
+ * covers arrive as PNG/WebP/AVIF at whatever size the designer exported. Padding
+ * rather than cropping means a cover that is not quite square still shows whole.
  *
  * Meta fetches the image itself, so the result has to live at a public URL.
  */
-async function toInstagramImage(coverImage: string): Promise<string> {
+async function toSquareImage(coverImage: string, size: number): Promise<string> {
   const source = coverImage.startsWith("http")
     ? coverImage
     : `${SITE_URL}${coverImage}`;
-
-  if (/\.jpe?g($|\?)/i.test(source)) return source;
 
   const res = await fetch(source);
   if (!res.ok) {
     throw new Error(`could not read cover image (HTTP ${res.status})`);
   }
 
-  // Imported lazily so a missing native binary cannot break the Facebook path.
+  // Imported lazily so a missing native binary cannot break everything else.
   const sharp = (await import("sharp")).default;
   const jpeg = await sharp(Buffer.from(await res.arrayBuffer()))
-    .resize(1080, 1080, {
+    .resize(size, size, {
       fit: "contain",
       background: { r: 255, g: 255, b: 255 },
     })
-    .jpeg({ quality: 88 })
+    .jpeg({ quality: 90 })
     .toBuffer();
 
-  const { url } = await put(`instagram/${Date.now()}.jpg`, jpeg, {
+  const { url } = await put(`social/${Date.now()}-${size}.jpg`, jpeg, {
+    access: "public",
+    contentType: "image/jpeg",
+    token: BLOB_TOKEN,
+  });
+  return url;
+}
+
+/**
+ * Renders a cover into the 1200x630 that link previews expect.
+ *
+ * Facebook crops whatever it is given to 1.91:1, which decapitates a square
+ * cover — text at the top and a logo at the bottom simply disappear. So the
+ * cover is contained at full height in the middle, and the gap on either side
+ * is filled with a blurred, zoomed copy of the same image. Nothing is lost and
+ * the result reads as deliberate rather than letterboxed.
+ */
+export async function toOpenGraphImage(coverImage: string): Promise<string> {
+  if (!BLOB_TOKEN) throw new Error("blob storage is not configured");
+
+  const source = coverImage.startsWith("http")
+    ? coverImage
+    : `${SITE_URL}${coverImage}`;
+  const res = await fetch(source);
+  if (!res.ok) {
+    throw new Error(`could not read cover image (HTTP ${res.status})`);
+  }
+  const input = Buffer.from(await res.arrayBuffer());
+
+  const sharp = (await import("sharp")).default;
+  const [background, foreground] = await Promise.all([
+    sharp(input).resize(1200, 630, { fit: "cover" }).blur(40).toBuffer(),
+    sharp(input).resize(630, 630, { fit: "contain" }).toBuffer(),
+  ]);
+
+  const jpeg = await sharp(background)
+    .composite([{ input: foreground, gravity: "center" }])
+    .jpeg({ quality: 90 })
+    .toBuffer();
+
+  const { url } = await put(`og/${Date.now()}.jpg`, jpeg, {
     access: "public",
     contentType: "image/jpeg",
     token: BLOB_TOKEN,
@@ -207,7 +260,7 @@ export async function publishToInstagram(post: ShareablePost): Promise<string> {
     throw new Error("the article has no cover image, and Instagram requires one");
   }
 
-  const imageUrl = await toInstagramImage(post.coverImage);
+  const imageUrl = await toSquareImage(post.coverImage, 1080);
 
   const container = await graphPost(`${IG_USER_ID}/media`, {
     image_url: imageUrl,
@@ -258,6 +311,34 @@ export async function shareBlogPost(
   }
 
   return result;
+}
+
+/**
+ * Makes sure the article has a link-preview image matching its current cover.
+ *
+ * Runs on save rather than at share time because the OpenGraph tag has to be
+ * right for anyone who pastes the URL into WhatsApp or a chat, not only for the
+ * automatic posts. Cheap after the first call: it exits unless the cover changed.
+ *
+ * Never throws — a cover that cannot be rendered must not block saving an article.
+ */
+export async function ensureOgImage(id: string): Promise<void> {
+  try {
+    const post = await prisma.blogPost.findUnique({
+      where: { id },
+      select: { coverImage: true, ogImage: true, ogImageFor: true },
+    });
+    if (!post?.coverImage) return;
+    if (post.ogImage && post.ogImageFor === post.coverImage) return;
+
+    const ogImage = await toOpenGraphImage(post.coverImage);
+    await prisma.blogPost.update({
+      where: { id },
+      data: { ogImage, ogImageFor: post.coverImage },
+    });
+  } catch (error) {
+    console.error("OpenGraph image generation failed:", error);
+  }
 }
 
 /**

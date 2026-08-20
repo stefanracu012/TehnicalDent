@@ -9,6 +9,12 @@ interface ImageUploadProps {
   folder: string;
   label?: string;
   className?: string;
+  /**
+   * Adds a 1:1 preview of what auto-publishing will send to Instagram. The
+   * white square with the image contained inside is not an approximation —
+   * it mirrors the sharp resize in lib/social-publish.ts exactly.
+   */
+  squarePreview?: boolean;
 }
 
 export default function ImageUpload({
@@ -17,6 +23,7 @@ export default function ImageUpload({
   folder,
   label = "Imagine",
   className = "",
+  squarePreview = false,
 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
@@ -154,6 +161,31 @@ export default function ImageUpload({
           </div>
         )}
       </div>
+
+      {squarePreview && value && !imgError && (
+        <div className="mt-3 flex items-start gap-4">
+          <div className="w-36 shrink-0">
+            <p className="text-xs text-muted-foreground mb-1.5">
+              Cum apare pe Instagram
+            </p>
+            {/* White background + object-contain reproduces the server-side
+                resize byte for byte, so what is shown here is what gets posted. */}
+            <div className="aspect-square bg-white border border-border flex items-center justify-center overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={value}
+                alt="Previzualizare pătrată"
+                className="max-w-full max-h-full object-contain"
+              />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground pt-6 leading-relaxed">
+            Instagram refuză imaginile care nu sunt pătrate sau apropiate de
+            pătrat, așa că a ta se încadrează pe fundal alb — nu se decupează
+            nimic. O copertă deja pătrată umple tot cadrul.
+          </p>
+        </div>
+      )}
 
       {/* Manual URL input */}
       <div className="mt-2">

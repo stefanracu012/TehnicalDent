@@ -349,6 +349,7 @@ export default function EditBlogPostPage({
             {/* Cover Image - RO only */}
             {activeLocale === "ro" && (
               <ImageUpload
+                squarePreview
                 value={formData.coverImage}
                 onChange={(url) =>
                   setFormData((p) => ({ ...p, coverImage: url }))

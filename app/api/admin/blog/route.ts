@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import prisma from "@/lib/prisma";
 import { sanitizeObject, validateNoInjection } from "@/lib/security";
-import { shareBlogPostById } from "@/lib/social-publish";
+import { shareBlogPostById, ensureOgImage } from "@/lib/social-publish";
 
 export async function GET() {
   try {
@@ -72,6 +72,7 @@ export async function POST(request: Request) {
       },
     });
 
+    await ensureOgImage(post.id);
     revalidatePath("/", "layout");
 
     // The article is already saved, so a Meta outage must not turn this into a
