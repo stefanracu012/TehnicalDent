@@ -247,6 +247,60 @@ const ARTICLE_SCHEMA = {
   },
 };
 
+/** Editor-chosen shape of the draft. Everything is optional; defaults below. */
+export interface DraftOptions {
+  category?: string;
+  length?: "scurt" | "mediu" | "lung";
+  tone?: "informativ" | "cald" | "profesional";
+  includeFaq?: boolean;
+  includeMyths?: boolean;
+  includeWarnings?: boolean;
+  includePrices?: boolean;
+  avoid?: string;
+}
+
+const LENGTHS: Record<string, string> = {
+  scurt: "3-4 secțiuni, fiecare cu 2 paragrafe",
+  mediu: "4-6 secțiuni, fiecare cu 2-4 paragrafe",
+  lung: "7-9 secțiuni, fiecare cu 3-4 paragrafe",
+};
+
+const TONES: Record<string, string> = {
+  informativ: "Ton neutru și explicativ, ca o fișă de informare.",
+  cald: "Ton cald și liniștitor, potrivit pentru pacienți anxioși.",
+  profesional: "Ton profesional și concis, potrivit pentru cititori informați.",
+};
+
+/** Turns the editor's checkboxes into instructions the model can follow. */
+function optionRules(opts: DraftOptions): string {
+  const lines: string[] = [
+    `- ${LENGTHS[opts.length ?? "mediu"]}.`,
+    `- ${TONES[opts.tone ?? "informativ"]}`,
+  ];
+
+  if (opts.includeFaq) {
+    lines.push("- Include o secțiune de întrebări frecvente, cu 4-6 întrebări scurte și răspunsurile lor.");
+  }
+  if (opts.includeMyths) {
+    lines.push("- Include o secțiune care combate miturile răspândite despre acest subiect.");
+  }
+  if (opts.includeWarnings) {
+    lines.push("- Include o secțiune cu semnalele care cer o vizită urgentă la medic. Descrie simptomele, fără să spui cititorului ce boală are.");
+  }
+  // Off by default: prices change, and a stale number in an article is worse
+  // than no number. Only mention them in general terms when asked.
+  lines.push(
+    opts.includePrices
+      ? "- Poți vorbi despre costuri doar în termeni generali (ce influențează prețul), niciodată cu sume concrete."
+      : "- Nu menționa deloc costuri sau prețuri.",
+  );
+  if (opts.avoid?.trim()) {
+    lines.push(`- De evitat, la cererea editorului: ${opts.avoid.trim()}`);
+  }
+
+  return lines.join("\n");
+}
+
 /**
  * Written once and appended to both prompts. The city belongs in the search
  * snippet because the clinic competes locally, and the captions are separated
@@ -267,9 +321,8 @@ SEO (pentru Google):
 - Poate să difere de titlu și rezumat: un H1 bun se citește altfel decât un titlu bun în Google.
 
 Text (pentru cititor):
-- 4-6 secțiuni, fiecare cu titlu de subcapitol și 2-4 paragrafe.
+- Fiecare secțiune are titlu de subcapitol.
 - Prima secțiune răspunde direct la întrebarea din titlu, în primele două propoziții.
-- Include o secțiune de întrebări frecvente dacă subiectul o justifică.
 - Ultima secțiune îndeamnă la consultație, fără presiune.
 - 4-8 etichete (tags) scurte, cu litere mici.
 - Text simplu, fără Markdown, fără HTML. Paragrafele se despart prin linie goală.
@@ -288,7 +341,7 @@ Instagram (instagramCaption):
 
 export async function generateArticle(
   topic: string,
-  category?: string,
+  opts: DraftOptions = {},
 ): Promise<ArticleDraft> {
   const context = await clinicContext();
 
@@ -297,7 +350,10 @@ export async function generateArticle(
     schema: ARTICLE_SCHEMA,
     user: `${context}
 
-Scrie un articol complet pe subiectul: "${topic}"${category ? `\nCategoria: ${category}` : ""}
+Scrie un articol complet pe subiectul: "${topic}"${opts.category ? `\nCategoria: ${opts.category}` : ""}
+
+Cerințe alese de editor:
+${optionRules(opts)}
 ${OUTPUT_RULES}`,
   });
 }

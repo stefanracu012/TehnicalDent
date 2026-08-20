@@ -37,7 +37,16 @@ export async function POST(request: Request) {
             { status: 400 },
           );
         }
-        const draft = await generateArticle(body.topic.trim(), body.category);
+        const draft = await generateArticle(body.topic.trim(), {
+          category: body.category,
+          length: body.length,
+          tone: body.tone,
+          includeFaq: body.includeFaq,
+          includeMyths: body.includeMyths,
+          includeWarnings: body.includeWarnings,
+          includePrices: body.includePrices,
+          avoid: body.avoid,
+        });
         return NextResponse.json({ draft });
       }
 
