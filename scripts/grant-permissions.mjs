@@ -85,17 +85,22 @@ try {
     } else if (user.permissions.includes("*")) {
       console.log(`${email} este proprietarul și are deja acces complet.`);
     } else {
-      const missing = all.filter((p) => !user.permissions.includes(p));
+      const before = [...user.permissions];
+      const missing = all.filter((p) => !before.includes(p));
+
       await prisma.adminUser.update({
         where: { email },
         data: { permissions: all },
       });
-      console.log(`${email}: ${all.length} permisiuni (parola neatinsă)`);
-      console.log(
-        missing.length
-          ? `  adăugate: ${missing.join(", ")}`
-          : "  nu lipsea nimic",
-      );
+
+      // Counts rather than a verdict: a wrong "nothing was missing" next to a
+      // list that just grew by two is worse than no message at all.
+      console.log(`${email} — parola neatinsă`);
+      console.log(`  înainte: ${before.length} permisiuni`);
+      console.log(`  acum   : ${all.length} permisiuni`);
+      if (missing.length) {
+        console.log(`  adăugate: ${missing.join(", ")}`);
+      }
     }
     if (owner === email) {
       console.log("  (acesta e și ADMIN_EMAIL)");
