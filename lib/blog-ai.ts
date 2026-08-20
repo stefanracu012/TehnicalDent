@@ -416,9 +416,12 @@ Aceasta NU este un articol de blog. Nu există pagină pe site în spatele ei, d
 Cerințe:
 - ${POST_LENGTHS[opts.length ?? "mediu"]}.
 - ${TONES[opts.tone ?? "cald"]}
-${slides > 1 ? `- Textul însoțește un carusel de ${slides} imagini. Structurează-l ca ${slides} idei distincte, în ordine, câte una pentru fiecare imagine.\n` : ""}${opts.askQuestion ? "- Termină cu o întrebare care invită la comentarii.\n" : ""}${opts.avoid?.trim() ? `- De evitat: ${opts.avoid.trim()}\n` : ""}- title: o etichetă scurtă, doar pentru uz intern în panoul de administrare. Nu se publică nicăieri.
-- facebookCaption: ton de conversație. Prima propoziție oprește derularea.
-- instagramCaption: prima propoziție funcționează singură, restul se ascunde după „mai mult". Linie goală între idei.
+${slides > 1 ? `- Textul însoțește un carusel de ${slides} imagini. Structurează-l ca ${slides} idei distincte, în ordine, câte una pentru fiecare imagine.\n` : ""}${opts.askQuestion ? "- Termină cu o întrebare care invită la comentarii.\n" : ""}${opts.avoid?.trim() ? `- De evitat: ${opts.avoid.trim()}\n` : ""}- title: o etichetă scurtă în limbaj normal, cu spații și majusculă la început, ca un titlu de rând într-o listă. Exemplu: "Obiceiuri care pătează dinții". Fără underscore, fără cratime, fără litere lipite. Nu se publică nicăieri.
+
+facebookCaption și instagramCaption sunt DOUĂ texte diferite. Nu copia unul în celălalt și nu le face aproape la fel — sunt platforme cu obiceiuri diferite de citire:
+- facebookCaption: paragrafe curgătoare, ton de conversație, ca și cum ai explica unui pacient în cabinet. Poate fi mai lung și mai explicativ.
+- instagramCaption: prima propoziție trebuie să funcționeze complet singură, fiindcă restul se ascunde după „mai mult". Apoi propoziții scurte, cu linie goală între idei. Mai direct și mai tăiat decât varianta de Facebook.
+
 - Niciun link și niciun îndemn la programare în text — se adaugă automat la final.
 - Fără hashtag-uri în text; pune 4-8 etichete în tags, cu litere mici.`,
   });
