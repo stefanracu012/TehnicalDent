@@ -59,14 +59,16 @@ export interface ShareablePost {
  * grants Advanced Access for instagram_manage_messages, DMs from anyone
  * without a role on the app never reach the inbox, so inviting them would
  * send patients into silence.
+ *
+ * @param articleSlug article to send readers to, or null for a standalone post.
  */
-function facebookCta(slug: string, linkToArticle: boolean): string {
+function facebookCta(articleSlug: string | null): string {
   return [
     "———",
     // Photo posts carry no preview card, so the article link has to be spelled
     // out here. Facebook makes bare URLs in post text clickable.
-    ...(linkToArticle
-      ? [`📖 Continuă să citești: ${articleUrl(slug)}`]
+    ...(articleSlug
+      ? [`📖 Continuă să citești: ${articleUrl(articleSlug)}`]
       : []),
     `📅 Programează-te: ${SITE_URL}/ro/contact`,
     `💬 WhatsApp: https://wa.me/${CLINIC.telephone.replace("+", "")}`,
@@ -74,11 +76,11 @@ function facebookCta(slug: string, linkToArticle: boolean): string {
   ].join("\n");
 }
 
-function instagramCta(linkToArticle: boolean): string {
+function instagramCta(articleSlug: string | null): string {
   return [
     "———",
     // No clickable links here, so both asks route through the bio link.
-    ...(linkToArticle ? ["📖 Articolul complet — linkul e în bio"] : []),
+    ...(articleSlug ? ["📖 Articolul complet — linkul e în bio"] : []),
     "📅 Programează-te — linkul e în bio",
     `💬 Scrie-ne pe WhatsApp: ${CLINIC.telephoneDisplay}`,
     `📍 ${CLINIC.streetAddress}, ${CLINIC.locality}`,
@@ -140,7 +142,7 @@ export async function publishToFacebook(post: ShareablePost): Promise<string> {
     caption: [
       post.facebookCaption?.trim() || [post.title, post.excerpt].join("\n\n"),
       "",
-      facebookCta(post.slug, post.linkToArticle ?? true),
+      facebookCta(post.linkToArticle === false ? null : post.slug),
     ].join("\n"),
   });
 
@@ -233,25 +235,30 @@ export async function toOpenGraphImage(coverImage: string): Promise<string> {
  * left out on purpose: Instagram shows it as dead text, and a long unclickable
  * link reads as spam. "Link în bio" carries it instead.
  */
-function buildInstagramCaption(post: ShareablePost): string {
-  const hashtags = (post.tags ?? [])
+function buildCaption(body: string, cta: string, tags: string[]): string {
+  const hashtags = tags
     .slice(0, 8)
     .map((t) => `#${t.replace(/[^\p{L}\p{N}]/gu, "")}`)
     .filter((t) => t.length > 1)
     .join(" ");
 
-  const tail = ["", instagramCta(post.linkToArticle ?? true), hashtags]
-    .filter(Boolean)
-    .join("\n");
+  const tail = ["", cta, hashtags].filter(Boolean).join("\n");
 
   // The tail is fixed, so the body is what gets trimmed to fit.
   const room = IG_CAPTION_LIMIT - tail.length - 2;
-  let head =
-    post.instagramCaption?.trim() ||
-    [post.title, post.excerpt].filter(Boolean).join("\n\n");
-  if (head.length > room) head = `${head.slice(0, room - 1).trimEnd()}…`;
+  const head =
+    body.length > room ? `${body.slice(0, room - 1).trimEnd()}…` : body;
 
   return `${head}\n${tail}`;
+}
+
+function buildInstagramCaption(post: ShareablePost): string {
+  return buildCaption(
+    post.instagramCaption?.trim() ||
+      [post.title, post.excerpt].filter(Boolean).join("\n\n"),
+    instagramCta(post.linkToArticle === false ? null : post.slug),
+    post.tags ?? [],
+  );
 }
 
 /**
@@ -317,6 +324,161 @@ export async function shareBlogPost(
       result.errors.push(`Instagram: ${(error as Error).message}`);
     }
   }
+
+  return result;
+}
+
+// ── Standalone social posts (no article behind them) ────────────────────────
+
+/** Meta's ceiling for a carousel, and the reason the editor is capped at 10. */
+const MAX_CAROUSEL = 10;
+
+interface PublishableSocialPost {
+  images: string[];
+  facebookCaption: string;
+  instagramCaption: string;
+  tags: string[];
+  articleSlug: string | null;
+}
+
+/**
+ * Posts up to ten photos to the Page as one album.
+ *
+ * Each photo is uploaded unpublished first — that returns an id without putting
+ * anything on the page — and the ids are then attached to a single feed post.
+ * Uploading them published would scatter ten separate posts across the page.
+ */
+async function publishAlbumToFacebook(
+  post: PublishableSocialPost,
+): Promise<string> {
+  const images = post.images.slice(0, MAX_CAROUSEL);
+  const caption = [post.facebookCaption.trim(), "", facebookCta(post.articleSlug)]
+    .join("\n")
+    .trim();
+
+  if (images.length === 1) {
+    const body = await graphPost(`${PAGE_ID}/photos`, {
+      url: await toSquareImage(images[0], 1440),
+      caption,
+    });
+    return body.post_id || body.id;
+  }
+
+  const ids = await Promise.all(
+    images.map(async (image) => {
+      const body = await graphPost(`${PAGE_ID}/photos`, {
+        url: await toSquareImage(image, 1440),
+        published: "false",
+      });
+      return body.id;
+    }),
+  );
+
+  const body = await graphPost(`${PAGE_ID}/feed`, {
+    message: caption,
+    attached_media: JSON.stringify(ids.map((id) => ({ media_fbid: id }))),
+  });
+  return body.id;
+}
+
+/**
+ * Publishes one photo, or a carousel of up to ten.
+ *
+ * A carousel takes three rounds of calls: a container per image flagged as a
+ * carousel item, a parent container listing those children, then the publish.
+ * Instagram rejects a carousel of one, so a single image takes the plain path.
+ */
+async function publishCarouselToInstagram(
+  post: PublishableSocialPost,
+): Promise<string> {
+  const images = post.images.slice(0, MAX_CAROUSEL);
+
+  const caption = buildCaption(
+    post.instagramCaption,
+    instagramCta(post.articleSlug),
+    post.tags,
+  );
+
+  let containerId: string;
+  if (images.length === 1) {
+    const container = await graphPost(`${IG_USER_ID}/media`, {
+      image_url: await toSquareImage(images[0], 1080),
+      caption,
+    });
+    containerId = container.id;
+  } else {
+    const children = await Promise.all(
+      images.map(async (image) => {
+        const child = await graphPost(`${IG_USER_ID}/media`, {
+          image_url: await toSquareImage(image, 1080),
+          is_carousel_item: "true",
+        });
+        return child.id;
+      }),
+    );
+
+    const parent = await graphPost(`${IG_USER_ID}/media`, {
+      media_type: "CAROUSEL",
+      children: children.join(","),
+      caption,
+    });
+    containerId = parent.id;
+  }
+
+  const published = await graphPost(`${IG_USER_ID}/media_publish`, {
+    creation_id: containerId,
+  });
+  return published.id;
+}
+
+/**
+ * Publishes a social post to both networks and records the outcome. Mirrors
+ * shareBlogPostById: never throws, and skips whatever already went out.
+ */
+export async function publishSocialPostById(
+  id: string,
+): Promise<ShareResult | null> {
+  const post = await prisma.socialPost.findUnique({ where: { id } });
+  if (!post?.isPublished || post.images.length === 0) return null;
+
+  const payload: PublishableSocialPost = {
+    images: post.images,
+    facebookCaption: post.facebookCaption,
+    instagramCaption: post.instagramCaption,
+    tags: post.tags,
+    articleSlug: post.articleSlug,
+  };
+
+  const result: ShareResult = {
+    facebookPostId: null,
+    instagramPostId: null,
+    errors: [],
+  };
+
+  if (!post.facebookPostId && isFacebookPublishConfigured()) {
+    try {
+      result.facebookPostId = await publishAlbumToFacebook(payload);
+    } catch (error) {
+      result.errors.push(`Facebook: ${(error as Error).message}`);
+    }
+  }
+
+  if (!post.instagramPostId && isInstagramPublishConfigured()) {
+    try {
+      result.instagramPostId = await publishCarouselToInstagram(payload);
+    } catch (error) {
+      result.errors.push(`Instagram: ${(error as Error).message}`);
+    }
+  }
+
+  await prisma.socialPost.update({
+    where: { id },
+    data: {
+      facebookPostId: result.facebookPostId ?? post.facebookPostId,
+      instagramPostId: result.instagramPostId ?? post.instagramPostId,
+      socialError: result.errors.length ? result.errors.join(" · ") : null,
+    },
+  });
 
   return result;
 }

@@ -4,6 +4,7 @@ import {
   suggestTopics,
   generateArticle,
   reviseArticle,
+  generateSocialPost,
   type ArticleDraft,
 } from "@/lib/blog-ai";
 
@@ -45,6 +46,23 @@ export async function POST(request: Request) {
           includeMyths: body.includeMyths,
           includeWarnings: body.includeWarnings,
           includePrices: body.includePrices,
+          avoid: body.avoid,
+        });
+        return NextResponse.json({ draft });
+      }
+
+      case "generate-post": {
+        if (!body.topic?.trim()) {
+          return NextResponse.json(
+            { error: "Lipsește subiectul postării." },
+            { status: 400 },
+          );
+        }
+        const draft = await generateSocialPost(body.topic.trim(), {
+          tone: body.tone,
+          length: body.length,
+          carouselSlides: body.carouselSlides,
+          askQuestion: body.askQuestion,
           avoid: body.avoid,
         });
         return NextResponse.json({ draft });

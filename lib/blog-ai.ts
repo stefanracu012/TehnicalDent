@@ -358,6 +358,72 @@ ${OUTPUT_RULES}`,
   });
 }
 
+// ── Standalone social posts ─────────────────────────────────────────────────
+
+export interface SocialPostDraft {
+  title: string;
+  facebookCaption: string;
+  instagramCaption: string;
+  tags: string[];
+}
+
+export interface SocialPostOptions {
+  tone?: "informativ" | "cald" | "profesional";
+  length?: "scurt" | "mediu" | "lung";
+  carouselSlides?: number;
+  askQuestion?: boolean;
+  avoid?: string;
+}
+
+const POST_LENGTHS: Record<string, string> = {
+  scurt: "3-4 propoziții scurte",
+  mediu: "6-8 propoziții, grupate în 2-3 paragrafe",
+  lung: "10-14 propoziții, grupate în 4-5 paragrafe scurte",
+};
+
+/**
+ * Copy for a post that lives only on Facebook and Instagram.
+ *
+ * Longer than the teaser written for an article, because there is nothing to
+ * click through to — the caption has to carry the whole idea by itself.
+ */
+export async function generateSocialPost(
+  topic: string,
+  opts: SocialPostOptions = {},
+): Promise<SocialPostDraft> {
+  const context = await clinicContext();
+  const slides = opts.carouselSlides ?? 1;
+
+  return chatJson<SocialPostDraft>({
+    schemaName: "social_post",
+    schema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["title", "facebookCaption", "instagramCaption", "tags"],
+      properties: {
+        title: { type: "string" },
+        facebookCaption: { type: "string" },
+        instagramCaption: { type: "string" },
+        tags: { type: "array", items: { type: "string" } },
+      },
+    },
+    user: `${context}
+
+Scrie o postare pentru rețelele sociale despre: "${topic}"
+
+Aceasta NU este un articol de blog. Nu există pagină pe site în spatele ei, deci textul trebuie să spună tot ce are de spus singur.
+
+Cerințe:
+- ${POST_LENGTHS[opts.length ?? "mediu"]}.
+- ${TONES[opts.tone ?? "cald"]}
+${slides > 1 ? `- Textul însoțește un carusel de ${slides} imagini. Structurează-l ca ${slides} idei distincte, în ordine, câte una pentru fiecare imagine.\n` : ""}${opts.askQuestion ? "- Termină cu o întrebare care invită la comentarii.\n" : ""}${opts.avoid?.trim() ? `- De evitat: ${opts.avoid.trim()}\n` : ""}- title: o etichetă scurtă, doar pentru uz intern în panoul de administrare. Nu se publică nicăieri.
+- facebookCaption: ton de conversație. Prima propoziție oprește derularea.
+- instagramCaption: prima propoziție funcționează singură, restul se ascunde după „mai mult". Linie goală între idei.
+- Niciun link și niciun îndemn la programare în text — se adaugă automat la final.
+- Fără hashtag-uri în text; pune 4-8 etichete în tags, cu litere mici.`,
+  });
+}
+
 // ── Revision ────────────────────────────────────────────────────────────────
 
 export async function reviseArticle(

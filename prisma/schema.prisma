@@ -235,6 +235,38 @@ model BlogPost {
 // Booking module: Patients, Appointments, Notifications
 // =============================================
 
+/**
+ * A post that lives only on Facebook and Instagram — no page on the site.
+ *
+ * Kept apart from BlogPost rather than flagged inside it: a social post has no
+ * slug, no sections and no search snippet, and forcing those to be optional
+ * would weaken the article model for every real article.
+ */
+model SocialPost {
+  id    String @id @default(auto()) @map("_id") @db.ObjectId
+  // Internal label for the admin list; never published anywhere.
+  title String
+  // 1-10 images. The first is the one Facebook and Instagram show first, and
+  // the only one used when there is no carousel.
+  images String[]
+
+  facebookCaption  String
+  instagramCaption String
+  tags             String[]
+  // Slug of a related article, when the post is meant to drive traffic to one.
+  articleSlug String?
+
+  isPublished Boolean   @default(false)
+  publishedAt DateTime?
+
+  facebookPostId  String?
+  instagramPostId String?
+  socialError     String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model Patient {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String
