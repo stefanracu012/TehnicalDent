@@ -11,6 +11,7 @@ import SectionBuilder, {
   createEmptySection,
 } from "@/components/admin/SectionBuilder";
 import BlogAiPanel, { type ArticleDraft } from "@/components/admin/BlogAiPanel";
+import SeoSocialFields from "@/components/admin/SeoSocialFields";
 
 type Translations = Record<string, Record<string, string>>;
 
@@ -50,6 +51,10 @@ export default function NewBlogPostPage() {
     author: "TehnicalDent",
     isPublished: false,
     shareToSocial: false,
+    metaTitle: "",
+    metaDescription: "",
+    facebookCaption: "",
+    instagramCaption: "",
   });
   const [sections, setSections] = useState<BlogSection[]>([
     createEmptySection(),
@@ -102,6 +107,10 @@ export default function NewBlogPostPage() {
       excerpt: draft.excerpt,
       category: draft.category,
       tags: draft.tags.join(", "),
+      metaTitle: draft.metaTitle,
+      metaDescription: draft.metaDescription,
+      facebookCaption: draft.facebookCaption,
+      instagramCaption: draft.instagramCaption,
     }));
     setSections(
       draft.sections.map((s) => ({
@@ -123,6 +132,10 @@ export default function NewBlogPostPage() {
       .split(",")
       .map((t) => t.trim())
       .filter(Boolean),
+    metaTitle: formData.metaTitle,
+    metaDescription: formData.metaDescription,
+    facebookCaption: formData.facebookCaption,
+    instagramCaption: formData.instagramCaption,
     sections: sections
       .filter((s) => s.title || s.text)
       .map((s) => ({ title: s.title || "", text: s.text || "" })),
@@ -446,6 +459,11 @@ export default function NewBlogPostPage() {
                     className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none"
                   />
                 </div>
+
+                <SeoSocialFields
+                  values={formData}
+                  onChange={(k, v) => setFormData((p) => ({ ...p, [k]: v }))}
+                />
 
                 <div className="flex items-center gap-3">
                   <input

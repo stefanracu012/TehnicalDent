@@ -10,6 +10,8 @@ import SectionBuilder, {
   type BlogSection,
   createEmptySection,
 } from "@/components/admin/SectionBuilder";
+import BlogAiPanel, { type ArticleDraft } from "@/components/admin/BlogAiPanel";
+import SeoSocialFields from "@/components/admin/SeoSocialFields";
 
 type Translations = Record<string, Record<string, string>>;
 
@@ -40,6 +42,10 @@ interface BlogPost {
   facebookPostId: string | null;
   instagramPostId: string | null;
   socialError: string | null;
+  metaTitle: string | null;
+  metaDescription: string | null;
+  facebookCaption: string | null;
+  instagramCaption: string | null;
 }
 
 export default function EditBlogPostPage({
@@ -67,6 +73,10 @@ export default function EditBlogPostPage({
     author: "TehnicalDent",
     isPublished: false,
     shareToSocial: false,
+    metaTitle: "",
+    metaDescription: "",
+    facebookCaption: "",
+    instagramCaption: "",
   });
   // Read-only outcome of past sharing, so the form can say what already went out.
   const [socialStatus, setSocialStatus] = useState<{
@@ -96,6 +106,10 @@ export default function EditBlogPostPage({
           author: post.author,
           isPublished: post.isPublished,
           shareToSocial: post.shareToSocial ?? false,
+          metaTitle: post.metaTitle ?? "",
+          metaDescription: post.metaDescription ?? "",
+          facebookCaption: post.facebookCaption ?? "",
+          instagramCaption: post.instagramCaption ?? "",
         });
         setSocialStatus({
           facebookPostId: post.facebookPostId ?? null,
@@ -149,6 +163,44 @@ export default function EditBlogPostPage({
         [activeLocale]: { ...(prev[activeLocale] || {}), [field]: value },
       }));
     }
+  };
+
+  /** Drops an AI draft into the form. Images and slug are left alone — the
+   *  slug is already indexed by Google and must not change on an edit. */
+  const applyDraft = (draft: ArticleDraft) => {
+    setFormData((p) => ({
+      ...p,
+      title: draft.title,
+      excerpt: draft.excerpt,
+      category: draft.category,
+      tags: draft.tags.join(", "),
+      metaTitle: draft.metaTitle,
+      metaDescription: draft.metaDescription,
+      facebookCaption: draft.facebookCaption,
+      instagramCaption: draft.instagramCaption,
+    }));
+    setSections(
+      draft.sections.map((s) => ({
+        ...createEmptySection(),
+        title: s.title,
+        text: s.text,
+      })),
+    );
+    setTranslations({});
+  };
+
+  const currentDraft: ArticleDraft = {
+    title: formData.title,
+    excerpt: formData.excerpt,
+    category: formData.category,
+    tags: formData.tags.split(",").map((t) => t.trim()).filter(Boolean),
+    metaTitle: formData.metaTitle,
+    metaDescription: formData.metaDescription,
+    facebookCaption: formData.facebookCaption,
+    instagramCaption: formData.instagramCaption,
+    sections: sections
+      .filter((s) => s.title || s.text)
+      .map((s) => ({ title: s.title || "", text: s.text || "" })),
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -286,6 +338,12 @@ export default function EditBlogPostPage({
               </p>
             )}
           </div>
+
+          {activeLocale === "ro" && (
+            <div className="mb-6">
+              <BlogAiPanel onDraft={applyDraft} current={currentDraft} />
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Cover Image - RO only */}
@@ -472,6 +530,11 @@ export default function EditBlogPostPage({
                     className="w-full border border-border px-4 py-3 focus:border-foreground focus:outline-none"
                   />
                 </div>
+
+                <SeoSocialFields
+                  values={formData}
+                  onChange={(k, v) => setFormData((p) => ({ ...p, [k]: v }))}
+                />
 
                 <div className="flex items-center gap-3">
                   <input

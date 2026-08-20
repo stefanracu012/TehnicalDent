@@ -13,6 +13,10 @@ export interface ArticleDraft {
   excerpt: string;
   category: string;
   tags: string[];
+  metaTitle: string;
+  metaDescription: string;
+  facebookCaption: string;
+  instagramCaption: string;
   sections: DraftSection[];
 }
 

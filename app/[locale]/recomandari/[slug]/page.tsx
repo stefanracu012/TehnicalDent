@@ -40,8 +40,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!post) return { title: t("articolNegasit") };
 
   return {
-    title: post.title,
-    description: post.excerpt,
+    // A good H1 and a good <title> are not the same sentence; use the dedicated
+    // snippet when the editor wrote one, otherwise fall back to the article's own.
+    title: post.metaTitle || post.title,
+    description: post.metaDescription || post.excerpt,
     keywords: getKeywords([post.title, ...(post.tags || [])], locale),
     alternates: getAlternates(`/recomandari/${slug}`, locale),
     openGraph: {

@@ -201,8 +201,90 @@ export interface ArticleDraft {
   excerpt: string;
   category: string;
   tags: string[];
+  metaTitle: string;
+  metaDescription: string;
+  facebookCaption: string;
+  instagramCaption: string;
   sections: DraftSection[];
 }
+
+/** Shared by drafting and revision so the two can never drift apart. */
+const ARTICLE_SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: [
+    "title",
+    "excerpt",
+    "category",
+    "tags",
+    "metaTitle",
+    "metaDescription",
+    "facebookCaption",
+    "instagramCaption",
+    "sections",
+  ],
+  properties: {
+    title: { type: "string" },
+    excerpt: { type: "string" },
+    category: { type: "string", enum: [...CATEGORIES] },
+    tags: { type: "array", items: { type: "string" } },
+    metaTitle: { type: "string" },
+    metaDescription: { type: "string" },
+    facebookCaption: { type: "string" },
+    instagramCaption: { type: "string" },
+    sections: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["title", "text"],
+        properties: {
+          title: { type: "string" },
+          text: { type: "string" },
+        },
+      },
+    },
+  },
+};
+
+/**
+ * Written once and appended to both prompts. The city belongs in the search
+ * snippet because the clinic competes locally, and the captions are separated
+ * because Facebook renders links while Instagram shows them as dead text.
+ *
+ * The calls to action are added at publish time, not written by the model —
+ * see lib/social-publish.ts — so the captions must stop before them.
+ */
+const OUTPUT_RULES = `
+Titlu și rezumat (pentru pagină):
+- Titlu sub 60 de caractere, conținând termenul pe care îl caută pacienții.
+- Rezumat (excerpt) de 140-160 de caractere, care spune concret ce află cititorul.
+
+SEO (pentru Google):
+- metaTitle: maximum 55 de caractere, cu termenul căutat la început. Nu adăuga numele clinicii — se adaugă automat.
+- metaDescription: OBLIGATORIU între 140 și 155 de caractere. Numără caracterele înainte să răspunzi. Sub 140 pierzi spațiu în rezultatele Google, peste 155 se taie.
+  Ca să ajungi la lungime, include toate trei: ce află concret cititorul, un beneficiu practic, și mențiunea Chișinău. Dacă textul iese mai scurt, adaugă încă un detaliu util — nu umple cu vorbe goale.
+- Poate să difere de titlu și rezumat: un H1 bun se citește altfel decât un titlu bun în Google.
+
+Text (pentru cititor):
+- 4-6 secțiuni, fiecare cu titlu de subcapitol și 2-4 paragrafe.
+- Prima secțiune răspunde direct la întrebarea din titlu, în primele două propoziții.
+- Include o secțiune de întrebări frecvente dacă subiectul o justifică.
+- Ultima secțiune îndeamnă la consultație, fără presiune.
+- 4-8 etichete (tags) scurte, cu litere mici.
+- Text simplu, fără Markdown, fără HTML. Paragrafele se despart prin linie goală.
+
+Facebook (facebookCaption):
+- 3-5 propoziții. Începe cu o observație sau o întrebare care oprește derularea.
+- Ton de conversație, nu de comunicat de presă.
+- Nu pune linkuri și nu pune îndemn la programare — se adaugă automat la final.
+- Fără hashtag-uri.
+
+Instagram (instagramCaption):
+- Prima propoziție trebuie să funcționeze singură — restul e ascuns după "mai mult".
+- 4-6 propoziții scurte, cu linie goală între idei.
+- Nu pune linkuri (Instagram nu le face clicabile) și nu pune îndemn — se adaugă automat.
+- Nu pune hashtag-uri; se generează din etichete.`;
 
 export async function generateArticle(
   topic: string,
@@ -212,42 +294,11 @@ export async function generateArticle(
 
   return chatJson<ArticleDraft>({
     schemaName: "article_draft",
-    schema: {
-      type: "object",
-      additionalProperties: false,
-      required: ["title", "excerpt", "category", "tags", "sections"],
-      properties: {
-        title: { type: "string" },
-        excerpt: { type: "string" },
-        category: { type: "string", enum: [...CATEGORIES] },
-        tags: { type: "array", items: { type: "string" } },
-        sections: {
-          type: "array",
-          items: {
-            type: "object",
-            additionalProperties: false,
-            required: ["title", "text"],
-            properties: {
-              title: { type: "string" },
-              text: { type: "string" },
-            },
-          },
-        },
-      },
-    },
+    schema: ARTICLE_SCHEMA,
     user: `${context}
 
 Scrie un articol complet pe subiectul: "${topic}"${category ? `\nCategoria: ${category}` : ""}
-
-Cerințe:
-- Titlu sub 60 de caractere, care conține termenul căutat de pacienți.
-- Un rezumat (excerpt) de 140-160 de caractere, care spune concret ce află cititorul.
-- 4-6 secțiuni. Fiecare cu titlu de subcapitol și 2-4 paragrafe de text.
-- Prima secțiune răspunde direct la întrebarea din titlu, în primele două propoziții.
-- Include o secțiune de întrebări frecvente dacă subiectul o justifică.
-- Ultima secțiune îndeamnă la consultație, fără presiune.
-- 4-8 etichete (tags) scurte, cu litere mici.
-- Text simplu, fără Markdown, fără HTML. Paragrafele se despart prin linie goală.`,
+${OUTPUT_RULES}`,
   });
 }
 
@@ -260,35 +311,16 @@ export async function reviseArticle(
   return chatJson<ArticleDraft>({
     schemaName: "article_draft",
     temperature: 0.5,
-    schema: {
-      type: "object",
-      additionalProperties: false,
-      required: ["title", "excerpt", "category", "tags", "sections"],
-      properties: {
-        title: { type: "string" },
-        excerpt: { type: "string" },
-        category: { type: "string", enum: [...CATEGORIES] },
-        tags: { type: "array", items: { type: "string" } },
-        sections: {
-          type: "array",
-          items: {
-            type: "object",
-            additionalProperties: false,
-            required: ["title", "text"],
-            properties: {
-              title: { type: "string" },
-              text: { type: "string" },
-            },
-          },
-        },
-      },
-    },
+    schema: ARTICLE_SCHEMA,
     user: `Articolul curent, în JSON:
 
 ${JSON.stringify(current, null, 2)}
 
 Instrucțiunea editorului: "${instruction}"
 
-Aplică exact ce cere instrucțiunea și returnează articolul întreg, în aceeași structură. Nu rescrie părțile care nu sunt vizate de instrucțiune — păstrează-le cuvânt cu cuvânt.`,
+Aplică exact ce cere instrucțiunea și returnează articolul întreg, în aceeași structură. Nu rescrie părțile care nu sunt vizate de instrucțiune — păstrează-le cuvânt cu cuvânt.
+
+Dacă modificarea schimbă subiectul sau titlul, actualizează în consecință metaTitle, metaDescription și textele pentru Facebook și Instagram, respectând regulile:
+${OUTPUT_RULES}`,
   });
 }

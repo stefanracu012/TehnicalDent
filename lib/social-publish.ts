@@ -14,6 +14,7 @@
 
 import { put } from "@vercel/blob";
 import prisma from "@/lib/prisma";
+import { CLINIC } from "@/lib/seo";
 
 const GRAPH = "https://graph.facebook.com/v21.0";
 
@@ -42,6 +43,36 @@ export interface ShareablePost {
   excerpt: string;
   coverImage: string;
   tags?: string[];
+  /** Platform-tuned copy from the drafting assistant; falls back to the excerpt. */
+  facebookCaption?: string | null;
+  instagramCaption?: string | null;
+}
+
+/**
+ * Appended to every post rather than written per article, so the ask is
+ * identical everywhere and one edit changes all future posts.
+ *
+ * Instagram deliberately points at WhatsApp instead of Direct: until Meta
+ * grants Advanced Access for instagram_manage_messages, DMs from anyone
+ * without a role on the app never reach the inbox, so inviting them would
+ * send patients into silence.
+ */
+function facebookCta(): string {
+  return [
+    "———",
+    `📅 Programează-te: ${SITE_URL}/ro/contact`,
+    `💬 WhatsApp: https://wa.me/${CLINIC.telephone.replace("+", "")}`,
+    `📍 ${CLINIC.streetAddress}, ${CLINIC.locality}`,
+  ].join("\n");
+}
+
+function instagramCta(): string {
+  return [
+    "———",
+    "📅 Programează-te — linkul e în bio",
+    `💬 Scrie-ne pe WhatsApp: ${CLINIC.telephone}`,
+    `📍 ${CLINIC.streetAddress}, ${CLINIC.locality}`,
+  ].join("\n");
 }
 
 export interface ShareResult {
@@ -86,9 +117,12 @@ export async function publishToFacebook(post: ShareablePost): Promise<string> {
     );
   }
 
-  const message = [post.title, post.excerpt].filter(Boolean).join("\n\n");
   const body = await graphPost(`${PAGE_ID}/feed`, {
-    message,
+    message: [
+      post.facebookCaption?.trim() || [post.title, post.excerpt].join("\n\n"),
+      "",
+      facebookCta(),
+    ].join("\n"),
     link: articleUrl(post.slug),
   });
 
@@ -135,20 +169,25 @@ async function toInstagramImage(coverImage: string): Promise<string> {
   return url;
 }
 
-/** Instagram captions render links as plain text, so the URL is spelled out. */
-function instagramCaption(post: ShareablePost): string {
+/**
+ * Body, then the standing call to action, then hashtags. The article URL is
+ * left out on purpose: Instagram shows it as dead text, and a long unclickable
+ * link reads as spam. "Link în bio" carries it instead.
+ */
+function buildInstagramCaption(post: ShareablePost): string {
   const hashtags = (post.tags ?? [])
     .slice(0, 8)
     .map((t) => `#${t.replace(/[^\p{L}\p{N}]/gu, "")}`)
     .filter((t) => t.length > 1)
     .join(" ");
 
-  const tail = ["", `Articolul complet: ${articleUrl(post.slug)}`, hashtags]
-    .filter(Boolean)
-    .join("\n");
+  const tail = ["", instagramCta(), hashtags].filter(Boolean).join("\n");
 
+  // The tail is fixed, so the body is what gets trimmed to fit.
   const room = IG_CAPTION_LIMIT - tail.length - 2;
-  let head = [post.title, post.excerpt].filter(Boolean).join("\n\n");
+  let head =
+    post.instagramCaption?.trim() ||
+    [post.title, post.excerpt].filter(Boolean).join("\n\n");
   if (head.length > room) head = `${head.slice(0, room - 1).trimEnd()}…`;
 
   return `${head}\n${tail}`;
@@ -172,7 +211,7 @@ export async function publishToInstagram(post: ShareablePost): Promise<string> {
 
   const container = await graphPost(`${IG_USER_ID}/media`, {
     image_url: imageUrl,
-    caption: instagramCaption(post),
+    caption: buildInstagramCaption(post),
   });
 
   const published = await graphPost(`${IG_USER_ID}/media_publish`, {
@@ -244,6 +283,8 @@ export async function shareBlogPostById(id: string): Promise<ShareResult | null>
       excerpt: post.excerpt,
       coverImage: post.coverImage,
       tags: post.tags,
+      facebookCaption: post.facebookCaption,
+      instagramCaption: post.instagramCaption,
     },
     {
       skipFacebook: Boolean(post.facebookPostId),

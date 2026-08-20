@@ -200,6 +200,17 @@ model BlogPost {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  // Search snippet, kept apart from title/excerpt: a good H1 reads differently
+  // from a good <title>, and the card preview differs from a meta description.
+  // Both fall back to title/excerpt when empty.
+  metaTitle       String?
+  metaDescription String?
+
+  // Platform-specific captions. Facebook renders links, Instagram does not, so
+  // one caption cannot serve both well.
+  facebookCaption  String?
+  instagramCaption String?
+
   // Auto-sharing to the clinic's own Facebook Page and Instagram account.
   // The two ids double as "already posted" markers, so re-saving a published
   // article never posts it twice; socialError carries the last failure so the
