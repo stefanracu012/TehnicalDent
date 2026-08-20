@@ -49,6 +49,8 @@ const NEEDED = {
   "Messenger + Instagram DM": ["pages_messaging", "instagram_manage_messages"],
   "Publish to the Facebook Page": ["pages_manage_posts"],
   "Publish to Instagram": ["instagram_content_publish", "instagram_basic"],
+  "Read ad results": ["ads_read"],
+  "Create and change ads": ["ads_management"],
 };
 
 async function graph(path, params = {}) {
@@ -94,6 +96,34 @@ if (pageId) {
   }
 } else {
   console.log("Instagram     : skipped (need the Page id first)");
+}
+
+// ── Ad accounts ─────────────────────────────────────────────────────────────
+// Ad accounts hang off a user or a business, never off a Page, so this is not
+// a missing scope but the wrong kind of token — ads need one of their own.
+let adAccountId = null;
+try {
+  const { data } = await graph("me/adaccounts", {
+    fields: "account_id,name,account_status,currency",
+  });
+  if (!data?.length) {
+    console.log("Ad accounts   : none reachable with this token");
+  } else {
+    for (const account of data) {
+      console.log(
+        `Ad account    : ${account.name}  (act_${account.account_id}, ${account.currency})`,
+      );
+      adAccountId ??= `act_${account.account_id}`;
+    }
+  }
+} catch (err) {
+  const isPageToken = /nonexisting field \(adaccounts\)/.test(err.message);
+  console.log(
+    isPageToken
+      ? "Ad accounts   : n/a — a Page token cannot own ad accounts.\n" +
+          "                Ads need a separate user or System User token."
+      : `Ad accounts   : cannot list — ${short(err)}`,
+  );
 }
 
 // ── Token type, expiry and scopes ───────────────────────────────────────────
@@ -148,6 +178,9 @@ if (pageId && !process.env.FACEBOOK_PAGE_ID) {
 }
 if (igId && !process.env.INSTAGRAM_USER_ID) {
   additions.push(`INSTAGRAM_USER_ID=${igId}`);
+}
+if (adAccountId && !process.env.META_AD_ACCOUNT_ID) {
+  additions.push(`META_AD_ACCOUNT_ID=${adAccountId}`);
 }
 if (additions.length) {
   console.log("\nAdd to .env.local:");
