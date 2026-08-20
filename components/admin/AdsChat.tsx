@@ -19,8 +19,14 @@ const SUGGESTIONS = [
   "Care zi a fost cea mai scumpă și de ce?",
 ];
 
+const time = (iso: string) =>
+  new Date(iso).toLocaleTimeString("ro-RO", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
 /**
- * Floating assistant, docked bottom-right.
+ * Floating assistant, docked bottom-right, laid out as a conversation.
  *
  * Kept out of the page flow on purpose: the questions worth asking occur while
  * reading a table halfway down, and a box at the bottom of the page is a box
@@ -55,6 +61,7 @@ export default function AdsChat({ disabled }: { disabled?: boolean }) {
     const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
     document.addEventListener("keydown", onKey);
     inputRef.current?.focus();
+    requestAnimationFrame(() => endRef.current?.scrollIntoView({ block: "end" }));
     return () => document.removeEventListener("keydown", onKey);
   }, [open]);
 
@@ -123,7 +130,7 @@ export default function AdsChat({ disabled }: { disabled?: boolean }) {
         type="button"
         onClick={() => setOpen(true)}
         disabled={disabled}
-        className="fixed bottom-6 right-6 z-40 inline-flex items-center gap-2.5 bg-foreground text-white text-sm font-semibold pl-4 pr-5 py-3 shadow-lg hover:bg-foreground/90 transition-colors disabled:opacity-50"
+        className="fixed bottom-6 right-6 z-40 inline-flex items-center gap-2.5 bg-foreground text-white text-sm font-semibold pl-4 pr-5 py-3.5 shadow-lg hover:bg-foreground/90 transition-colors disabled:opacity-50"
       >
         <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
           <path d="M12 2l1.9 5.1L19 9l-5.1 1.9L12 16l-1.9-5.1L5 9l5.1-1.9L12 2zM19 15l.95 2.55L22.5 18.5l-2.55.95L19 22l-.95-2.55L15.5 18.5l2.55-.95L19 15z" />
@@ -139,17 +146,18 @@ export default function AdsChat({ disabled }: { disabled?: boolean }) {
   }
 
   return (
-    <div className="fixed bottom-6 right-6 z-40 w-[calc(100vw-3rem)] sm:w-[27rem] max-h-[min(40rem,calc(100vh-4rem))] flex flex-col bg-background border border-border shadow-2xl">
-      <div className="flex items-start justify-between gap-3 px-4 py-3 border-b border-border">
+    <div className="fixed inset-x-4 bottom-4 sm:inset-x-auto sm:right-6 sm:bottom-6 z-40 sm:w-[34rem] h-[min(46rem,calc(100vh-2rem))] flex flex-col bg-background border border-border shadow-2xl">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-border shrink-0">
         <div>
-          <h2 className="font-serif text-base font-medium text-foreground">
-            Întreabă despre reclame
+          <h2 className="font-serif text-lg font-medium text-foreground">
+            Asistent reclame
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
             Răspunde doar din raport. Dacă ceva nu e în date, spune că nu e.
           </p>
         </div>
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-4 shrink-0">
           {entries.length > 0 && (
             <button
               type="button"
@@ -163,16 +171,17 @@ export default function AdsChat({ disabled }: { disabled?: boolean }) {
             type="button"
             onClick={() => setOpen(false)}
             aria-label="Închide"
-            className="text-muted-foreground hover:text-foreground text-xl leading-none"
+            className="text-muted-foreground hover:text-foreground text-2xl leading-none"
           >
             ×
           </button>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5 min-h-[8rem]">
+      {/* Conversation */}
+      <div className="flex-1 overflow-y-auto px-5 py-6 space-y-5 bg-muted/30">
         {entries.length === 0 && !pending && (
-          <div className="space-y-2">
+          <div className="space-y-2.5">
             <p className="text-xs text-muted-foreground">Încearcă:</p>
             {SUGGESTIONS.map((s) => (
               <button
@@ -180,7 +189,7 @@ export default function AdsChat({ disabled }: { disabled?: boolean }) {
                 type="button"
                 disabled={disabled || busy}
                 onClick={() => ask(s)}
-                className="block w-full text-left text-xs border border-border px-3 py-2 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors disabled:opacity-50"
+                className="block w-full text-left text-sm bg-background border border-border rounded-2xl px-4 py-3 text-muted-foreground hover:border-foreground/30 hover:text-foreground transition-colors disabled:opacity-50"
               >
                 {s}
               </button>
@@ -189,45 +198,76 @@ export default function AdsChat({ disabled }: { disabled?: boolean }) {
         )}
 
         {entries.map((e) => (
-          <div key={e.id} className="group">
-            <div className="flex items-start justify-between gap-2">
-              <p className="text-sm font-semibold text-foreground border-l-2 border-foreground/30 pl-3 flex-1">
-                {e.question}
-              </p>
-              <button
-                type="button"
-                onClick={() => remove(e.id)}
-                aria-label="Șterge întrebarea"
-                className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-muted-foreground hover:text-red-600 text-sm transition-opacity shrink-0"
-              >
-                ×
-              </button>
+          <div key={e.id} className="space-y-3 group">
+            {/* Mine — right */}
+            <div className="flex justify-end">
+              <div className="flex items-end gap-2 max-w-[85%]">
+                <button
+                  type="button"
+                  onClick={() => remove(e.id)}
+                  aria-label="Șterge conversația"
+                  className="opacity-0 group-hover:opacity-100 focus:opacity-100 text-muted-foreground hover:text-red-600 text-sm transition-opacity shrink-0 pb-2"
+                >
+                  ×
+                </button>
+                <div className="bg-foreground text-white rounded-2xl rounded-br-md px-4 py-2.5">
+                  <p className="text-sm leading-relaxed">{e.question}</p>
+                  <p className="text-[10px] text-white/50 mt-1 text-right">
+                    {time(e.createdAt)}
+                  </p>
+                </div>
+              </div>
             </div>
-            <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-line mt-2 pl-3">
-              {e.answer}
-            </p>
+
+            {/* Its — left */}
+            <div className="flex justify-start">
+              <div className="max-w-[85%] bg-background border border-border rounded-2xl rounded-bl-md px-4 py-3">
+                <p className="text-sm text-foreground/85 leading-relaxed whitespace-pre-line">
+                  {e.answer}
+                </p>
+              </div>
+            </div>
           </div>
         ))}
 
         {pending && (
-          <div>
-            <p className="text-sm font-semibold text-foreground border-l-2 border-foreground/30 pl-3">
-              {pending}
-            </p>
-            <p className="text-sm text-muted-foreground mt-2 pl-3">Se gândește…</p>
+          <div className="space-y-3">
+            <div className="flex justify-end">
+              <div className="max-w-[85%] bg-foreground text-white rounded-2xl rounded-br-md px-4 py-2.5">
+                <p className="text-sm leading-relaxed">{pending}</p>
+              </div>
+            </div>
+            <div className="flex justify-start">
+              <div className="bg-background border border-border rounded-2xl rounded-bl-md px-4 py-3">
+                <span className="flex gap-1.5" aria-label="Se gândește">
+                  {[0, 150, 300].map((delay) => (
+                    <span
+                      key={delay}
+                      className="w-1.5 h-1.5 rounded-full bg-muted-foreground/50 animate-pulse"
+                      style={{ animationDelay: `${delay}ms` }}
+                    />
+                  ))}
+                </span>
+              </div>
+            </div>
           </div>
         )}
 
-        {error && <p className="text-xs text-red-600">{error}</p>}
+        {error && (
+          <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+            {error}
+          </p>
+        )}
         <div ref={endRef} />
       </div>
 
+      {/* Composer */}
       <form
         onSubmit={(e) => {
           e.preventDefault();
           ask(question);
         }}
-        className="px-4 py-3 border-t border-border flex gap-2"
+        className="px-5 py-4 border-t border-border flex gap-2.5 shrink-0"
       >
         <input
           ref={inputRef}
@@ -237,14 +277,17 @@ export default function AdsChat({ disabled }: { disabled?: boolean }) {
           disabled={disabled || busy}
           maxLength={500}
           placeholder="Scrie o întrebare…"
-          className="flex-1 border border-border px-3 py-2 text-sm focus:border-foreground focus:outline-none disabled:opacity-50"
+          className="flex-1 border border-border rounded-full px-4 py-2.5 text-sm focus:border-foreground focus:outline-none disabled:opacity-50"
         />
         <button
           type="submit"
           disabled={disabled || busy || !question.trim()}
-          className="bg-foreground text-white text-sm font-semibold px-4 py-2 hover:bg-foreground/90 transition-colors disabled:opacity-50"
+          aria-label="Trimite"
+          className="bg-foreground text-white rounded-full w-11 h-11 flex items-center justify-center hover:bg-foreground/90 transition-colors disabled:opacity-50 shrink-0"
         >
-          {busy ? "…" : "Trimite"}
+          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+            <path d="M3.4 20.4l17.45-7.48a1 1 0 000-1.84L3.4 3.6a.99.99 0 00-1.39.91L2 9.12c0 .5.37.93.87.99L17 12 2.87 13.88c-.5.07-.87.5-.87 1l.01 4.61c0 .71.73 1.2 1.39.91z" />
+          </svg>
         </button>
       </form>
     </div>
