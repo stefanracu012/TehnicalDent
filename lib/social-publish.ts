@@ -47,6 +47,8 @@ export interface ShareablePost {
   /** Platform-tuned copy from the drafting assistant; falls back to the excerpt. */
   facebookCaption?: string | null;
   instagramCaption?: string | null;
+  /** Whether the post invites the reader to the article. */
+  linkToArticle?: boolean;
 }
 
 /**
@@ -58,21 +60,25 @@ export interface ShareablePost {
  * without a role on the app never reach the inbox, so inviting them would
  * send patients into silence.
  */
-function facebookCta(slug: string): string {
+function facebookCta(slug: string, linkToArticle: boolean): string {
   return [
     "———",
     // Photo posts carry no preview card, so the article link has to be spelled
     // out here. Facebook makes bare URLs in post text clickable.
-    `📖 Articolul complet: ${articleUrl(slug)}`,
+    ...(linkToArticle
+      ? [`📖 Continuă să citești: ${articleUrl(slug)}`]
+      : []),
     `📅 Programează-te: ${SITE_URL}/ro/contact`,
     `💬 WhatsApp: https://wa.me/${CLINIC.telephone.replace("+", "")}`,
     `📍 ${CLINIC.streetAddress}, ${CLINIC.locality}`,
   ].join("\n");
 }
 
-function instagramCta(): string {
+function instagramCta(linkToArticle: boolean): string {
   return [
     "———",
+    // No clickable links here, so both asks route through the bio link.
+    ...(linkToArticle ? ["📖 Articolul complet — linkul e în bio"] : []),
     "📅 Programează-te — linkul e în bio",
     `💬 Scrie-ne pe WhatsApp: ${CLINIC.telephoneDisplay}`,
     `📍 ${CLINIC.streetAddress}, ${CLINIC.locality}`,
@@ -134,7 +140,7 @@ export async function publishToFacebook(post: ShareablePost): Promise<string> {
     caption: [
       post.facebookCaption?.trim() || [post.title, post.excerpt].join("\n\n"),
       "",
-      facebookCta(post.slug),
+      facebookCta(post.slug, post.linkToArticle ?? true),
     ].join("\n"),
   });
 
@@ -234,7 +240,9 @@ function buildInstagramCaption(post: ShareablePost): string {
     .filter((t) => t.length > 1)
     .join(" ");
 
-  const tail = ["", instagramCta(), hashtags].filter(Boolean).join("\n");
+  const tail = ["", instagramCta(post.linkToArticle ?? true), hashtags]
+    .filter(Boolean)
+    .join("\n");
 
   // The tail is fixed, so the body is what gets trimmed to fit.
   const room = IG_CAPTION_LIMIT - tail.length - 2;
@@ -366,6 +374,7 @@ export async function shareBlogPostById(id: string): Promise<ShareResult | null>
       tags: post.tags,
       facebookCaption: post.facebookCaption,
       instagramCaption: post.instagramCaption,
+      linkToArticle: post.linkToArticle,
     },
     {
       skipFacebook: Boolean(post.facebookPostId),

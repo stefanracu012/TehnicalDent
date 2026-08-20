@@ -222,6 +222,10 @@ model BlogPost {
   // article never posts it twice; socialError carries the last failure so the
   // admin can see why a share did not go out.
   shareToSocial   Boolean @default(false)
+  // Whether the social post invites people to read the article. On for pieces
+  // worth the click; off for graphics that say everything themselves, where a
+  // "read more" would send people away from a post that had nothing more to give.
+  linkToArticle   Boolean @default(true)
   facebookPostId  String?
   instagramPostId String?
   socialError     String?

@@ -65,6 +65,7 @@ export async function POST(request: Request) {
         publishedAt: body.isPublished ? new Date() : null,
         translations: body.translations || null,
         shareToSocial: body.shareToSocial ?? false,
+        linkToArticle: body.linkToArticle ?? true,
         metaTitle: body.metaTitle || null,
         metaDescription: body.metaDescription || null,
         facebookCaption: body.facebookCaption || null,

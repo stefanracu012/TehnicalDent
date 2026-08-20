@@ -51,6 +51,7 @@ export default function NewBlogPostPage() {
     author: "TehnicalDent",
     isPublished: false,
     shareToSocial: false,
+    linkToArticle: true,
     metaTitle: "",
     metaDescription: "",
     facebookCaption: "",
@@ -508,6 +509,30 @@ export default function NewBlogPostPage() {
                     </span>
                   </label>
                 </div>
+
+                {formData.shareToSocial && (
+                  <div className="flex items-start gap-3 ml-7">
+                    <input
+                      type="checkbox"
+                      id="linkToArticle"
+                      checked={formData.linkToArticle}
+                      onChange={(e) =>
+                        setFormData((p) => ({
+                          ...p,
+                          linkToArticle: e.target.checked,
+                        }))
+                      }
+                      className="w-4 h-4 mt-0.5"
+                    />
+                    <label htmlFor="linkToArticle" className="text-sm text-foreground">
+                      Trimite cititorii către articol
+                      <span className="block text-xs text-foreground/50 mt-0.5">
+                        Adaugă un îndemn de citire cu linkul articolului. Lasă
+                        nebifat dacă imaginea spune deja tot.
+                      </span>
+                    </label>
+                  </div>
+                )}
               </>
             )}
 
