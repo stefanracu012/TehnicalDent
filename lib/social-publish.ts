@@ -76,13 +76,24 @@ function facebookCta(articleSlug: string | null): string {
   ].join("\n");
 }
 
+/**
+ * Instagram renders no clickable links, so exactly one line may point at the
+ * bio — there is only one link up there, and two lines claiming it is where to
+ * go tell the reader nothing. Whichever ask the post is really making gets it;
+ * the other routes through WhatsApp, which is tappable from a caption.
+ */
 function instagramCta(articleSlug: string | null): string {
   return [
     "———",
-    // No clickable links here, so both asks route through the bio link.
-    ...(articleSlug ? ["📖 Articolul complet — linkul e în bio"] : []),
-    "📅 Programează-te — linkul e în bio",
-    `💬 Scrie-ne pe WhatsApp: ${CLINIC.telephoneDisplay}`,
+    ...(articleSlug
+      ? [
+          "📖 Articolul complet — linkul e în bio",
+          `💬 Programează-te pe WhatsApp: ${CLINIC.telephoneDisplay}`,
+        ]
+      : [
+          "📅 Programează-te — linkul e în bio",
+          `💬 Sau scrie-ne pe WhatsApp: ${CLINIC.telephoneDisplay}`,
+        ]),
     `📍 ${CLINIC.streetAddress}, ${CLINIC.locality}`,
   ].join("\n");
 }
