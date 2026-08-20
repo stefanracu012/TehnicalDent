@@ -104,7 +104,20 @@ try {
     data.expires_at === 0 || data.expires_at === undefined
       ? "never ✅"
       : new Date(data.expires_at * 1000).toISOString().slice(0, 10);
-  console.log(`Token type    : ${data.type}`);
+  // lib/messenger.ts posts to /me/messages, where "me" only resolves to the
+  // Page on a PAGE token. A USER token carries the same scopes and looks fine
+  // everywhere else, so this is worth calling out loudly.
+  const wrongType = data.type !== "PAGE";
+  console.log(
+    `Token type    : ${data.type}${wrongType ? "  ❌ must be PAGE" : "  ✅"}`,
+  );
+  if (wrongType) {
+    console.log(
+      "                Replies will fail with \"Object with ID 'me' does not\n" +
+        '                exist". Derive the Page token from this one:\n' +
+        "                  npm run get-page-token -- <this-token>",
+    );
+  }
   console.log(`Expires       : ${expires}`);
   scopes = data.scopes ?? null;
 } catch (err) {
