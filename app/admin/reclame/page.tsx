@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { secureFetch } from "@/lib/csrf-client";
 import type { AdsReport } from "@/lib/meta-ads";
 import type { AdsAnalysis } from "@/lib/ads-ai";
+import AdsChat from "@/components/admin/AdsChat";
 
 interface Snapshot {
   id: string;
@@ -253,6 +254,8 @@ export default function AdminAdsPage() {
                 )}
               </section>
             )}
+
+            <AdsChat />
 
             {/* Funnel */}
             <section className="bg-background border border-border p-5">

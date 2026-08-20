@@ -41,6 +41,13 @@ export interface FunnelStep {
   value: number;
 }
 
+export interface DailyPoint {
+  date: string;
+  spend: number;
+  connections: number;
+  leads: number;
+}
+
 export interface AdsReport {
   currency: string;
   totals: {
@@ -58,6 +65,9 @@ export interface AdsReport {
   funnel: FunnelStep[];
   ads: AdRow[];
   campaigns: CampaignRow[];
+  /** Last 90 days, day by day. Lets questions about trends be answered
+   *  from the stored report instead of another round trip to Meta. */
+  daily: DailyPoint[];
 }
 
 async function graph(
@@ -119,7 +129,8 @@ export async function fetchAdsReport(): Promise<AdsReport> {
     );
   }
 
-  const [account, totalRes, adRes, campaignRes, campaignMeta] = await Promise.all([
+  const [account, totalRes, adRes, campaignRes, campaignMeta, dailyRes] =
+    await Promise.all([
     graph(ACCOUNT, { fields: "currency" }),
     graph(`${ACCOUNT}/insights`, {
       date_preset: "maximum",
@@ -139,6 +150,12 @@ export async function fetchAdsReport(): Promise<AdsReport> {
     }),
     graph(`${ACCOUNT}/campaigns`, {
       fields: "id,name,status,objective",
+      limit: "100",
+    }),
+    graph(`${ACCOUNT}/insights`, {
+      date_preset: "last_90d",
+      time_increment: "1",
+      fields: "date_start,spend,actions",
       limit: "100",
     }),
   ]);
@@ -220,5 +237,14 @@ export async function fetchAdsReport(): Promise<AdsReport> {
     ],
     ads,
     campaigns,
+    daily: (dailyRes.data ?? []).map(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (d: any): DailyPoint => ({
+        date: d.date_start,
+        spend: Math.round(Number(d.spend ?? 0) * 100) / 100,
+        connections: action(d.actions, A.connection),
+        leads: action(d.actions, A.lead),
+      }),
+    ),
   };
 }

@@ -85,6 +85,76 @@ export function isAdsAiConfigured(): boolean {
   return Boolean(API_KEY);
 }
 
+/**
+ * Grounding rules for the question box.
+ *
+ * The whole report travels in the prompt, so every figure the assistant needs is
+ * in front of it — which makes inventing one inexcusable rather than merely
+ * unlucky. It is told to quote what it used and to refuse rather than estimate,
+ * because a confident wrong number here would be acted on with real money.
+ */
+const CHAT_SYSTEM = `Ești analistul contului de reclame Meta al clinicii TehnicalDent din Chișinău.
+
+Primești raportul complet al contului în format JSON. Răspunzi la întrebări în română.
+
+REGULI ABSOLUTE:
+- Răspunzi EXCLUSIV pe baza datelor din JSON-ul primit. Nu folosești cunoștințe generale despre publicitate ca să completezi cifre.
+- Dacă răspunsul nu se află în date, spui direct: "Datele din raport nu conțin asta" și explici ce anume ar fi nevoie.
+- Nu estimezi și nu aproximezi cifre. Dacă un calcul e posibil din datele existente, îl faci și arăți din ce l-ai obținut.
+- Când dai o cifră, spui de unde vine: "Igienizare, 13 contacte la 66,03 USD" e util; "aproximativ 5 dolari" nu e.
+- Diferențele bazate pe mai puțin de 10 conversii sunt zgomot. Le marchezi ca incerte de fiecare dată.
+- Un contact ieftin nu înseamnă profit. Nu știi cât valorează un tratament, deci nu numești nimic "profitabil".
+- Răspunsuri scurte. Două-trei paragrafe, nu eseuri. Fără liste numerotate decât dacă întrebarea cere pași.
+- Fără Markdown: nici **, nici #, nici liste cu -.`;
+
+export interface ChatTurn {
+  role: "user" | "assistant";
+  content: string;
+}
+
+/** Answers one question about the stored report. Returns plain prose. */
+export async function answerAdsQuestion(
+  report: AdsReport,
+  question: string,
+  history: ChatTurn[] = [],
+): Promise<string> {
+  if (!isAdsAiConfigured()) {
+    throw new Error("OPENAI_API_KEY nu este configurat");
+  }
+
+  const res = await fetch(ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      temperature: 0.2,
+      messages: [
+        { role: "system", content: CHAT_SYSTEM },
+        {
+          role: "system",
+          content: `Raportul contului, în ${report.currency}:\n\n${JSON.stringify(report)}`,
+        },
+        // Only the last few turns: the report is the expensive part of the
+        // prompt, and older chatter adds cost without adding grounding.
+        ...history.slice(-6),
+        { role: "user", content: question },
+      ],
+    }),
+  });
+
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(body?.error?.message || `OpenAI ${res.status}`);
+  }
+
+  const content = body?.choices?.[0]?.message?.content;
+  if (!content) throw new Error("OpenAI a răspuns fără conținut");
+  return content.trim();
+}
+
 export async function analyseAdsReport(report: AdsReport): Promise<AdsAnalysis> {
   if (!isAdsAiConfigured()) {
     throw new Error("OPENAI_API_KEY nu este configurat");
