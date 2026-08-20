@@ -112,6 +112,15 @@ export const PERMISSIONS = [
     actionLabels: { create: "Trimite campanii" },
   },
   {
+    key: "reclame",
+    label: "Reclame",
+    path: "/admin/reclame",
+    // Refreshing pulls fresh numbers from Meta and costs API quota, so it is
+    // gated separately from reading the report.
+    actions: ["view", "edit"],
+    actionLabels: { edit: "Reîmprospătează datele" },
+  },
+  {
     key: "utilizatori",
     label: "Utilizatori",
     path: "/admin/utilizatori",
@@ -200,6 +209,7 @@ const API_PERMISSION_MAP: Record<string, string> = {
   messages: "mesaje",
   whatsapp: "whatsapp",
   campaigns: "campanii",
+  ads: "reclame",
   users: "utilizatori",
   settings: "setari",
 };
@@ -220,6 +230,8 @@ const METHOD_ACTIONS: Record<string, PermissionAction> = {
  */
 const METHOD_ACTION_OVERRIDES: Record<string, Partial<Record<string, PermissionAction>>> = {
   settings: { POST: "edit" },
+  // Refreshing the ads report re-reads Meta; it creates nothing.
+  ads: { POST: "edit" },
 };
 
 export function permissionForApiPath(pathname: string, method: string): string | null {

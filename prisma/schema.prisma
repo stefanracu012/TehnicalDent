@@ -267,6 +267,26 @@ model SocialPost {
   updatedAt DateTime @updatedAt
 }
 
+/**
+ * One pull of the Meta ads report, kept rather than fetched per page view.
+ *
+ * The page reads the newest row, so opening it costs nothing and never waits on
+ * Meta. Rows also serve as the refresh log: the rate limit counts how many were
+ * written in the last hour, which survives restarts in a way an in-memory
+ * counter would not.
+ */
+model AdsSnapshot {
+  id   String @id @default(auto()) @map("_id") @db.ObjectId
+  // The computed report: totals, funnel, per-ad and per-campaign rows.
+  data Json
+  // What the assistant made of it. Null when the analysis failed but the
+  // numbers came through — the report is still worth showing.
+  analysis    String?
+  fetchedAt   DateTime @default(now())
+  fetchedBy   String?
+  @@index([fetchedAt])
+}
+
 model Patient {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String
