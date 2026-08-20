@@ -79,7 +79,7 @@ export default async function ContactPage({
           <div className="mt-14 grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* Phone */}
             <a
-              href="tel:+37379950008"
+              href="tel:+37360355350"
               className="group flex items-center gap-5 bg-white/5 border border-white/10 p-6 hover:bg-white/10 hover:border-white/20 transition-all duration-300"
             >
               <div className="shrink-0 w-12 h-12 flex items-center justify-center bg-white/10 group-hover:bg-accent/20 transition-colors duration-300">
@@ -101,7 +101,7 @@ export default async function ContactPage({
                 <p className="text-xs text-white/40 uppercase tracking-widest mb-1">
                   {t("telefon")}
                 </p>
-                <p className="text-white font-medium">+373 799 500 08</p>
+                <p className="text-white font-medium">+373 603 55 350</p>
               </div>
             </a>
 
@@ -248,7 +248,7 @@ export default async function ContactPage({
                 {/* Quick actions */}
                 <div className="space-y-3">
                   <a
-                    href="https://wa.me/37379950008"
+                    href="https://wa.me/37360355350"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="group flex items-center gap-4 bg-background border border-border p-5 hover:border-[#25D366]/40 transition-colors duration-300"
@@ -287,7 +287,7 @@ export default async function ContactPage({
                   </a>
 
                   <a
-                    href="viber://chat?number=%2B37379950008"
+                    href="viber://chat?number=%2B37360355350"
                     className="group flex items-center gap-4 bg-background border border-border p-5 hover:border-[#7360F2]/40 transition-colors duration-300"
                   >
                     <div className="shrink-0 w-10 h-10 flex items-center justify-center bg-[#7360F2]/10 text-[#7360F2]">
@@ -393,7 +393,7 @@ export default async function ContactPage({
                         {t("urgenteDesc")}
                       </p>
                       <a
-                        href="tel:+37379950008"
+                        href="tel:+37360355350"
                         className="inline-flex items-center gap-2 text-sm font-medium text-white hover:text-accent transition-colors"
                       >
                         <svg
@@ -409,7 +409,7 @@ export default async function ContactPage({
                             d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 01-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 00-1.091-.852H4.5A2.25 2.25 0 002.25 4.5v2.25z"
                           />
                         </svg>
-                        +373 799 500 08
+                        +373 603 55 350
                       </a>
                     </div>
                   </div>

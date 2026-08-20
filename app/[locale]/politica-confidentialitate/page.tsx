@@ -430,10 +430,10 @@ export default async function PoliticaConfidentialitate({
                 <p className="text-muted-foreground text-sm">
                   {t("contactTelefon")}{" "}
                   <a
-                    href="tel:+37379950008"
+                    href="tel:+37360355350"
                     className="text-accent hover:underline"
                   >
-                    +373 799 500 08
+                    +373 603 55 350
                   </a>
                 </p>
               </div>

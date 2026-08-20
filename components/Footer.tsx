@@ -49,7 +49,7 @@ export default function Footer() {
             </p>
             <div className="mt-8 flex items-center gap-3">
               <a
-                href="https://wa.me/37379950008"
+                href="https://wa.me/37360355350"
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label="WhatsApp"
@@ -64,7 +64,7 @@ export default function Footer() {
                 </svg>
               </a>
               <a
-                href="viber://chat?number=%2B37379950008"
+                href="viber://chat?number=%2B37360355350"
                 aria-label="Viber"
                 className="w-9 h-9 flex items-center justify-center border border-white/15 text-white/50 hover:border-[#7360F2] hover:text-[#7360F2] transition-colors duration-200"
               >
@@ -162,10 +162,10 @@ export default function Footer() {
                   />
                 </svg>
                 <a
-                  href="tel:+37379950008"
+                  href="tel:+37360355350"
                   className="text-white/65 hover:text-white transition-colors duration-200"
                 >
-                  +373 799 500 08
+                  +373 603 55 350
                 </a>
               </li>
               <li className="flex items-start gap-3">

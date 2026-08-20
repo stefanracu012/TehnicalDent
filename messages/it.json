@@ -46,10 +46,10 @@
     "ctaTitle": "Pronti a fare il primo passo?",
     "ctaDescription": "Prenota una consulenza per discutere le tue esigenze con uno dei nostri specialisti e ricevere un piano di trattamento personalizzato. Siamo qui per aiutarti a ottenere il sorriso che meriti.",
     "programeazaAcum": "Prenota ora",
-    "sunaNeLabel": "Chiamaci: +373 799 500 08"
+    "sunaNeLabel": "Chiamaci: +373 603 55 350"
   },
   "Contact": {
-    "metaTitle": "Contatto | TehnicalDent",
+    "metaTitle": "Contatto",
     "metaDescription": "Contatta la clinica odontoiatrica TehnicalDent per appuntamenti, domande o informazioni aggiuntive. Siamo qui per aiutarti.",
     "subtitle": "Contatto",
     "heroTitle": "Siamo qui",
@@ -236,7 +236,7 @@
     "toateServiciile": "Tutti i servizi"
   },
   "Blog": {
-    "metaTitle": "Consigli e Blog | TehnicalDent",
+    "metaTitle": "Consigli e Blog",
     "metaDescription": "Consigli e raccomandazioni dai nostri specialisti odontoiatrici per la salute e bellezza del tuo sorriso.",
     "heroTitle": "Consigli dal medico",
     "heroDescription": "Articoli e consigli pratici dal nostro team di specialisti, per aiutarti a prenderti cura della tua salute dentale ogni giorno.",
@@ -323,7 +323,7 @@
     "slide": "Diapositiva"
   },
   "Terms": {
-    "metaTitle": "Termini e Condizioni | TehnicalDent",
+    "metaTitle": "Termini e Condizioni",
     "metaDescription": "Termini e condizioni d'uso del sito web e dei servizi della clinica odontoiatrica TehnicalDent di Chișinău.",
     "breadcrumb": "Termini e condizioni",
     "heroTitle": "Termini e",
@@ -360,7 +360,7 @@
     "contactTelefon": "Telefono:"
   },
   "Privacy": {
-    "metaTitle": "Informativa sulla Privacy | TehnicalDent",
+    "metaTitle": "Informativa sulla Privacy",
     "metaDescription": "Informativa sulla privacy della clinica odontoiatrica TehnicalDent. Informazioni sulla raccolta, l'utilizzo e la protezione dei dati personali, anche nelle conversazioni su Messenger, Instagram e WhatsApp.",
     "breadcrumb": "Informativa sulla privacy",
     "heroTitle": "Informativa sulla",

@@ -150,7 +150,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
               {t("programeazaConsultatie")}
             </Button>
             <a
-              href="tel:+37379950008"
+              href="tel:+37360355350"
               className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 text-white text-sm font-semibold px-6 py-3 rounded-sm hover:bg-white/20 transition-colors"
             >
               <svg
@@ -166,7 +166,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
                   d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
                 />
               </svg>
-              +373 799 500 08
+              +373 603 55 350
             </a>
           </div>
         </div>
@@ -375,7 +375,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
                     {t("programeazaAcum")}
                   </Button>
                   <a
-                    href="tel:+37379950008"
+                    href="tel:+37360355350"
                     className="flex items-center justify-center gap-2 w-full border border-border text-foreground text-sm font-semibold px-4 py-2.5 rounded-sm hover:bg-muted transition-colors"
                   >
                     <svg
@@ -391,7 +391,7 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
                         d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
                       />
                     </svg>
-                    +373 799 500 08
+                    +373 603 55 350
                   </a>
                 </div>
               </div>

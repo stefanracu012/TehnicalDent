@@ -105,7 +105,7 @@ export default async function HomePage({
               {t("programeazaAcum")}
             </Button>
             <Button
-              href="tel:+37379950008"
+              href="tel:+37360355350"
               variant="outline"
               size="lg"
               className="!text-white !border-white hover:!bg-background hover:!text-foreground"
