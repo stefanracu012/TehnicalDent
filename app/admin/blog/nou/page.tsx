@@ -10,6 +10,7 @@ import SectionBuilder, {
   type BlogSection,
   createEmptySection,
 } from "@/components/admin/SectionBuilder";
+import BlogAiPanel, { type ArticleDraft } from "@/components/admin/BlogAiPanel";
 
 type Translations = Record<string, Record<string, string>>;
 
@@ -87,6 +88,44 @@ export default function NewBlogPostPage() {
         [activeLocale]: { ...(prev[activeLocale] || {}), [field]: value },
       }));
     }
+  };
+
+  /**
+   * Drops an AI draft into the form. Images are deliberately untouched — the
+   * assistant writes copy, the editor supplies the photo.
+   */
+  const applyDraft = (draft: ArticleDraft) => {
+    setFormData((p) => ({
+      ...p,
+      title: draft.title,
+      slug: generateSlug(draft.title),
+      excerpt: draft.excerpt,
+      category: draft.category,
+      tags: draft.tags.join(", "),
+    }));
+    setSections(
+      draft.sections.map((s) => ({
+        ...createEmptySection(),
+        title: s.title,
+        text: s.text,
+      })),
+    );
+    // Translations were made from the previous text and no longer match.
+    setTranslations({});
+  };
+
+  /** The form's current state, in the shape a revision request expects. */
+  const currentDraft: ArticleDraft = {
+    title: formData.title,
+    excerpt: formData.excerpt,
+    category: formData.category,
+    tags: formData.tags
+      .split(",")
+      .map((t) => t.trim())
+      .filter(Boolean),
+    sections: sections
+      .filter((s) => s.title || s.text)
+      .map((s) => ({ title: s.title || "", text: s.text || "" })),
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -212,6 +251,13 @@ export default function NewBlogPostPage() {
               </p>
             )}
           </div>
+
+          {/* The assistant writes Romanian; other locales come from translation. */}
+          {activeLocale === "ro" && (
+            <div className="mb-6">
+              <BlogAiPanel onDraft={applyDraft} current={currentDraft} />
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Cover Image - RO only */}

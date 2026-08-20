@@ -1,0 +1,294 @@
+// =============================================
+// Blog drafting assistance (OpenAI).
+//
+// Three jobs, all returning the exact shape the admin blog form already uses:
+// propose topics, draft a full article, and revise a draft from an instruction.
+//
+// Nothing here publishes. Drafts come back with isPublished left to the editor,
+// because this is dental content — see the editorial rules in SYSTEM below.
+//
+// Raw fetch rather than the SDK, matching how the Meta, Telegram and translation
+// integrations are written.
+// =============================================
+
+import prisma from "@/lib/prisma";
+
+const API_KEY = process.env.OPENAI_API_KEY || "";
+const MODEL = process.env.OPENAI_MODEL || "gpt-4o";
+const ENDPOINT = "https://api.openai.com/v1/chat/completions";
+
+export function isBlogAiConfigured(): boolean {
+  return Boolean(API_KEY);
+}
+
+/** Categories the admin form offers. Drafts must pick one of these slugs. */
+export const CATEGORIES = [
+  "igiena-orala",
+  "estetica",
+  "preventie",
+  "copii",
+  "nutritie",
+  "tratamente",
+] as const;
+
+/**
+ * Queries Search Console shows the site ranking for on pages 7-10 — real demand
+ * the clinic already half-ranks for. Suggestions anchored here beat invented
+ * topics, because the audience is measured rather than assumed.
+ */
+const OPPORTUNITY_QUERIES = [
+  "scoatere nerv dinte",
+  "nervul dintelui",
+  "nerv dentar",
+  "scoaterea nervului la masea",
+  "periaj dentar corect",
+  "igiena orala la copii",
+  "гигиена полости рта у детей",
+  "reparatii proteze dentare",
+];
+
+/**
+ * Editorial rules. Dental content is health content: a confident wrong sentence
+ * here can cost a reader money or a tooth, and Google judges the whole domain on
+ * it. The model informs and routes to a consultation; it never diagnoses.
+ */
+const SYSTEM = `Ești redactor de conținut pentru TehnicalDent, o clinică stomatologică din Chișinău, sectorul Botanica.
+
+Scrii în română, pentru pacienți fără pregătire medicală.
+
+REGULI OBLIGATORII:
+- Informezi, nu diagnostichezi. Nu spui cititorului ce are sau ce tratament îi trebuie.
+- Nu dai doze, nu recomanzi medicamente, nu promiți rezultate sau durate de vindecare.
+- Nu inventezi statistici, studii, procente sau citate. Dacă nu știi o cifră, scrii fără ea.
+- Nu inventezi prețuri și nu descrii dotări sau servicii ale clinicii care nu ți-au fost date.
+- Îndemni la consultație pentru orice situație individuală.
+- Ton calm și clar. Fără alarmism, fără limbaj de vânzare agresiv.
+- Folosești cuvintele pacienților ("scoaterea nervului"), explicând o dată termenul medical ("tratament de canal").
+- Diacritice corecte, obligatoriu.`;
+
+interface ChatOptions {
+  schemaName: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  schema: Record<string, any>;
+  user: string;
+  temperature?: number;
+}
+
+async function chatJson<T>({
+  schemaName,
+  schema,
+  user,
+  temperature = 0.7,
+}: ChatOptions): Promise<T> {
+  if (!isBlogAiConfigured()) {
+    throw new Error("OPENAI_API_KEY nu este configurat");
+  }
+
+  const res = await fetch(ENDPOINT, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      temperature,
+      messages: [
+        { role: "system", content: SYSTEM },
+        { role: "user", content: user },
+      ],
+      // Strict schema so the result drops straight into the form with no
+      // repair step; a malformed draft is worse than a failed request.
+      response_format: {
+        type: "json_schema",
+        json_schema: { name: schemaName, strict: true, schema },
+      },
+    }),
+  });
+
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(body?.error?.message || `OpenAI ${res.status}`);
+  }
+
+  const content = body?.choices?.[0]?.message?.content;
+  if (!content) throw new Error("OpenAI a răspuns fără conținut");
+
+  try {
+    return JSON.parse(content) as T;
+  } catch {
+    throw new Error("OpenAI a returnat JSON invalid");
+  }
+}
+
+/** What the clinic actually treats, so drafts never invent a service. */
+async function clinicContext(): Promise<string> {
+  const [services, posts] = await Promise.all([
+    prisma.service.findMany({
+      where: { isActive: true },
+      select: { title: true, shortDesc: true },
+    }),
+    prisma.blogPost.findMany({ select: { title: true } }),
+  ]);
+
+  return [
+    "Servicii oferite de clinică:",
+    ...services.map((s) => `- ${s.title}: ${s.shortDesc}`),
+    "",
+    "Articole care există deja pe blog (nu le repeta):",
+    ...posts.map((p) => `- ${p.title}`),
+  ].join("\n");
+}
+
+// ── Topic suggestions ───────────────────────────────────────────────────────
+
+export interface TopicIdea {
+  title: string;
+  angle: string;
+  category: string;
+  targetQuery: string;
+}
+
+export async function suggestTopics(count = 6): Promise<TopicIdea[]> {
+  const context = await clinicContext();
+
+  const { topics } = await chatJson<{ topics: TopicIdea[] }>({
+    schemaName: "topic_ideas",
+    temperature: 0.9,
+    schema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["topics"],
+      properties: {
+        topics: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["title", "angle", "category", "targetQuery"],
+            properties: {
+              title: { type: "string" },
+              angle: { type: "string" },
+              category: { type: "string", enum: [...CATEGORIES] },
+              targetQuery: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    user: `${context}
+
+Căutări pentru care site-ul apare deja în Google, dar pe pagina 7-10 — cerere reală, nevalorificată:
+${OPPORTUNITY_QUERIES.map((q) => `- ${q}`).join("\n")}
+
+Propune ${count} subiecte de articol. Prioritizează subiectele care răspund căutărilor de mai sus, apoi subiecte legate de serviciile clinicii.
+
+Pentru fiecare: un titlu pe care l-ar da click un pacient, unghiul abordării într-o propoziție, categoria potrivită și căutarea principală vizată.`,
+  });
+
+  return topics;
+}
+
+// ── Full draft ──────────────────────────────────────────────────────────────
+
+export interface DraftSection {
+  title: string;
+  text: string;
+}
+
+export interface ArticleDraft {
+  title: string;
+  excerpt: string;
+  category: string;
+  tags: string[];
+  sections: DraftSection[];
+}
+
+export async function generateArticle(
+  topic: string,
+  category?: string,
+): Promise<ArticleDraft> {
+  const context = await clinicContext();
+
+  return chatJson<ArticleDraft>({
+    schemaName: "article_draft",
+    schema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["title", "excerpt", "category", "tags", "sections"],
+      properties: {
+        title: { type: "string" },
+        excerpt: { type: "string" },
+        category: { type: "string", enum: [...CATEGORIES] },
+        tags: { type: "array", items: { type: "string" } },
+        sections: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["title", "text"],
+            properties: {
+              title: { type: "string" },
+              text: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    user: `${context}
+
+Scrie un articol complet pe subiectul: "${topic}"${category ? `\nCategoria: ${category}` : ""}
+
+Cerințe:
+- Titlu sub 60 de caractere, care conține termenul căutat de pacienți.
+- Un rezumat (excerpt) de 140-160 de caractere, care spune concret ce află cititorul.
+- 4-6 secțiuni. Fiecare cu titlu de subcapitol și 2-4 paragrafe de text.
+- Prima secțiune răspunde direct la întrebarea din titlu, în primele două propoziții.
+- Include o secțiune de întrebări frecvente dacă subiectul o justifică.
+- Ultima secțiune îndeamnă la consultație, fără presiune.
+- 4-8 etichete (tags) scurte, cu litere mici.
+- Text simplu, fără Markdown, fără HTML. Paragrafele se despart prin linie goală.`,
+  });
+}
+
+// ── Revision ────────────────────────────────────────────────────────────────
+
+export async function reviseArticle(
+  current: ArticleDraft,
+  instruction: string,
+): Promise<ArticleDraft> {
+  return chatJson<ArticleDraft>({
+    schemaName: "article_draft",
+    temperature: 0.5,
+    schema: {
+      type: "object",
+      additionalProperties: false,
+      required: ["title", "excerpt", "category", "tags", "sections"],
+      properties: {
+        title: { type: "string" },
+        excerpt: { type: "string" },
+        category: { type: "string", enum: [...CATEGORIES] },
+        tags: { type: "array", items: { type: "string" } },
+        sections: {
+          type: "array",
+          items: {
+            type: "object",
+            additionalProperties: false,
+            required: ["title", "text"],
+            properties: {
+              title: { type: "string" },
+              text: { type: "string" },
+            },
+          },
+        },
+      },
+    },
+    user: `Articolul curent, în JSON:
+
+${JSON.stringify(current, null, 2)}
+
+Instrucțiunea editorului: "${instruction}"
+
+Aplică exact ce cere instrucțiunea și returnează articolul întreg, în aceeași structură. Nu rescrie părțile care nu sunt vizate de instrucțiune — păstrează-le cuvânt cu cuvânt.`,
+  });
+}
