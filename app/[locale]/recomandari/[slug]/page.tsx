@@ -10,6 +10,7 @@ import {
 } from "@/lib/blog-data";
 import { getAlternates, getKeywords } from "@/lib/seo";
 import { ArticleSchema, BreadcrumbSchema } from "@/components/JsonLd";
+import RichText from "@/components/RichText";
 
 // Prerendered at build time. Next does not infer this on its own here because
 // next-intl reads the locale from request context; every admin mutation calls
@@ -239,7 +240,7 @@ export default async function BlogPostPage({ params }: Props) {
                                 key={j}
                                 className="text-base leading-[1.85] text-foreground/85"
                               >
-                                {p}
+                                <RichText text={p} />
                               </p>
                             ))}
                         </div>
@@ -289,7 +290,7 @@ export default async function BlogPostPage({ params }: Props) {
                     key={i}
                     className="text-base leading-[1.85] text-foreground/85"
                   >
-                    {paragraph}
+                    <RichText text={paragraph} />
                   </p>
                 ))}
           </div>

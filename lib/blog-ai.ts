@@ -325,13 +325,14 @@ Text (pentru cititor):
 - Prima secțiune răspunde direct la întrebarea din titlu, în primele două propoziții.
 - Ultima secțiune îndeamnă la consultație, fără presiune.
 - 4-8 etichete (tags) scurte, cu litere mici.
-- Text simplu, fără Markdown, fără HTML. Paragrafele se despart prin linie goală.
+- Paragrafele se despart prin linie goală. Fără HTML.
+- Poți încadra un cuvânt sau o întrebare între ** ** pentru a o îngroșa; site-ul o afișează îngroșat. Niciun alt Markdown: fără #, fără liste cu -, fără linkuri.
 
 Facebook (facebookCaption):
 - 3-5 propoziții. Începe cu o observație sau o întrebare care oprește derularea.
 - Ton de conversație, nu de comunicat de presă.
 - Nu pune linkuri și nu pune îndemn la programare — se adaugă automat la final.
-- Fără hashtag-uri.
+- Fără hashtag-uri și fără Markdown: rețelele afișează ** ** ca asteriscuri.
 
 Instagram (instagramCaption):
 - Prima propoziție trebuie să funcționeze singură — restul e ascuns după "mai mult".
@@ -423,7 +424,7 @@ facebookCaption și instagramCaption sunt DOUĂ texte diferite. Nu copia unul î
 - instagramCaption: prima propoziție trebuie să funcționeze complet singură, fiindcă restul se ascunde după „mai mult". Apoi propoziții scurte, cu linie goală între idei. Mai direct și mai tăiat decât varianta de Facebook.
 
 - Niciun link și niciun îndemn la programare în text — se adaugă automat la final.
-- Fără hashtag-uri în text; pune 4-8 etichete în tags, cu litere mici.`,
+- Fără hashtag-uri și fără Markdown în text; rețelele afișează ** ** ca asteriscuri. Pune 4-8 etichete în tags, cu litere mici.`,
   });
 }
 

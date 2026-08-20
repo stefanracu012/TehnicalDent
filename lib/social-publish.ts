@@ -87,6 +87,20 @@ function instagramCta(articleSlug: string | null): string {
   ].join("\n");
 }
 
+/**
+ * Drops Markdown emphasis from a caption.
+ *
+ * The site renders **bold**, so article text is allowed to use it — but neither
+ * network does, and asterisks reach the reader as asterisks. Stripping here
+ * rather than trusting the prompt means a slip never ships.
+ */
+function stripMarkdown(text: string): string {
+  return text
+    .replace(/\*\*([^*\n]+)\*\*/g, "$1")
+    .replace(/(^|\s)\*([^*\n]+)\*(?=\s|$)/g, "$1$2")
+    .replace(/(^|\n)#{1,6}\s+/g, "$1");
+}
+
 export interface ShareResult {
   facebookPostId: string | null;
   instagramPostId: string | null;
@@ -96,6 +110,42 @@ export interface ShareResult {
 /** Public URL of the Romanian version of an article. */
 export function articleUrl(slug: string): string {
   return `${SITE_URL}/ro/recomandari/${slug}`;
+}
+
+async function graphGet(
+  path: string,
+  params: Record<string, string>,
+): Promise<Record<string, string>> {
+  const url = new URL(`${GRAPH}/${path}`);
+  for (const [k, v] of Object.entries(params)) url.searchParams.set(k, v);
+  url.searchParams.set("access_token", PAGE_TOKEN);
+  const res = await fetch(url);
+  const body = await res.json();
+  if (body.error) throw new Error(body.error.message);
+  return body;
+}
+
+/**
+ * Waits for an Instagram media container to finish processing.
+ *
+ * Meta downloads and transcodes the image after the container is created, and
+ * publishing before that completes fails with "Media ID is not available" — a
+ * race that only shows up once the image is large enough to take a moment.
+ *
+ * Polls for up to a minute, which is far longer than a photo needs.
+ */
+async function waitForContainer(containerId: string): Promise<void> {
+  for (let attempt = 0; attempt < 20; attempt++) {
+    const { status_code: status } = await graphGet(containerId, {
+      fields: "status_code",
+    });
+    if (status === "FINISHED") return;
+    if (status === "ERROR" || status === "EXPIRED") {
+      throw new Error(`Instagram could not process the image (${status})`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+  }
+  throw new Error("Instagram is still processing the image; try again shortly");
 }
 
 async function graphPost(
@@ -140,7 +190,9 @@ export async function publishToFacebook(post: ShareablePost): Promise<string> {
     // desktop and will downscale, never upscale.
     url: await toSquareImage(post.coverImage, 1440),
     caption: [
-      post.facebookCaption?.trim() || [post.title, post.excerpt].join("\n\n"),
+      stripMarkdown(
+        post.facebookCaption?.trim() || [post.title, post.excerpt].join("\n\n"),
+      ),
       "",
       facebookCta(post.linkToArticle === false ? null : post.slug),
     ].join("\n"),
@@ -235,7 +287,9 @@ export async function toOpenGraphImage(coverImage: string): Promise<string> {
  * left out on purpose: Instagram shows it as dead text, and a long unclickable
  * link reads as spam. "Link în bio" carries it instead.
  */
-function buildCaption(body: string, cta: string, tags: string[]): string {
+/** Stripping here covers every Instagram path by construction. */
+function buildCaption(raw: string, cta: string, tags: string[]): string {
+  const body = stripMarkdown(raw);
   const hashtags = tags
     .slice(0, 8)
     .map((t) => `#${t.replace(/[^\p{L}\p{N}]/gu, "")}`)
@@ -282,6 +336,7 @@ export async function publishToInstagram(post: ShareablePost): Promise<string> {
     caption: buildInstagramCaption(post),
   });
 
+  await waitForContainer(container.id);
   const published = await graphPost(`${IG_USER_ID}/media_publish`, {
     creation_id: container.id,
   });
@@ -352,7 +407,7 @@ async function publishAlbumToFacebook(
   post: PublishableSocialPost,
 ): Promise<string> {
   const images = post.images.slice(0, MAX_CAROUSEL);
-  const caption = [post.facebookCaption.trim(), "", facebookCta(post.articleSlug)]
+  const caption = [stripMarkdown(post.facebookCaption.trim()), "", facebookCta(post.articleSlug)]
     .join("\n")
     .trim();
 
@@ -413,6 +468,8 @@ async function publishCarouselToInstagram(
           image_url: await toSquareImage(image, 1080),
           is_carousel_item: "true",
         });
+        // The parent rejects children Meta has not finished downloading yet.
+        await waitForContainer(child.id);
         return child.id;
       }),
     );
@@ -425,6 +482,7 @@ async function publishCarouselToInstagram(
     containerId = parent.id;
   }
 
+  await waitForContainer(containerId);
   const published = await graphPost(`${IG_USER_ID}/media_publish`, {
     creation_id: containerId,
   });
