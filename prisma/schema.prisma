@@ -287,6 +287,25 @@ model AdsSnapshot {
   @@index([fetchedAt])
 }
 
+/**
+ * One question and its answer, kept so the thread survives a page reload.
+ *
+ * Stored as pairs rather than a message stream: an answer without its question
+ * is noise, and deleting one should never leave the other stranded.
+ */
+model AdsChatEntry {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  question String
+  answer   String
+  // Which pull the answer was grounded in, so an old answer can be told apart
+  // from one about the current numbers.
+  basedOn   DateTime?
+  askedBy   String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 model Patient {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String

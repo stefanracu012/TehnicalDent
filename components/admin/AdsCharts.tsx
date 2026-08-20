@@ -1,0 +1,299 @@
+"use client";
+
+import { useState } from "react";
+import type { AdsReport } from "@/lib/meta-ads";
+
+/**
+ * Three single-series charts rather than one crowded one.
+ *
+ * Spend and leads share an x-axis but never a y-axis: money and conversions are
+ * different units, and putting them on two scales in one frame invites a
+ * comparison the data cannot support. Small multiples say the same thing
+ * honestly.
+ */
+
+const INDIGO = "#4F46E5";
+const EMERALD = "#059669";
+const AMBER = "#D97706";
+
+const W = 720;
+const H = 130;
+const PAD = { top: 10, right: 8, bottom: 18, left: 8 };
+
+interface Hover {
+  x: number;
+  label: string;
+  value: string;
+}
+
+function useHover() {
+  const [hover, setHover] = useState<Hover | null>(null);
+  return { hover, setHover };
+}
+
+function Tooltip({ hover }: { hover: Hover | null }) {
+  if (!hover) return null;
+  const flip = hover.x > W * 0.7;
+  return (
+    <g transform={`translate(${hover.x}, 0)`} pointerEvents="none">
+      <line
+        y1={PAD.top}
+        y2={H - PAD.bottom}
+        stroke="currentColor"
+        strokeWidth="1"
+        className="text-foreground/25"
+      />
+      <text
+        x={flip ? -8 : 8}
+        y={PAD.top + 12}
+        textAnchor={flip ? "end" : "start"}
+        className="fill-foreground text-[11px] font-semibold"
+      >
+        {hover.value}
+      </text>
+      <text
+        x={flip ? -8 : 8}
+        y={PAD.top + 26}
+        textAnchor={flip ? "end" : "start"}
+        className="fill-muted-foreground text-[10px]"
+      >
+        {hover.label}
+      </text>
+    </g>
+  );
+}
+
+function DailyChart({
+  points,
+  color,
+  kind,
+  format,
+  title,
+  subtitle,
+}: {
+  points: { date: string; value: number }[];
+  color: string;
+  kind: "area" | "bars";
+  format: (n: number) => string;
+  title: string;
+  subtitle: string;
+}) {
+  const { hover, setHover } = useHover();
+
+  if (points.length === 0) {
+    return (
+      <div className="p-5">
+        <h3 className="font-serif text-base text-foreground">{title}</h3>
+        <p className="text-sm text-muted-foreground mt-1">Nu există date zilnice.</p>
+      </div>
+    );
+  }
+
+  const max = Math.max(...points.map((p) => p.value), 1);
+  const plotW = W - PAD.left - PAD.right;
+  const plotH = H - PAD.top - PAD.bottom;
+  const step = plotW / Math.max(points.length - 1, 1);
+  const y = (v: number) => PAD.top + plotH - (v / max) * plotH;
+  const x = (i: number) => PAD.left + i * step;
+
+  const line = points.map((p, i) => `${i ? "L" : "M"}${x(i)},${y(p.value)}`).join(" ");
+  const area = `${line} L${x(points.length - 1)},${PAD.top + plotH} L${x(0)},${PAD.top + plotH} Z`;
+
+  const barW = Math.max(plotW / points.length - 1.5, 1.5);
+  const total = points.reduce((s, p) => s + p.value, 0);
+  const id = `grad-${title.replace(/\W/g, "")}`;
+
+  const fmtDate = (d: string) =>
+    new Date(d).toLocaleDateString("ro-RO", { day: "numeric", month: "short" });
+
+  return (
+    <div className="p-5">
+      <div className="flex items-baseline justify-between gap-3 mb-1">
+        <h3 className="font-serif text-base text-foreground">{title}</h3>
+        <span className="text-sm font-semibold tabular-nums" style={{ color }}>
+          {format(total)}
+        </span>
+      </div>
+      <p className="text-xs text-muted-foreground mb-3">{subtitle}</p>
+
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="w-full h-auto overflow-visible"
+        role="img"
+        aria-label={`${title}. Total ${format(total)}.`}
+        onMouseLeave={() => setHover(null)}
+      >
+        <defs>
+          <linearGradient id={id} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.28" />
+            <stop offset="100%" stopColor={color} stopOpacity="0.02" />
+          </linearGradient>
+        </defs>
+
+        {/* Baseline, recessive on purpose */}
+        <line
+          x1={PAD.left}
+          x2={W - PAD.right}
+          y1={PAD.top + plotH}
+          y2={PAD.top + plotH}
+          stroke="currentColor"
+          strokeWidth="1"
+          className="text-border"
+        />
+
+        {kind === "area" ? (
+          <>
+            <path d={area} fill={`url(#${id})`} />
+            <path
+              d={line}
+              fill="none"
+              stroke={color}
+              strokeWidth="2"
+              strokeLinejoin="round"
+              strokeLinecap="round"
+            />
+          </>
+        ) : (
+          points.map((p, i) => (
+            <rect
+              key={p.date}
+              x={x(i) - barW / 2}
+              y={y(p.value)}
+              width={barW}
+              height={Math.max(PAD.top + plotH - y(p.value), p.value > 0 ? 1.5 : 0)}
+              fill={color}
+              rx="1"
+            />
+          ))
+        )}
+
+        {/* One transparent column per point: a hit target far bigger than the mark */}
+        {points.map((p, i) => (
+          <rect
+            key={`hit-${p.date}`}
+            x={x(i) - step / 2}
+            y={PAD.top}
+            width={Math.max(step, 4)}
+            height={plotH}
+            fill="transparent"
+            onMouseEnter={() =>
+              setHover({
+                x: x(i),
+                label: fmtDate(p.date),
+                value: format(p.value),
+              })
+            }
+          />
+        ))}
+
+        <Tooltip hover={hover} />
+
+        <text
+          x={PAD.left}
+          y={H - 4}
+          className="fill-muted-foreground text-[10px]"
+        >
+          {fmtDate(points[0].date)}
+        </text>
+        <text
+          x={W - PAD.right}
+          y={H - 4}
+          textAnchor="end"
+          className="fill-muted-foreground text-[10px]"
+        >
+          {fmtDate(points[points.length - 1].date)}
+        </text>
+      </svg>
+    </div>
+  );
+}
+
+function CostPerLead({ report }: { report: AdsReport }) {
+  const rows = report.ads
+    .filter((a) => a.costPerLead !== null && a.leads > 0)
+    .sort((a, b) => (a.costPerLead ?? 0) - (b.costPerLead ?? 0));
+
+  if (rows.length === 0) return null;
+
+  const max = Math.max(...rows.map((r) => r.costPerLead ?? 0));
+
+  return (
+    <div className="p-5">
+      <h3 className="font-serif text-base text-foreground mb-1">
+        Cât costă un contact
+      </h3>
+      <p className="text-xs text-muted-foreground mb-4">
+        Mai scurt e mai bine. Barele palide au sub 10 contacte — prea puține ca
+        să fie o concluzie.
+      </p>
+      <div className="space-y-2">
+        {rows.map((r, i) => {
+          const value = r.costPerLead ?? 0;
+          const thin = r.leads < 10;
+          return (
+            <div
+              key={i}
+              className="grid grid-cols-1 sm:grid-cols-[190px_1fr] sm:items-center gap-1 sm:gap-3"
+            >
+              <span className="text-sm text-muted-foreground sm:text-right truncate">
+                {r.name}
+              </span>
+              <div className="flex items-center gap-2">
+                <div
+                  className="h-5 rounded-r-[3px]"
+                  style={{
+                    width: `${Math.max((value / max) * 100, 1.5)}%`,
+                    backgroundColor: AMBER,
+                    opacity: thin ? 0.35 : 1,
+                  }}
+                />
+                <span className="text-sm font-semibold text-foreground tabular-nums whitespace-nowrap">
+                  {value.toLocaleString("ro-RO", { maximumFractionDigits: 2 })}{" "}
+                  {report.currency}
+                </span>
+                <span className="text-xs text-muted-foreground whitespace-nowrap">
+                  {r.leads} contacte
+                </span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+export default function AdsCharts({ report }: { report: AdsReport }) {
+  const daily = report.daily ?? [];
+  const currency = report.currency;
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-px bg-border border border-border">
+      <div className="bg-background">
+        <DailyChart
+          points={daily.map((d) => ({ date: d.date, value: d.spend }))}
+          color={INDIGO}
+          kind="area"
+          format={(n) =>
+            `${n.toLocaleString("ro-RO", { maximumFractionDigits: 0 })} ${currency}`
+          }
+          title="Cheltuit pe zi"
+          subtitle="Ultimele 90 de zile"
+        />
+      </div>
+      <div className="bg-background">
+        <DailyChart
+          points={daily.map((d) => ({ date: d.date, value: d.leads }))}
+          color={EMERALD}
+          kind="bars"
+          format={(n) => `${n} contacte`}
+          title="Contacte pe zi"
+          subtitle="Ultimele 90 de zile"
+        />
+      </div>
+      <div className="bg-background lg:col-span-2">
+        <CostPerLead report={report} />
+      </div>
+    </div>
+  );
+}
