@@ -6,7 +6,13 @@
 // severity instead of printing a wall of text.
 // =============================================
 
-import type { AdsReport } from "@/lib/meta-ads";
+import {
+  INSIGHT_ENUMS,
+  queryInsights,
+  listStructure,
+  getAdCreatives,
+  type AdsReport,
+} from "@/lib/meta-ads";
 
 const API_KEY = process.env.OPENAI_API_KEY || "";
 const MODEL = process.env.OPENAI_MODEL || "gpt-4o";
@@ -95,11 +101,12 @@ export function isAdsAiConfigured(): boolean {
  */
 const CHAT_SYSTEM = `Ești analistul contului de reclame Meta al clinicii TehnicalDent din Chișinău.
 
-Primești raportul complet al contului în format JSON. Răspunzi la întrebări în română.
+Ai acces direct la contul de reclame prin unelte de citire. Răspunzi la întrebări în română.
 
 REGULI ABSOLUTE:
-- Răspunzi EXCLUSIV pe baza datelor din JSON-ul primit. Nu folosești cunoștințe generale despre publicitate ca să completezi cifre.
-- Dacă răspunsul nu se află în date, spui direct: "Datele din raport nu conțin asta" și explici ce anume ar fi nevoie.
+- Ai unelte care interoghează contul de reclame în direct. Folosește-le. Nu ghici o cifră pe care o poți cere.
+- Răspunzi EXCLUSIV pe baza cifrelor primite din unelte sau din totalurile date. Nu folosești cunoștințe generale despre publicitate ca să completezi cifre.
+- Dacă nici uneltele nu pot afla ceva, spui direct ce lipsește și de ce.
 - Nu estimezi și nu aproximezi cifre. Dacă un calcul e posibil din datele existente, îl faci și arăți din ce l-ai obținut.
 - Când dai o cifră, spui de unde vine: "Igienizare, 13 contacte la 66,03 USD" e util; "aproximativ 5 dolari" nu e.
 - Diferențele bazate pe mai puțin de 10 conversii sunt zgomot. Le marchezi ca incerte de fiecare dată.
@@ -128,7 +135,111 @@ export interface ChatTurn {
   content: string;
 }
 
-/** Answers one question about the stored report. Returns plain prose. */
+/**
+ * What the assistant can ask Meta.
+ *
+ * Every parameter is an enum, so the model picks between prepared questions
+ * rather than composing a request. There is no tool that writes, and no tool
+ * that takes a path — read-only holds regardless of what it is asked to do.
+ */
+const TOOLS = [
+  {
+    type: "function" as const,
+    function: {
+      name: "get_insights",
+      description:
+        "Cifre de performanță direct din contul de reclame: cheltuit, afișări, clicuri, CTR, conversații pornite, contacte, cost pe contact și cost pe conversație. Folosește-l pentru orice întrebare despre rezultate.",
+      parameters: {
+        type: "object",
+        additionalProperties: false,
+        required: ["level", "datePreset"],
+        properties: {
+          level: {
+            type: "string",
+            enum: [...INSIGHT_ENUMS.levels],
+            description:
+              "account pentru total, campaign pentru campanii, adset pentru seturi, ad pentru fiecare reclamă.",
+          },
+          datePreset: {
+            type: "string",
+            enum: [...INSIGHT_ENUMS.datePresets],
+            description: "maximum înseamnă tot istoricul contului.",
+          },
+          daily: {
+            type: ["boolean", "null"],
+            description: "true împarte rezultatul pe zile.",
+          },
+          breakdown: {
+            type: ["string", "null"],
+            enum: [...INSIGHT_ENUMS.breakdowns, null],
+            description:
+              "Segmentare: vârstă, gen, țară, regiune, platformă sau poziție.",
+          },
+        },
+      },
+    },
+  },
+  {
+    type: "function" as const,
+    function: {
+      name: "list_structure",
+      description:
+        "Structura contului: campanii, seturi de reclame sau reclame, cu starea lor (activă/oprită), obiectivul și bugetul setat.",
+      parameters: {
+        type: "object",
+        additionalProperties: false,
+        required: ["type"],
+        properties: {
+          type: { type: "string", enum: ["campaigns", "adsets", "ads"] },
+        },
+      },
+    },
+  },
+  {
+    type: "function" as const,
+    function: {
+      name: "get_ad_creatives",
+      description:
+        "Textul efectiv al reclamelor — titlu, mesaj, îndemn. Folosește-l când întrebarea e despre CE scrie într-o reclamă, nu doar cât a costat.",
+      parameters: {
+        type: "object",
+        additionalProperties: false,
+        required: [],
+        properties: {},
+      },
+    },
+  },
+];
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function runTool(name: string, args: any): Promise<unknown> {
+  switch (name) {
+    case "get_insights":
+      return queryInsights({
+        level: args?.level,
+        datePreset: args?.datePreset,
+        breakdown: args?.breakdown ?? undefined,
+        daily: args?.daily ?? false,
+      });
+    case "list_structure":
+      return listStructure(args?.type ?? "campaigns");
+    case "get_ad_creatives":
+      return getAdCreatives();
+    default:
+      return { error: `Unealtă necunoscută: ${name}` };
+  }
+}
+
+/**
+ * Answers one question, querying Meta as needed.
+ *
+ * The totals travel in the prompt so an easy question needs no round trip, but
+ * anything beyond them is fetched live — which is both fresher than a stored
+ * snapshot and honest about where the number came from.
+ *
+ * Capped at four rounds of tool calls: a question that cannot be answered in
+ * four queries is one the assistant should decline rather than grind at.
+ */
 export async function answerAdsQuestion(
   report: AdsReport,
   question: string,
@@ -138,37 +249,73 @@ export async function answerAdsQuestion(
     throw new Error("OPENAI_API_KEY nu este configurat");
   }
 
-  const res = await fetch(ENDPOINT, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${API_KEY}`,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const messages: any[] = [
+    { role: "system", content: CHAT_SYSTEM },
+    {
+      role: "system",
+      content:
+        `Contul are moneda ${report.currency}. Totalurile pe tot istoricul, ca punct de plecare:\n` +
+        JSON.stringify(report.totals) +
+        `\n\nPentru orice altceva — pe zile, pe campanii, pe reclame, pe vârste, pe platforme, textul reclamelor — folosește uneltele. Nu ghici niciodată o cifră pe care o poți cere.`,
     },
-    body: JSON.stringify({
-      model: MODEL,
-      temperature: 0.2,
-      messages: [
-        { role: "system", content: CHAT_SYSTEM },
-        {
-          role: "system",
-          content: `Raportul contului, în ${report.currency}:\n\n${JSON.stringify(report)}`,
-        },
-        // Only the last few turns: the report is the expensive part of the
-        // prompt, and older chatter adds cost without adding grounding.
-        ...history.slice(-6),
-        { role: "user", content: question },
-      ],
-    }),
-  });
+    ...history.slice(-6),
+    { role: "user", content: question },
+  ];
 
-  const body = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error(body?.error?.message || `OpenAI ${res.status}`);
+  for (let round = 0; round < 5; round++) {
+    const res = await fetch(ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: MODEL,
+        temperature: 0.2,
+        messages,
+        tools: TOOLS,
+      }),
+    });
+
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(body?.error?.message || `OpenAI ${res.status}`);
+    }
+
+    const message = body?.choices?.[0]?.message;
+    if (!message) throw new Error("OpenAI a răspuns fără conținut");
+
+    const calls = message.tool_calls ?? [];
+    if (calls.length === 0) {
+      const content = (message.content ?? "").trim();
+      if (!content) throw new Error("OpenAI a răspuns fără conținut");
+      return content;
+    }
+
+    messages.push(message);
+
+    for (const call of calls) {
+      let result: unknown;
+      try {
+        result = await runTool(
+          call.function.name,
+          JSON.parse(call.function.arguments || "{}"),
+        );
+      } catch (error) {
+        // Handed back as data: the model should say the query failed rather
+        // than answer as though it had succeeded.
+        result = { error: (error as Error).message };
+      }
+      messages.push({
+        role: "tool",
+        tool_call_id: call.id,
+        content: JSON.stringify(result),
+      });
+    }
   }
 
-  const content = body?.choices?.[0]?.message?.content;
-  if (!content) throw new Error("OpenAI a răspuns fără conținut");
-  return content.trim();
+  return "Nu am reușit să răspund în numărul de interogări permis. Încearcă o întrebare mai specifică.";
 }
 
 export async function analyseAdsReport(report: AdsReport): Promise<AdsAnalysis> {

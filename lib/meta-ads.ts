@@ -65,8 +65,7 @@ export interface AdsReport {
   funnel: FunnelStep[];
   ads: AdRow[];
   campaigns: CampaignRow[];
-  /** Last 90 days, day by day. Lets questions about trends be answered
-   *  from the stored report instead of another round trip to Meta. */
+  /** Every day the account has run, oldest first. */
   daily: DailyPoint[];
 }
 
@@ -121,6 +120,138 @@ const INSIGHT_FIELDS =
 const ratio = (cost: number, count: number) =>
   count > 0 ? Math.round((cost / count) * 100) / 100 : null;
 
+// ── Live queries, for the assistant ─────────────────────────────────────────
+//
+// Every parameter below is an enum or a bounded value, never a free-form path
+// or field list. The assistant chooses between prepared questions; it cannot
+// compose a request of its own, which is what keeps "read-only" true no matter
+// what it is asked to do.
+
+const DATE_PRESETS = [
+  "today",
+  "yesterday",
+  "this_week_mon_today",
+  "last_week_mon_sun",
+  "last_7d",
+  "last_14d",
+  "last_30d",
+  "last_90d",
+  "this_month",
+  "last_month",
+  "maximum",
+] as const;
+
+const LEVELS = ["account", "campaign", "adset", "ad"] as const;
+
+const BREAKDOWNS = [
+  "age",
+  "gender",
+  "country",
+  "region",
+  "publisher_platform",
+  "platform_position",
+  "impression_device",
+] as const;
+
+export type DatePreset = (typeof DATE_PRESETS)[number];
+export type InsightLevel = (typeof LEVELS)[number];
+export type Breakdown = (typeof BREAKDOWNS)[number];
+
+export const INSIGHT_ENUMS = {
+  datePresets: DATE_PRESETS,
+  levels: LEVELS,
+  breakdowns: BREAKDOWNS,
+};
+
+/** Trims Meta's action list to the handful that mean something here. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function summariseRow(r: any) {
+  return {
+    ...(r.date_start ? { date: r.date_start } : {}),
+    ...(r.campaign_name ? { campaign: r.campaign_name } : {}),
+    ...(r.adset_name ? { adset: r.adset_name } : {}),
+    ...(r.ad_name ? { ad: r.ad_name } : {}),
+    ...Object.fromEntries(
+      BREAKDOWNS.filter((b) => r[b] !== undefined).map((b) => [b, r[b]]),
+    ),
+    spend: Number(r.spend ?? 0),
+    impressions: Number(r.impressions ?? 0),
+    clicks: Number(r.clicks ?? 0),
+    ctr: Number(r.ctr ?? 0),
+    conversations: action(r.actions, A.connection),
+    leads: action(r.actions, A.lead),
+    costPerLead: costPer(r.cost_per_action_type, A.lead),
+    costPerConversation: costPer(r.cost_per_action_type, A.connection),
+  };
+}
+
+export async function queryInsights(params: {
+  level?: InsightLevel;
+  datePreset?: DatePreset;
+  breakdown?: Breakdown;
+  daily?: boolean;
+  limit?: number;
+}) {
+  const level = LEVELS.includes(params.level as InsightLevel)
+    ? params.level!
+    : "ad";
+  const preset = DATE_PRESETS.includes(params.datePreset as DatePreset)
+    ? params.datePreset!
+    : "last_30d";
+
+  const query: Record<string, string> = {
+    date_preset: preset,
+    fields:
+      "campaign_name,adset_name,ad_name,date_start,spend,impressions,clicks,ctr,actions,cost_per_action_type",
+    limit: String(Math.min(Math.max(params.limit ?? 50, 1), 200)),
+  };
+  if (level !== "account") query.level = level;
+  if (params.daily) query.time_increment = "1";
+  if (BREAKDOWNS.includes(params.breakdown as Breakdown)) {
+    query.breakdowns = params.breakdown!;
+  }
+
+  const { data } = await graph(`${ACCOUNT}/insights`, query);
+  return (data ?? []).map(summariseRow);
+}
+
+export async function listStructure(type: "campaigns" | "adsets" | "ads") {
+  const fields: Record<string, string> = {
+    campaigns: "name,status,objective,daily_budget,lifetime_budget,created_time",
+    adsets:
+      "name,status,optimization_goal,billing_event,daily_budget,lifetime_budget,campaign{name}",
+    ads: "name,status,effective_status,created_time,adset{name},campaign{name}",
+  };
+  const kind = fields[type] ? type : "campaigns";
+  const { data } = await graph(`${ACCOUNT}/${kind}`, {
+    fields: fields[kind],
+    limit: "100",
+  });
+  return data ?? [];
+}
+
+/** The words and image of an ad, so copy can be judged alongside its numbers. */
+export async function getAdCreatives() {
+  const { data } = await graph(`${ACCOUNT}/ads`, {
+    fields:
+      "name,status,creative{title,body,object_story_spec,call_to_action_type,image_url,thumbnail_url}",
+    limit: "50",
+  });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (data ?? []).map((ad: any) => {
+    const spec = ad.creative?.object_story_spec?.link_data ?? {};
+    return {
+      ad: ad.name,
+      status: ad.status,
+      title: ad.creative?.title ?? spec.name ?? null,
+      body: ad.creative?.body ?? spec.message ?? null,
+      description: spec.description ?? null,
+      callToAction:
+        ad.creative?.call_to_action_type ?? spec.call_to_action?.type ?? null,
+    };
+  });
+}
+
 /** Pulls the whole account history and shapes it for the report page. */
 export async function fetchAdsReport(): Promise<AdsReport> {
   if (!isAdsConfigured()) {
@@ -152,11 +283,13 @@ export async function fetchAdsReport(): Promise<AdsReport> {
       fields: "id,name,status,objective",
       limit: "100",
     }),
+    // Whole history, not a window: the account is young enough that every day
+    // fits, and a chart that starts mid-story invites wrong conclusions.
     graph(`${ACCOUNT}/insights`, {
-      date_preset: "last_90d",
+      date_preset: "maximum",
       time_increment: "1",
       fields: "date_start,spend,actions",
-      limit: "100",
+      limit: "500",
     }),
   ]);
 

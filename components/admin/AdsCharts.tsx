@@ -274,6 +274,12 @@ export default function AdsCharts({ report }: { report: AdsReport }) {
   const conversations = daily.reduce((s, d) => s + d.connections, 0);
   const per90 = conversations > 0 ? spent / conversations : null;
 
+  const fmt = (d: string) =>
+    new Date(d).toLocaleDateString("ro-RO", { day: "numeric", month: "short", year: "2-digit" });
+  const dateRange = daily.length
+    ? `${fmt(daily[0].date)} — ${fmt(daily[daily.length - 1].date)}`
+    : "Tot istoricul";
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-px bg-border border border-border">
       <div className="bg-background">
@@ -285,7 +291,7 @@ export default function AdsCharts({ report }: { report: AdsReport }) {
             `${n.toLocaleString("ro-RO", { maximumFractionDigits: 0 })} ${currency}`
           }
           title="Cheltuit pe zi"
-          subtitle="Ultimele 90 de zile"
+          subtitle={dateRange}
         />
       </div>
       <div className="bg-background">
@@ -298,7 +304,7 @@ export default function AdsCharts({ report }: { report: AdsReport }) {
           subtitle={
             per90
               ? `Câte o conversație la ${per90.toLocaleString("ro-RO", { maximumFractionDigits: 2 })} ${currency}`
-              : "Ultimele 90 de zile"
+              : dateRange
           }
         />
       </div>
@@ -309,7 +315,7 @@ export default function AdsCharts({ report }: { report: AdsReport }) {
           kind="bars"
           format={(n) => `${n} contacte`}
           title="Contacte pe zi"
-          subtitle="Ultimele 90 de zile"
+          subtitle={dateRange}
         />
       </div>
       <div className="bg-background lg:col-span-3">
