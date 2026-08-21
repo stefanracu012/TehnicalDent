@@ -17,8 +17,8 @@ const EMERALD = "#059669";
 const AMBER = "#D97706";
 
 const W = 720;
-const H = 130;
-const PAD = { top: 10, right: 8, bottom: 18, left: 8 };
+const H = 170;
+const PAD = { top: 12, right: 10, bottom: 20, left: 10 };
 
 interface Hover {
   x: number;
@@ -208,28 +208,49 @@ function DailyChart({
   );
 }
 
-function CostPerLead({ report }: { report: AdsReport }) {
+/**
+ * Ads ranked by what one outcome cost, cheapest first.
+ *
+ * Rows built on too few conversions are drawn faint rather than hidden: they
+ * are part of the spend and belong in the picture, but a cost derived from two
+ * of anything is not a finding and should not look like one.
+ */
+function CostRanking({
+  report,
+  title,
+  noun,
+  color,
+  cost,
+  count,
+  minimum,
+}: {
+  report: AdsReport;
+  title: string;
+  noun: string;
+  color: string;
+  cost: (a: AdsReport["ads"][number]) => number | null;
+  count: (a: AdsReport["ads"][number]) => number;
+  minimum: number;
+}) {
   const rows = report.ads
-    .filter((a) => a.costPerLead !== null && a.leads > 0)
-    .sort((a, b) => (a.costPerLead ?? 0) - (b.costPerLead ?? 0));
+    .filter((a) => cost(a) !== null && count(a) > 0)
+    .sort((a, b) => (cost(a) ?? 0) - (cost(b) ?? 0));
 
   if (rows.length === 0) return null;
 
-  const max = Math.max(...rows.map((r) => r.costPerLead ?? 0));
+  const max = Math.max(...rows.map((r) => cost(r) ?? 0));
 
   return (
     <div className="p-5">
-      <h3 className="font-serif text-base text-foreground mb-1">
-        Cât costă un contact
-      </h3>
+      <h3 className="font-serif text-base text-foreground mb-1">{title}</h3>
       <p className="text-xs text-muted-foreground mb-4">
-        Mai scurt e mai bine. Barele palide au sub 10 contacte — prea puține ca
-        să fie o concluzie.
+        Mai scurt e mai bine. Barele palide au sub {minimum} {noun} — prea puține
+        ca să fie o concluzie.
       </p>
       <div className="space-y-2">
         {rows.map((r, i) => {
-          const value = r.costPerLead ?? 0;
-          const thin = r.leads < 10;
+          const value = cost(r) ?? 0;
+          const n = count(r);
           return (
             <div
               key={i}
@@ -243,8 +264,8 @@ function CostPerLead({ report }: { report: AdsReport }) {
                   className="h-5 rounded-r-[3px]"
                   style={{
                     width: `${Math.max((value / max) * 100, 1.5)}%`,
-                    backgroundColor: AMBER,
-                    opacity: thin ? 0.35 : 1,
+                    backgroundColor: color,
+                    opacity: n < minimum ? 0.35 : 1,
                   }}
                 />
                 <span className="text-sm font-semibold text-foreground tabular-nums whitespace-nowrap">
@@ -252,7 +273,7 @@ function CostPerLead({ report }: { report: AdsReport }) {
                   {report.currency}
                 </span>
                 <span className="text-xs text-muted-foreground whitespace-nowrap">
-                  {r.leads} contacte
+                  {n} {noun}
                 </span>
               </div>
             </div>
@@ -281,7 +302,7 @@ export default function AdsCharts({ report }: { report: AdsReport }) {
     : "Tot istoricul";
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-px bg-border border border-border">
+    <div className="flex flex-col gap-px bg-border border border-border">
       <div className="bg-background">
         <DailyChart
           points={daily.map((d) => ({ date: d.date, value: d.spend }))}
@@ -318,8 +339,27 @@ export default function AdsCharts({ report }: { report: AdsReport }) {
           subtitle={dateRange}
         />
       </div>
-      <div className="bg-background lg:col-span-3">
-        <CostPerLead report={report} />
+      <div className="bg-background">
+        <CostRanking
+          report={report}
+          title="Cât costă o conversație"
+          noun="conversații"
+          color={AMBER}
+          cost={(a) => a.costPerConnection}
+          count={(a) => a.connections}
+          minimum={20}
+        />
+      </div>
+      <div className="bg-background">
+        <CostRanking
+          report={report}
+          title="Cât costă un contact"
+          noun="contacte"
+          color={EMERALD}
+          cost={(a) => a.costPerLead}
+          count={(a) => a.leads}
+          minimum={10}
+        />
       </div>
     </div>
   );
