@@ -39,7 +39,8 @@ interface BlogPost {
   translations?: Translations | null;
   sections?: BlogSection[] | null;
   shareToSocial: boolean;
-  linkToArticle: boolean;
+  linkOnFacebook: boolean;
+  linkOnInstagram: boolean;
   facebookPostId: string | null;
   instagramPostId: string | null;
   socialError: string | null;
@@ -74,7 +75,8 @@ export default function EditBlogPostPage({
     author: "TehnicalDent",
     isPublished: false,
     shareToSocial: false,
-    linkToArticle: true,
+    linkOnFacebook: true,
+    linkOnInstagram: true,
     metaTitle: "",
     metaDescription: "",
     facebookCaption: "",
@@ -108,7 +110,8 @@ export default function EditBlogPostPage({
           author: post.author,
           isPublished: post.isPublished,
           shareToSocial: post.shareToSocial ?? false,
-          linkToArticle: post.linkToArticle ?? true,
+          linkOnFacebook: post.linkOnFacebook ?? true,
+          linkOnInstagram: post.linkOnInstagram ?? true,
           metaTitle: post.metaTitle ?? "",
           metaDescription: post.metaDescription ?? "",
           facebookCaption: post.facebookCaption ?? "",
@@ -584,26 +587,51 @@ export default function EditBlogPostPage({
                 </div>
 
                 {formData.shareToSocial && (
-                  <div className="flex items-start gap-3 ml-7">
-                    <input
-                      type="checkbox"
-                      id="linkToArticle"
-                      checked={formData.linkToArticle}
-                      onChange={(e) =>
-                        setFormData((p) => ({
-                          ...p,
-                          linkToArticle: e.target.checked,
-                        }))
-                      }
-                      className="w-4 h-4 mt-0.5"
-                    />
-                    <label htmlFor="linkToArticle" className="text-sm text-foreground">
+                  <div className="ml-7 space-y-3">
+                    <p className="text-sm text-foreground">
                       Trimite cititorii către articol
                       <span className="block text-xs text-foreground/50 mt-0.5">
-                        Adaugă un îndemn de citire cu linkul articolului. Lasă
+                        Adaugă linkul articolului la finalul postării. Lasă
                         nebifat dacă imaginea spune deja tot.
                       </span>
-                    </label>
+                    </p>
+                    {(
+                      [
+                        {
+                          key: "linkOnFacebook",
+                          label: "Pe Facebook",
+                          hint: "linkul e clicabil",
+                        },
+                        {
+                          key: "linkOnInstagram",
+                          label: "Pe Instagram",
+                          hint: "apare ca text — Instagram nu face linkurile clicabile",
+                        },
+                      ] as const
+                    ).map((n) => (
+                      <label
+                        key={n.key}
+                        className="flex items-start gap-3 text-sm cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formData[n.key]}
+                          onChange={(e) =>
+                            setFormData((p) => ({
+                              ...p,
+                              [n.key]: e.target.checked,
+                            }))
+                          }
+                          className="w-4 h-4 mt-0.5"
+                        />
+                        <span>
+                          {n.label}
+                          <span className="block text-xs text-foreground/50">
+                            {n.hint}
+                          </span>
+                        </span>
+                      </label>
+                    ))}
                   </div>
                 )}
 

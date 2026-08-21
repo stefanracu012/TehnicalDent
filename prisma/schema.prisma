@@ -222,10 +222,12 @@ model BlogPost {
   // article never posts it twice; socialError carries the last failure so the
   // admin can see why a share did not go out.
   shareToSocial   Boolean @default(false)
-  // Whether the social post invites people to read the article. On for pieces
-  // worth the click; off for graphics that say everything themselves, where a
-  // "read more" would send people away from a post that had nothing more to give.
-  linkToArticle   Boolean @default(true)
+  // Whether the post invites people to read the article — decided per network,
+  // because the two behave differently. Facebook makes the URL tappable, so a
+  // link there costs nothing; Instagram shows it as plain text, which is worth
+  // it for a piece someone would go and type, and clutter for one they would not.
+  linkOnFacebook  Boolean @default(true)
+  linkOnInstagram Boolean @default(true)
   facebookPostId  String?
   instagramPostId String?
   socialError     String?

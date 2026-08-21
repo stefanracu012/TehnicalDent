@@ -47,8 +47,9 @@ export interface ShareablePost {
   /** Platform-tuned copy from the drafting assistant; falls back to the excerpt. */
   facebookCaption?: string | null;
   instagramCaption?: string | null;
-  /** Whether the post invites the reader to the article. */
-  linkToArticle?: boolean;
+  /** Whether the post invites the reader to the article, per network. */
+  linkOnFacebook?: boolean;
+  linkOnInstagram?: boolean;
 }
 
 /**
@@ -77,23 +78,19 @@ function facebookCta(articleSlug: string | null): string {
 }
 
 /**
- * Instagram renders no clickable links, so exactly one line may point at the
- * bio — there is only one link up there, and two lines claiming it is where to
- * go tell the reader nothing. Whichever ask the post is really making gets it;
- * the other routes through WhatsApp, which is tappable from a caption.
+ * Instagram makes no caption URL tappable, so the address is printed for a
+ * reader to retype rather than hidden behind "link in bio" — a bio holds one
+ * link and has to be re-pointed for every post, so it is wrong more often than
+ * right. The scheme is dropped: it is noise nobody types.
  */
 function instagramCta(articleSlug: string | null): string {
+  const bare = (url: string) => url.replace(/^https?:\/\//, "");
   return [
     "———",
     ...(articleSlug
-      ? [
-          "📖 Articolul complet — linkul e în bio",
-          `💬 Programează-te pe WhatsApp: ${CLINIC.telephoneDisplay}`,
-        ]
-      : [
-          "📅 Programează-te — linkul e în bio",
-          `💬 Sau scrie-ne pe WhatsApp: ${CLINIC.telephoneDisplay}`,
-        ]),
+      ? [`📖 Articolul complet:`, bare(articleUrl(articleSlug))]
+      : [`📅 Programează-te: ${bare(SITE_URL)}/contact`]),
+    `💬 Scrie-ne pe WhatsApp: ${CLINIC.telephoneDisplay}`,
     `📍 ${CLINIC.streetAddress}, ${CLINIC.locality}`,
   ].join("\n");
 }
@@ -205,7 +202,7 @@ export async function publishToFacebook(post: ShareablePost): Promise<string> {
         post.facebookCaption?.trim() || [post.title, post.excerpt].join("\n\n"),
       ),
       "",
-      facebookCta(post.linkToArticle === false ? null : post.slug),
+      facebookCta(post.linkOnFacebook === false ? null : post.slug),
     ].join("\n"),
   });
 
@@ -321,7 +318,7 @@ function buildInstagramCaption(post: ShareablePost): string {
   return buildCaption(
     post.instagramCaption?.trim() ||
       [post.title, post.excerpt].filter(Boolean).join("\n\n"),
-    instagramCta(post.linkToArticle === false ? null : post.slug),
+    instagramCta(post.linkOnInstagram === false ? null : post.slug),
     post.tags ?? [],
   );
 }
@@ -605,7 +602,8 @@ export async function shareBlogPostById(id: string): Promise<ShareResult | null>
       tags: post.tags,
       facebookCaption: post.facebookCaption,
       instagramCaption: post.instagramCaption,
-      linkToArticle: post.linkToArticle,
+      linkOnFacebook: post.linkOnFacebook,
+      linkOnInstagram: post.linkOnInstagram,
     },
     {
       skipFacebook: Boolean(post.facebookPostId),
