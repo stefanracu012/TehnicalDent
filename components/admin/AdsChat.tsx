@@ -105,22 +105,46 @@ export default function AdsChat({ disabled }: { disabled?: boolean }) {
     }
   };
 
-  const remove = async (id: string) => {
-    setEntries((prev) => prev.filter((e) => e.id !== id));
+  /**
+   * Deletes on the server first, then updates the list.
+   *
+   * The optimistic order was worse than useless here: fetch resolves on a 403
+   * as happily as on a 200, so a refused delete emptied the panel, said
+   * nothing, and the entries reappeared on the next reload.
+   */
+  const deleteOnServer = async (query: string): Promise<boolean> => {
+    setError(null);
     try {
-      await secureFetch(`/api/admin/ads/chat?id=${id}`, { method: "DELETE" });
+      const res = await secureFetch(`/api/admin/ads/chat?${query}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(
+          data.error ||
+            (res.status === 403
+              ? "Contul tău nu are dreptul de a șterge din istoric."
+              : `Ștergerea a eșuat (${res.status}).`),
+        );
+        return false;
+      }
+      return true;
     } catch {
-      loadHistory();
+      setError("Ștergerea a eșuat. Verifică conexiunea.");
+      return false;
+    }
+  };
+
+  const remove = async (id: string) => {
+    if (await deleteOnServer(`id=${id}`)) {
+      setEntries((prev) => prev.filter((e) => e.id !== id));
     }
   };
 
   const clearAll = async () => {
     if (!confirm("Ștergi tot istoricul de întrebări?")) return;
-    setEntries([]);
-    try {
-      await secureFetch("/api/admin/ads/chat?all=true", { method: "DELETE" });
-    } catch {
-      loadHistory();
+    if (await deleteOnServer("all=true")) {
+      setEntries([]);
     }
   };
 

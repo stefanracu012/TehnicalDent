@@ -116,9 +116,13 @@ export const PERMISSIONS = [
     label: "Reclame",
     path: "/admin/reclame",
     // Refreshing pulls fresh numbers from Meta and costs API quota, so it is
-    // gated separately from reading the report.
-    actions: ["view", "edit"],
-    actionLabels: { edit: "Reîmprospătează datele" },
+    // gated separately from reading the report. Delete covers the question
+    // history — without the key declared here, no account could ever hold it.
+    actions: ["view", "edit", "delete"],
+    actionLabels: {
+      edit: "Reîmprospătează și întreabă",
+      delete: "Șterge din istoricul de întrebări",
+    },
   },
   {
     key: "utilizatori",
