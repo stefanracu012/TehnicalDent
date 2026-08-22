@@ -21,7 +21,8 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendTelegramToTopic, TELEGRAM_TOPICS } from "@/lib/telegram";
 import { captureLead } from "@/lib/leads";
-import { findNameInConversations } from "@/lib/messenger";
+import { findNameInConversations, sendSocialReply } from "@/lib/messenger";
+import { shouldReply, assistantReply } from "@/lib/assistant";
 import type { SocialChannel } from "@prisma/client";
 
 const VERIFY_TOKEN = process.env.MESSENGER_VERIFY_TOKEN || "";
@@ -238,6 +239,33 @@ export async function POST(request: Request) {
         `💬 <b>Mesaj ${source}</b> de la <code>${senderName || event.sender.id}</code>\n${text}`,
         TELEGRAM_TOPICS.mesaje,
       );
+
+      // Silence unless the assistant has been switched on for this channel and
+      // this conversation. There is no fixed fallback here — these inboxes are
+      // answered by a person today, and a bot chiming in beside them would be
+      // worse than nothing.
+      if (await shouldReply(channel, event.sender.id)) {
+        try {
+          const recent = await prisma.socialMessage.findMany({
+            where: { channel, senderId: event.sender.id },
+            orderBy: { createdAt: "desc" },
+            take: 12,
+            select: { direction: true, body: true },
+          });
+
+          const answer = await assistantReply(
+            recent.reverse().map((m) => ({
+              role: m.direction === "in" ? ("user" as const) : ("assistant" as const),
+              content: m.body,
+            })),
+            null,
+          );
+
+          if (answer) await sendSocialReply(channel, event.sender.id, answer);
+        } catch (error) {
+          console.error(`Assistant reply on ${channel} failed:`, error);
+        }
+      }
     }
   }
 

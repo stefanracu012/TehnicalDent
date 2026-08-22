@@ -119,6 +119,13 @@ export const PERMISSIONS = [
     actionLabels: { create: "Trimite campanii" },
   },
   {
+    key: "asistent",
+    label: "Asistent AI",
+    path: "/admin/asistent",
+    actions: ["view", "edit"],
+    actionLabels: { edit: "Pornește și alege conversațiile" },
+  },
+  {
     key: "reclame",
     label: "Reclame",
     path: "/admin/reclame",
@@ -222,6 +229,7 @@ const API_PERMISSION_MAP: Record<string, string> = {
   whatsapp: "whatsapp",
   campaigns: "campanii",
   ads: "reclame",
+  assistant: "asistent",
   users: "utilizatori",
   settings: "setari",
 };
@@ -244,6 +252,8 @@ const METHOD_ACTION_OVERRIDES: Record<string, Partial<Record<string, PermissionA
   settings: { POST: "edit" },
   // Refreshing the ads report re-reads Meta; it creates nothing.
   ads: { POST: "edit" },
+  // Adding a conversation to the allowlist is configuration, not creation.
+  assistant: { POST: "edit", DELETE: "edit" },
 };
 
 export function permissionForApiPath(pathname: string, method: string): string | null {

@@ -20,6 +20,7 @@ import crypto from "crypto";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { captureLead } from "@/lib/leads";
+import { shouldReply, assistantReply } from "@/lib/assistant";
 import { normalizePhone } from "@/lib/appointments";
 import { sendWhatsAppText, sendTelegramToTopic, TELEGRAM_TOPICS } from "@/lib/notifications";
 
@@ -161,9 +162,37 @@ export async function POST(request: Request) {
         );
 
         try {
-          await sendWhatsAppText(phone, AUTO_REPLY);
+          // The assistant answers only where it has been switched on. Anywhere
+          // else the old fixed acknowledgement stands, so turning the feature
+          // off never leaves a patient with silence.
+          let reply = AUTO_REPLY;
+
+          if (await shouldReply("whatsapp", phone)) {
+            const recent = await prisma.whatsAppMessage.findMany({
+              where: { phone },
+              orderBy: { createdAt: "desc" },
+              take: 12,
+              select: { direction: true, body: true },
+            });
+
+            const answer = await assistantReply(
+              recent
+                .reverse()
+                .map((m) => ({
+                  role: m.direction === "in" ? ("user" as const) : ("assistant" as const),
+                  content: m.body,
+                })),
+              patient ? { name: patient.name, phone } : null,
+            );
+
+            // Falling back rather than staying quiet: a patient who wrote is
+            // owed an answer even when the model could not produce one.
+            if (answer) reply = answer;
+          }
+
+          await sendWhatsAppText(phone, reply);
           await prisma.whatsAppMessage.create({
-            data: { phone, direction: "out", body: AUTO_REPLY, patientId: patient?.id },
+            data: { phone, direction: "out", body: reply, patientId: patient?.id },
           });
         } catch (err) {
           console.error("WhatsApp auto-reply error:", err);

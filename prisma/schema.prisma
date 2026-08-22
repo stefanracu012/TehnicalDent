@@ -308,6 +308,40 @@ model AdsChatEntry {
   @@index([createdAt])
 }
 
+enum AssistantMode {
+  /** Never replies. The state every channel starts in. */
+  oprit
+  /** Replies only in conversations somebody added by hand. */
+  selectat
+  /** Replies to everyone on that channel. */
+  toti
+}
+
+/**
+ * Whether the assistant may answer on a channel, one row per channel.
+ *
+ * A missing row reads as "oprit": a channel that has never been configured must
+ * not start talking to patients because a deploy added the feature.
+ */
+model AssistantChannel {
+  id        String        @id @default(auto()) @map("_id") @db.ObjectId
+  channel   String        @unique // "whatsapp" | "messenger" | "instagram"
+  mode      AssistantMode @default(oprit)
+  updatedAt DateTime      @updatedAt
+}
+
+/** One conversation the assistant is allowed into while the channel is on "selectat". */
+model AssistantAllowed {
+  id      String  @id @default(auto()) @map("_id") @db.ObjectId
+  channel String
+  /** Phone in E.164 for WhatsApp, PSID or IGSID for the Meta channels. */
+  handle  String
+  label   String? // name, so the admin list is readable
+  createdAt DateTime @default(now())
+
+  @@unique([channel, handle])
+}
+
 enum LeadSource {
   messenger
   instagram
