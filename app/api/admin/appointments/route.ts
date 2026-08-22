@@ -39,6 +39,7 @@ export async function GET(request: Request) {
       include: {
         patient: { select: { id: true, name: true, phone: true } },
         service: { select: { id: true, title: true, slug: true, duration: true } },
+        teamMember: { select: { id: true, name: true, role: true } },
       },
       take: 500,
     });
@@ -50,7 +51,8 @@ export async function GET(request: Request) {
         (a) =>
           a.patient.name.toLowerCase().includes(ql) ||
           a.patient.phone.includes(q) ||
-          a.service.title.toLowerCase().includes(ql),
+          a.service.title.toLowerCase().includes(ql) ||
+          (a.teamMember?.name ?? "").toLowerCase().includes(ql),
       );
     }
 

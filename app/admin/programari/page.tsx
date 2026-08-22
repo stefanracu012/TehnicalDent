@@ -25,6 +25,7 @@ interface Appointment {
   teamMemberId?: string | null;
   patient: { id: string; name: string; phone: string };
   service: { id: string; title: string; duration: number };
+  teamMember?: { id: string; name: string; role: string } | null;
 }
 
 const STATUS_LABELS: Record<Status, string> = {
@@ -480,6 +481,9 @@ export default function AdminAppointmentsPage() {
                           {fmtTime(a.dateTime)} · {a.patient.name}
                         </div>
                         <div className="truncate">{a.service.title}</div>
+                        <div className="truncate opacity-70">
+                          {a.teamMember ? a.teamMember.name : "fără medic"}
+                        </div>
                       </button>
                     );
                   })}
@@ -504,6 +508,7 @@ export default function AdminAppointmentsPage() {
                   <th className="px-4 py-3 font-medium">Data / Ora</th>
                   <th className="px-4 py-3 font-medium">Pacient</th>
                   <th className="px-4 py-3 font-medium">Serviciu</th>
+                  <th className="px-4 py-3 font-medium">Medic</th>
                   <th className="px-4 py-3 font-medium">Durată</th>
                   <th className="px-4 py-3 font-medium">Status</th>
                   <th className="px-4 py-3 font-medium text-right">Acțiuni</th>
@@ -530,6 +535,20 @@ export default function AdminAppointmentsPage() {
                       </div>
                     </td>
                     <td className="px-4 py-3">{a.service.title}</td>
+                    <td className="px-4 py-3">
+                      {a.teamMember ? (
+                        <>
+                          <div>{a.teamMember.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {a.teamMember.role}
+                          </div>
+                        </>
+                      ) : (
+                        <span className="text-xs text-muted-foreground">
+                          neatribuit
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {a.duration} min
                     </td>
