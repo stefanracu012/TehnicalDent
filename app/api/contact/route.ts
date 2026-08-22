@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createContactSubmission } from "@/lib/data";
+import { captureLead, normalisePhone } from "@/lib/leads";
 import { sanitizeObject, validateNoInjection } from "@/lib/security";
 
 async function sendTelegramNotification(data: {
@@ -100,6 +101,17 @@ export async function POST(request: Request) {
       phone: body.phone,
       email: body.email || undefined,
       service: body.service || undefined,
+      message: body.message,
+    });
+
+    // The form is the one channel that hands over a name and phone directly,
+    // so the lead starts complete rather than filling in over several messages.
+    await captureLead({
+      source: "formular",
+      reference: submission.id,
+      name: body.name,
+      phone: normalisePhone(body.phone) ?? body.phone,
+      email: body.email || null,
       message: body.message,
     });
 

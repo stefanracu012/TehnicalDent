@@ -20,6 +20,7 @@ import crypto from "crypto";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendTelegramToTopic, TELEGRAM_TOPICS } from "@/lib/telegram";
+import { captureLead } from "@/lib/leads";
 import type { SocialChannel } from "@prisma/client";
 
 const VERIFY_TOKEN = process.env.MESSENGER_VERIFY_TOKEN || "";
@@ -213,6 +214,13 @@ export async function POST(request: Request) {
           metaMessageId: event.message?.mid,
           pageId: entry.id,
         },
+      });
+
+      await captureLead({
+        source: channel,
+        reference: event.sender.id,
+        name: senderName,
+        message: text,
       });
 
       await sendTelegramToTopic(

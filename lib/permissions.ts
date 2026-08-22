@@ -35,6 +35,13 @@ export const PERMISSIONS = [
     actions: ["view", "create", "edit", "delete"],
   },
   {
+    key: "leads",
+    label: "Leaduri",
+    path: "/admin/leads",
+    actions: ["view", "create", "edit", "delete"],
+    actionLabels: { create: "Transformă în pacient" },
+  },
+  {
     key: "pacienti",
     label: "Pacienți",
     path: "/admin/pacienti",
@@ -204,6 +211,7 @@ export function permissionForPath(pathname: string): string | null {
 const API_PERMISSION_MAP: Record<string, string> = {
   appointments: "programari",
   patients: "pacienti",
+  leads: "leads",
   availability: "calendar",
   services: "servicii",
   team: "echipa",

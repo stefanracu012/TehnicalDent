@@ -19,6 +19,7 @@
 import crypto from "crypto";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
+import { captureLead } from "@/lib/leads";
 import { normalizePhone } from "@/lib/appointments";
 import { sendWhatsAppText, sendTelegramToTopic, TELEGRAM_TOPICS } from "@/lib/notifications";
 
@@ -142,6 +143,17 @@ export async function POST(request: Request) {
             patientId: patient?.id,
           },
         });
+
+        // Someone already in the patient list is not a lead.
+        if (!patient) {
+          await captureLead({
+            source: "whatsapp",
+            reference: phone,
+            name: contact?.profile?.name ?? null,
+            phone,
+            message: text,
+          });
+        }
 
         await sendTelegramToTopic(
           `💬 <b>Mesaj WhatsApp</b> de la ${who} (<code>${phone}</code>)\n${text}`,

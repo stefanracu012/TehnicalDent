@@ -308,6 +308,61 @@ model AdsChatEntry {
   @@index([createdAt])
 }
 
+enum LeadSource {
+  messenger
+  instagram
+  whatsapp
+  formular
+  manual
+}
+
+enum LeadStatus {
+  nou
+  contactat
+  programat
+  convertit
+  pierdut
+}
+
+/**
+ * Someone who reached out and is not a patient yet.
+ *
+ * Kept as its own record rather than derived from the message tables: a lead
+ * carries state those tables have no room for — who is chasing it, when to
+ * chase again, why it was lost. Deriving it would recompute that from nothing
+ * every time.
+ */
+model Lead {
+  id    String  @id @default(auto()) @map("_id") @db.ObjectId
+  name  String?
+  phone String? // E.164 when we could parse one
+  email String?
+
+  source LeadSource
+  /**
+   * "<source>:<conversation or submission id>". Unique and always written, so a
+   * second message from the same person updates the lead instead of opening a
+   * duplicate beside it.
+   */
+  sourceKey    String  @unique
+  firstMessage String?
+
+  status LeadStatus @default(nou)
+  note   String?
+  /** When to chase. The list shows overdue ones first. */
+  followUpAt DateTime?
+
+  patientId String? @db.ObjectId
+  patient   Patient? @relation(fields: [patientId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([followUpAt])
+  @@index([phone])
+}
+
 model Patient {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String
@@ -319,6 +374,7 @@ model Patient {
 
   appointments      Appointment[]
   whatsappMessages  WhatsAppMessage[]
+  leads             Lead[]
 
   @@index([phone])
   @@index([name])
