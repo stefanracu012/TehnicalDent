@@ -41,6 +41,51 @@ async function lastInboundAt(channel: SocialChannel, senderId: string): Promise<
  * the admin inbox — never generated automatically.
  */
 /**
+ * Looks one sender up in the Page's conversation list.
+ *
+ * Cheaper than the full sync and aimed at the webhook: whoever just wrote sits
+ * at the top of that list, because it comes back ordered by most recent
+ * activity. One page is almost always enough.
+ *
+ * Returns null rather than throwing — a missing name must never cost the
+ * message that triggered the lookup.
+ */
+export async function findNameInConversations(
+  channel: SocialChannel,
+  senderId: string,
+): Promise<string | null> {
+  if (!isMessengerConfigured()) return null;
+
+  // Instagram refuses this edge at any page size above one.
+  const limit = channel === "instagram" ? 1 : 100;
+
+  try {
+    const url =
+      `${GRAPH}/me/conversations?platform=${channel}` +
+      `&fields=participants&limit=${limit}` +
+      `&access_token=${encodeURIComponent(PAGE_TOKEN)}`;
+
+    const body = (await (await fetch(url)).json()) as {
+      data?: { participants?: { data?: { id: string; name?: string; username?: string }[] } }[];
+      error?: { message: string };
+    };
+    if (body.error) {
+      console.warn(`findNameInConversations ${channel}: ${body.error.message}`);
+      return null;
+    }
+
+    for (const conversation of body.data ?? []) {
+      for (const person of conversation.participants?.data ?? []) {
+        if (person.id === senderId) return person.name || person.username || null;
+      }
+    }
+  } catch (error) {
+    console.warn(`findNameInConversations ${channel} failed:`, error);
+  }
+  return null;
+}
+
+/**
  * Fills in sender names from the Page's own conversation list.
  *
  * Looking a PSID up directly (`GET /{psid}`) needs Business Asset User Profile

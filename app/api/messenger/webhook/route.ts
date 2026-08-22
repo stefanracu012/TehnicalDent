@@ -21,6 +21,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendTelegramToTopic, TELEGRAM_TOPICS } from "@/lib/telegram";
 import { captureLead } from "@/lib/leads";
+import { findNameInConversations } from "@/lib/messenger";
 import type { SocialChannel } from "@prisma/client";
 
 const VERIFY_TOKEN = process.env.MESSENGER_VERIFY_TOKEN || "";
@@ -111,7 +112,17 @@ async function resolveSenderName(
       console.warn(
         `resolveSenderName ${channel} ${res.status}: ${detail.slice(0, 300)}`,
       );
-      return null;
+      // The direct profile lookup needs Business Asset User Profile Access,
+      // still in review. The Page conversation list carries the same name and
+      // needs only the scopes we hold, so it is the real path — not a fallback.
+      const fromList = await findNameInConversations(channel, senderId);
+      if (fromList) {
+        await prisma.socialMessage.updateMany({
+          where: { channel, senderId, senderName: null },
+          data: { senderName: fromList },
+        });
+      }
+      return fromList;
     }
     const data = (await res.json()) as { name?: string; username?: string };
     const name = data.name || data.username || null;
