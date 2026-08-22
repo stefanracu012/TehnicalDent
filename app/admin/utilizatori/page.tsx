@@ -345,9 +345,9 @@ export default function AdminUtilizatoriPage() {
                   />
                   <p className="text-xs text-muted-foreground mt-1">
                     Aici primește doctorul, personal, programările lui noi și
-                    lista pacienților de dimineață. Îl află scriind /start
-                    botului clinicii. Fără el, notificările merg doar în grupul
-                    comun.
+                    lista pacienților de dimineață. De obicei nu îl completați
+                    de mână: doctorul intră în „Contul meu” și apasă
+                    „Conectează Telegram”, iar câmpul se umple singur.
                   </p>
                 </div>
 

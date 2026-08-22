@@ -544,3 +544,18 @@ model Notification {
   @@index([status])
   @@index([type])
 }
+
+// One-time codes for linking a Telegram chat to an admin account.
+//
+// The account asks for a code, the person opens the bot with it in the deep
+// link, and the bot writes their chat id back to the account. That way nobody
+// has to read an id off a screen and retype it, and a code that leaks is
+// useless within a quarter of an hour.
+model TelegramLink {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  code        String    @unique
+  adminUserId String    @db.ObjectId
+  expiresAt   DateTime
+  usedAt      DateTime?
+  createdAt   DateTime  @default(now())
+}

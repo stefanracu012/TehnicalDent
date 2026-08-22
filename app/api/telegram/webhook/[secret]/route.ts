@@ -514,18 +514,40 @@ export async function POST(request: Request, { params }: RouteParams) {
   const msg = update.message || update.edited_message;
   if (!msg || !msg.text) return NextResponse.json({ ok: true });
 
+  // ---- Connecting a chat to an admin account ----
+  // Deliberately ahead of the access check: an unconnected chat is exactly
+  // what this handles, so the check below would turn every attempt away.
+  const incoming = msg.text.trim();
+  if (incoming.startsWith("/start ")) {
+    const code = incoming.slice("/start ".length).trim();
+    if (code) {
+      const { consumeTelegramLink } = await import("@/lib/telegram-link");
+      await tgSend(msg.chat.id, await consumeTelegramLink(code, String(msg.chat.id)));
+      return NextResponse.json({ ok: true });
+    }
+  }
+
   // Restrict to admin chat(s) — group AND private chat of the admin
   const ALLOWED = [String(ADMIN_CHAT_ID), process.env.TELEGRAM_ADMIN_USER_ID || ""].filter(Boolean);
   if (ALLOWED.length && !ALLOWED.includes(String(msg.chat.id))) {
-    // The id is shown on purpose: a doctor writing to the bot for the first
-    // time needs it to paste into their admin account, and there is nothing
-    // secret about a chat id — it grants no access on its own.
+    // A connected doctor is not an intruder — they simply have no business
+    // driving the clinic-wide commands. Telling them "access denied" for a
+    // chat that works perfectly well for their own notifications would only
+    // send them asking why.
+    const linked = await prisma.adminUser.findFirst({
+      where: { telegramId: String(msg.chat.id), isActive: true },
+      select: { name: true },
+    });
+
     await tgSend(
       msg.chat.id,
-      "⛔ Acest bot răspunde doar echipei clinicii.\n\n" +
-        `ID-ul dumneavoastră Telegram este: <code>${msg.chat.id}</code>\n` +
-        "Dați-l administratorului ca să îl adauge la contul dumneavoastră — " +
-        "după aceea primiți aici programările proprii și lista pacienților de dimineață.",
+      linked
+        ? `Bună ziua, ${linked.name}. Contul dumneavoastră este conectat — ` +
+            "aici primiți programările proprii și lista de dimineață.\n\n" +
+            "Comenzile clinicii se dau din grupul comun, nu de aici."
+        : "⛔ Acest bot răspunde doar echipei clinicii.\n\n" +
+            "Dacă aveți cont în panou, deschideți Contul meu și apăsați " +
+            "„Conectează Telegram” — linkul de acolo vă conectează automat.",
     );
     return NextResponse.json({ ok: true });
   }

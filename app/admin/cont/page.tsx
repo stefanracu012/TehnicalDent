@@ -9,8 +9,17 @@ interface Account {
   isOwner: boolean;
 }
 
+interface TelegramState {
+  connected: boolean;
+  telegramId: string | null;
+  bot: string;
+}
+
 export default function AdminContPage() {
   const [account, setAccount] = useState<Account | null>(null);
+  const [telegram, setTelegram] = useState<TelegramState | null>(null);
+  const [linking, setLinking] = useState(false);
+  const [link, setLink] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -29,7 +38,42 @@ export default function AdminContPage() {
         }
       })
       .catch(() => setError("Nu am putut încărca datele contului."));
+
+    secureFetch("/api/admin/account/telegram")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => data && setTelegram(data))
+      .catch(() => {});
   }, []);
+
+  // While a link is open, the connection happens in Telegram rather than here,
+  // so the page has to look for it. Stops as soon as it connects, and gives up
+  // after the code's own lifetime rather than polling forever.
+  useEffect(() => {
+    if (!link || telegram?.connected) return;
+
+    const started = Date.now();
+    const timer = setInterval(async () => {
+      if (Date.now() - started > 15 * 60 * 1000) {
+        clearInterval(timer);
+        return;
+      }
+      try {
+        const res = await secureFetch("/api/admin/account/telegram");
+        if (!res.ok) return;
+        const data: TelegramState = await res.json();
+        setTelegram(data);
+        if (data.connected) {
+          setLink(null);
+          setDone("Telegram conectat.");
+          clearInterval(timer);
+        }
+      } catch {
+        // A failed poll is not worth showing — the next one is 3 seconds away.
+      }
+    }, 3000);
+
+    return () => clearInterval(timer);
+  }, [link, telegram?.connected]);
 
   const save = async (payload: Record<string, unknown>, message: string) => {
     setSaving(true);
@@ -50,6 +94,44 @@ export default function AdminContPage() {
       return false;
     } finally {
       setSaving(false);
+    }
+  };
+
+  const connectTelegram = async () => {
+    setLinking(true);
+    setError(null);
+    setDone(null);
+    try {
+      const res = await secureFetch("/api/admin/account/telegram", { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Nu am putut genera linkul.");
+      setLink(data.link);
+      window.open(data.link, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Eroare necunoscută.");
+    } finally {
+      setLinking(false);
+    }
+  };
+
+  const disconnectTelegram = async () => {
+    if (!confirm("Nu veți mai primi notificări pe Telegram. Continuați?")) return;
+    setLinking(true);
+    setError(null);
+    setDone(null);
+    try {
+      const res = await secureFetch("/api/admin/account/telegram", { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "Nu am putut deconecta.");
+      }
+      setTelegram((t) => (t ? { ...t, connected: false, telegramId: null } : t));
+      setLink(null);
+      setDone("Telegram deconectat.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Eroare necunoscută.");
+    } finally {
+      setLinking(false);
     }
   };
 
@@ -112,6 +194,67 @@ export default function AdminContPage() {
               Salvează
             </button>
           </div>
+        </div>
+
+        <div className="bg-background border border-border p-6 mb-6">
+          <h2 className="font-serif text-lg font-medium text-foreground mb-1">
+            Notificări pe Telegram
+          </h2>
+          <p className="text-sm text-muted-foreground mb-4 leading-relaxed">
+            Conectați-vă contul ca să primiți, personal, programările făcute la
+            dumneavoastră și lista pacienților de dimineață — cu butoane pentru
+            „Finalizat” și „Nu a venit”.
+          </p>
+
+          {telegram?.connected ? (
+            <div className="flex flex-wrap items-center gap-3">
+              <span className="inline-flex items-center gap-2 text-sm text-green-700 bg-green-50 border border-green-200 px-3 py-1.5">
+                ✓ Conectat
+              </span>
+              <button
+                onClick={disconnectTelegram}
+                disabled={linking}
+                className="px-4 py-2 text-sm border border-red-200 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
+              >
+                Deconectează
+              </button>
+            </div>
+          ) : (
+            <>
+              <button
+                onClick={connectTelegram}
+                disabled={linking}
+                className="px-5 py-2 bg-foreground text-background text-sm font-medium disabled:opacity-50"
+              >
+                {linking ? "Se pregătește..." : "Conectează Telegram"}
+              </button>
+
+              {link && (
+                <div className="mt-4 border-l-2 border-accent/40 pl-3">
+                  <p className="text-sm text-foreground">
+                    S-a deschis Telegram — apăsați <b>Start</b> acolo. Pagina se
+                    actualizează singură.
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                    Dacă nu s-a deschis, deschideți acest link pe telefonul pe
+                    care aveți Telegram:
+                  </p>
+                  <a
+                    href={link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs break-all underline text-foreground"
+                  >
+                    {link}
+                  </a>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Linkul este valabil 15 minute și doar pentru contul
+                    dumneavoastră.
+                  </p>
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         <div className="bg-background border border-border p-6">
