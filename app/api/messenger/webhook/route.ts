@@ -52,6 +52,23 @@ interface WebhookBody {
   entry?: WebhookEntry[];
 }
 
+/**
+ * Whether a webhook entry is for one of this clinic's own assets.
+ *
+ * Meta delivers events for every page and Instagram account the app is
+ * subscribed to, and the payload names the asset in entry.id. Without both ids
+ * configured this cannot be judged, so everything is accepted — the same
+ * behaviour as before, rather than a silent blackout of the inbox.
+ */
+function belongsToClinic(entryId: string): boolean {
+  const owned = [
+    process.env.FACEBOOK_PAGE_ID,
+    process.env.INSTAGRAM_USER_ID,
+  ].filter(Boolean);
+  if (owned.length === 0) return true;
+  return owned.includes(entryId);
+}
+
 function eventText(m: MessagingEvent): string {
   if (m.message?.text) return m.message.text;
   if (m.message?.attachments?.length) return `[${m.message.attachments[0].type}]`;
@@ -158,6 +175,17 @@ export async function POST(request: Request) {
   const source = channel === "instagram" ? "Instagram" : "Messenger";
 
   for (const entry of body.entry || []) {
+    // entry.id is the Page (or Instagram account) the event belongs to. The app
+    // receives events for every asset it is subscribed to, so without this the
+    // clinic's inbox fills with conversations from unrelated pages — and
+    // Telegram announces every one of them.
+    if (!belongsToClinic(entry.id)) {
+      console.warn(
+        `Webhook ignored: ${channel} entry ${entry.id} is not this clinic's page`,
+      );
+      continue;
+    }
+
     for (const event of entry.messaging || []) {
       // Echo of our own outbound message, sent back by Instagram with the
       // Page as "sender" — not a real inbound message from a patient.
@@ -183,6 +211,7 @@ export async function POST(request: Request) {
           direction: "in",
           body: text,
           metaMessageId: event.message?.mid,
+          pageId: entry.id,
         },
       });
 

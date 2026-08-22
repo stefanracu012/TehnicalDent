@@ -362,6 +362,9 @@ model SocialMessage {
   direction     WhatsAppDirection // same in/out meaning
   body          String
   metaMessageId String?           // for dedup across webhook retries
+  // Which Page or Instagram account received it. Older rows predate this and
+  // are null, which is why they cannot be sorted by origin after the fact.
+  pageId        String?
   createdAt     DateTime          @default(now())
 
   @@index([channel, senderId])
