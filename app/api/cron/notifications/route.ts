@@ -99,10 +99,20 @@ async function handle(request: Request) {
   );
   const h = nowMoldova.getHours();
   const m = nowMoldova.getMinutes();
+
+  // A run can name the job it is for: /api/cron/notifications?job=morning.
+  //
+  // The clock windows below only work if something calls this every hour, and
+  // on a plan that allows one run a day it never lands inside them — which is
+  // exactly how the 20:00 reminder went a whole year without firing. Naming
+  // the job makes a once-a-day schedule enough, and the daily claim still
+  // stops a job running twice.
+  const job = url.searchParams.get("job");
+
   // 20:00–20:10 Moldova → reminder pentru programări nefinalizate
-  const inEveningWindow = h === 20 && m >= 0 && m <= 10;
+  const inEveningWindow = job === "evening" || (!job && h === 20 && m >= 0 && m <= 10);
   // 08:00–08:10 Moldova → fiecare medic își primește pacienții zilei
-  const inMorningWindow = h === 8 && m >= 0 && m <= 10;
+  const inMorningWindow = job === "morning" || (!job && h === 8 && m >= 0 && m <= 10);
   const todayStr = `${nowMoldova.getFullYear()}-${String(nowMoldova.getMonth() + 1).padStart(2, "0")}-${String(nowMoldova.getDate()).padStart(2, "0")}`;
 
   if (!(await acquireDispatchLock())) {
