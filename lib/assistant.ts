@@ -15,6 +15,7 @@
 import prisma from "@/lib/prisma";
 import { freeHours, claimSlot } from "@/lib/slots";
 import { normalizePhone, isValidPhone } from "@/lib/appointments";
+import { sendTelegramToTopic, TELEGRAM_TOPICS } from "@/lib/telegram";
 import type { AssistantMode } from "@prisma/client";
 
 const API_KEY = process.env.OPENAI_API_KEY || "";
@@ -77,14 +78,16 @@ CUM VORBEȘTI:
 - Dacă pacientul scrie în rusă, răspunzi în rusă. Dacă scrie în engleză, în engleză.
 
 CE FACI:
-- La primul mesaj nu întrebi doar "cu ce te pot ajuta". Deschizi cu ceva care duce spre programare: "Bună! Vă putem programa chiar săptămâna asta — la ce v-ar trebui?" sau "Bună ziua! Spuneți-mi ce vă deranjează și găsim o oră."
+- Primul mesaj e scurt și obișnuit, cum răspunde un om la recepție: "Bună ziua! Spuneți-mi, ce vă deranjează?" sau "Bună ziua! La ce ați vrea să veniți?". Nu anunți din prima că poți programa, nu vinzi nimic, nu faci reclamă clinicii.
+- Nu scrii înflorit și nu construiești fraze pe care nu le-ar spune nimeni cu voce tare. Dacă o propoziție sună a text de reclamă, o scrii mai simplu.
 - Afli de ce serviciu are nevoie. Dacă nu e clar, întrebi simplu.
+- Spre programare duci firesc, după ce înțelegi ce îi trebuie: îi propui o oră, nu îl întrebi dacă vrea să se programeze.
 - Verifici orele libere cu unealta, nu din memorie. Nu inventezi niciodată o oră.
 - Prima dată propui două ore, cele mai apropiate.
 - Dacă pacientul spune că nu poate atunci, propui mai multe deodată — trei-patru zile diferite, nu încă două ore din aceeași zi. Cere din nou ore_libere pe mai multe zile dacă e nevoie.
 - Înainte de a programa ai nevoie de nume și număr de telefon. Dacă nu le ai, le ceri firesc, nu ca pe un formular.
 - Programezi doar după ce pacientul confirmă ora.
-- După ce ai programat, confirmi scurt: ziua, ora, medicul.
+- După ce ai programat, confirmi scurt ziua și ora. Fără numele medicului. Poți adăuga că, dacă apare ceva, poate suna la 060 355 350.
 
 CÂND PROGRAMAREA NU REUȘEȘTE:
 - Unealta îți spune de ce. Nu inventa "problemă tehnică" și nu spune că sistemul e defect.
@@ -265,7 +268,7 @@ async function book(args: {
   // ore_libere meant. Moldova is UTC+3 through the booking window.
   const day = String(args.data ?? "");
   const hour = Number(args.ora);
-  if (!/^d{4}-d{2}-d{2}$/.test(day) || !Number.isInteger(hour) || hour < 0 || hour > 23) {
+  if (!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(day) || !Number.isInteger(hour) || hour < 0 || hour > 23) {
     return { ok: false, motiv: "Ziua sau ora nu sunt valide. Ia-le din ore_libere." };
   }
   const when = new Date(`${day}T${String(hour).padStart(2, "0")}:00:00+03:00`);
@@ -316,6 +319,35 @@ async function book(args: {
   };
 }
 
+/** Hands a refused booking to reception, with everything the chat collected. */
+async function reportFailedBooking(
+  args: { nume?: string; telefon?: string; serviciuSlug?: string; data?: string; ora?: number },
+  reason: string,
+) {
+  const line = (label: string, value: unknown) =>
+    value ? `${label}: <b>${String(value)}</b>` : `${label}: <i>lipsește</i>`;
+
+  try {
+    await sendTelegramToTopic(
+      [
+        "⚠️ <b>Nu am putut programa un pacient din chat</b>",
+        `Motiv: ${reason}`,
+        "",
+        line("Nume", args.nume),
+        line("Telefon", args.telefon),
+        line("Serviciu", args.serviciuSlug),
+        line("Ziua", args.data),
+        line("Ora", args.ora === undefined ? "" : `${args.ora}:00`),
+        "",
+        "Sunați pacientul — el rămâne cu „revine cineva de la recepție”.",
+      ].join("\n"),
+      TELEGRAM_TOPICS.erori,
+    );
+  } catch (error) {
+    console.error("Failed to report a refused booking:", error);
+  }
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 async function runTool(name: string, args: any): Promise<unknown> {
   switch (name) {
@@ -329,6 +361,10 @@ async function runTool(name: string, args: any): Promise<unknown> {
       const result = await book(args ?? {});
       if (!result.ok) {
         console.warn("Assistant booking refused:", JSON.stringify({ args, result }));
+        // A refused booking is a patient who wanted an hour and did not get
+        // one. Reception gets everything collected so far, so somebody can
+        // call back without asking the patient to repeat it.
+        await reportFailedBooking(args ?? {}, result.motiv ?? "Motiv necunoscut");
       }
       return result;
     }
