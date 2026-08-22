@@ -15,6 +15,7 @@ export async function GET() {
         permissions: true,
         isActive: true,
         teamMemberId: true,
+        telegramId: true,
         createdAt: true,
       },
     });
@@ -34,6 +35,7 @@ export async function POST(request: Request) {
     const name = String(body.name || "").trim();
     const password = String(body.password || "");
     const teamMemberId = body.teamMemberId ? String(body.teamMemberId) : null;
+    const telegramId = String(body.telegramId || "").trim() || null;
     const permissions = Array.isArray(body.permissions)
       ? body.permissions.filter((p: unknown): p is string =>
           typeof p === "string" && ALL_PERMISSION_KEYS.includes(p),
@@ -62,6 +64,7 @@ export async function POST(request: Request) {
         passwordHash: await hashPassword(password),
         permissions,
         teamMemberId,
+        telegramId,
       },
       select: { id: true, email: true, name: true, permissions: true, isActive: true },
     });

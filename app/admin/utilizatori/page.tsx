@@ -44,6 +44,7 @@ interface AdminUser {
   permissions: string[];
   isActive: boolean;
   teamMemberId: string | null;
+  telegramId: string | null;
   isOwner?: boolean;
 }
 
@@ -58,6 +59,7 @@ const EMPTY_FORM = {
   name: "",
   password: "",
   teamMemberId: "",
+  telegramId: "",
   permissions: [] as string[],
 };
 
@@ -106,6 +108,7 @@ export default function AdminUtilizatoriPage() {
       name: user.name,
       password: "",
       teamMemberId: user.teamMemberId || "",
+      telegramId: user.telegramId || "",
       permissions: expandPermissions(user.permissions),
     });
     setError(null);
@@ -130,6 +133,7 @@ export default function AdminUtilizatoriPage() {
         name: form.name,
         permissions: form.permissions,
         teamMemberId: form.teamMemberId || null,
+        telegramId: form.telegramId.trim() || null,
       };
       if (!editing) {
         payload.email = form.email;
@@ -324,6 +328,26 @@ export default function AdminUtilizatoriPage() {
                   <p className="text-xs text-muted-foreground mt-1">
                     Doctorii legați aici își pot completa propriul calendar de
                     disponibilitate.
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm text-foreground mb-1">
+                    ID Telegram (opțional)
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    value={form.telegramId}
+                    onChange={(e) => setForm({ ...form, telegramId: e.target.value })}
+                    placeholder="ex. 123456789"
+                    className="w-full border border-border px-3 py-2 bg-background"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Aici primește doctorul, personal, programările lui noi și
+                    lista pacienților de dimineață. Îl află scriind /start
+                    botului clinicii. Fără el, notificările merg doar în grupul
+                    comun.
                   </p>
                 </div>
 

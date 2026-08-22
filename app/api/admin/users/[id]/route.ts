@@ -34,6 +34,9 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     if (typeof body.isActive === "boolean" && !isOwner) {
       data.isActive = body.isActive;
     }
+    if ("telegramId" in body) {
+      data.telegramId = String(body.telegramId || "").trim() || null;
+    }
     if ("teamMemberId" in body) {
       data.teamMemberId = body.teamMemberId ? String(body.teamMemberId) : null;
     }

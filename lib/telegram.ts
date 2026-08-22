@@ -58,6 +58,26 @@ export async function sendTelegramMessage(
 }
 
 /**
+ * Sends to one person's private chat rather than the clinic group.
+ *
+ * Used for what concerns a single doctor — their own bookings, their own day —
+ * which has no business filling a shared topic everyone reads.
+ */
+export async function sendTelegramToChat(
+  chatId: string,
+  text: string,
+  opts: { replyMarkup?: object } = {},
+): Promise<{ message_id: number }> {
+  return telegramCall("sendMessage", {
+    chat_id: chatId,
+    text,
+    parse_mode: "HTML",
+    disable_web_page_preview: true,
+    ...(opts.replyMarkup ? { reply_markup: opts.replyMarkup } : {}),
+  });
+}
+
+/**
  * Sends straight to a Telegram topic (or General if threadId is undefined),
  * swallowing errors — used for admin FYI pings (new/cancelled/recall/error)
  * that don't need the Notification-queue retry history WhatsApp/email get.

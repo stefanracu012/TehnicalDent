@@ -459,6 +459,15 @@ export async function POST(request: Request, { params }: RouteParams) {
           data: { status: typedStatus },
         });
 
+        // Freeing the hour is what the admin panel does for these two, and it
+        // has to happen here too — otherwise a doctor marking "nu a venit"
+        // from the phone leaves the slot reserved and nobody can be booked
+        // into it.
+        if (newStatus === "cancelled" || newStatus === "noshow") {
+          const { releaseSlotByAppointment } = await import("@/lib/slots");
+          await releaseSlotByAppointment(apptId);
+        }
+
         // Fetch full appointment for notifications
         const apptFull = await prisma.appointment.findUnique({
           where: { id: apptId },
@@ -508,7 +517,16 @@ export async function POST(request: Request, { params }: RouteParams) {
   // Restrict to admin chat(s) — group AND private chat of the admin
   const ALLOWED = [String(ADMIN_CHAT_ID), process.env.TELEGRAM_ADMIN_USER_ID || ""].filter(Boolean);
   if (ALLOWED.length && !ALLOWED.includes(String(msg.chat.id))) {
-    await tgSend(msg.chat.id, "⛔ Acces interzis.");
+    // The id is shown on purpose: a doctor writing to the bot for the first
+    // time needs it to paste into their admin account, and there is nothing
+    // secret about a chat id — it grants no access on its own.
+    await tgSend(
+      msg.chat.id,
+      "⛔ Acest bot răspunde doar echipei clinicii.\n\n" +
+        `ID-ul dumneavoastră Telegram este: <code>${msg.chat.id}</code>\n` +
+        "Dați-l administratorului ca să îl adauge la contul dumneavoastră — " +
+        "după aceea primiți aici programările proprii și lista pacienților de dimineață.",
+    );
     return NextResponse.json({ ok: true });
   }
 

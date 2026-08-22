@@ -52,6 +52,7 @@ model AdminUser {
   permissions  String[] // page keys from lib/permissions.ts; empty = no access
   isActive     Boolean  @default(true)
   teamMemberId String?  @db.ObjectId // set when this account is a doctor
+  telegramId   String? // personal Telegram chat id, for notifications meant only for them
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
