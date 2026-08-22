@@ -363,6 +363,11 @@ export async function notifyCreated(a: AppointmentFull) {
     TELEGRAM_TOPICS.programariNoi,
   );
 
+  // The assigned doctor, privately — they should not have to read the whole
+  // clinic feed to notice a patient was put in their calendar.
+  const { notifyDoctorNewAppointment } = await import("@/lib/doctor-notify");
+  await notifyDoctorNewAppointment(a.id);
+
   // Client: WhatsApp confirmation request (business-initiated -> template required)
   if (a.patient.phone) {
     const url = buildConfirmUrl(a.id);

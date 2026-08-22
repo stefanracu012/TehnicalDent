@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { retryFailed, runRecallScan, runReminderScan } from "@/lib/notifications";
 import { sendEveningReminder } from "@/lib/daily-briefing";
+import { sendDoctorMorningBriefings } from "@/lib/doctor-notify";
 import { refreshStaleDigests } from "@/lib/telegram-digest";
 
 // Marks `key` as run for `todayStr` ("YYYY-MM-DD") — returns true only the
@@ -100,6 +101,8 @@ async function handle(request: Request) {
   const m = nowMoldova.getMinutes();
   // 20:00–20:10 Moldova → reminder pentru programări nefinalizate
   const inEveningWindow = h === 20 && m >= 0 && m <= 10;
+  // 08:00–08:10 Moldova → fiecare medic își primește pacienții zilei
+  const inMorningWindow = h === 8 && m >= 0 && m <= 10;
   const todayStr = `${nowMoldova.getFullYear()}-${String(nowMoldova.getMonth() + 1).padStart(2, "0")}-${String(nowMoldova.getDate()).padStart(2, "0")}`;
 
   if (!(await acquireDispatchLock())) {
@@ -120,7 +123,12 @@ async function handle(request: Request) {
       evening = await sendEveningReminder();
     }
 
-    return NextResponse.json({ ok: true, reminders, recalls, retried, evening });
+    let morning: { doctors?: number; sent?: number; skipped?: boolean } = { skipped: true };
+    if (inMorningWindow && (await claimDailyRun("doctor-morning", todayStr))) {
+      morning = await sendDoctorMorningBriefings();
+    }
+
+    return NextResponse.json({ ok: true, reminders, recalls, retried, evening, morning });
   } catch (error) {
     console.error("Cron error:", error);
     return NextResponse.json(
