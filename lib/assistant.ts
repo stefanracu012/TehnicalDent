@@ -89,6 +89,14 @@ CE FACI:
 - Programezi doar după ce pacientul confirmă ora.
 - După ce ai programat, confirmi scurt ziua și ora. Fără numele medicului. Poți adăuga că, dacă apare ceva, poate suna la 060 355 350.
 
+CÂND TE ÎNTREABĂ DE PREȚ:
+- Ceri de fiecare dată lista cu unealta "servicii". Niciodată din memorie și niciodată aproximat.
+- Găsești serviciul exact despre care întreabă. Dacă nu ești sigur care e, întrebi înainte să spui vreo cifră.
+- Te uiți dacă are reducere. Dacă "areReducere" e adevărat, spui prețul redus și menționezi că e preț cu reducere. Dacă nu, spui prețul obișnuit.
+- Dacă serviciul nu e în listă, sau nu are preț ("pret" lipsește), NU inventezi și nu dai un interval. Spui simplu că verifici cu recepția și revii cu prețul.
+- Prețul îl dai ca orientativ: suma finală se stabilește la consultație, după ce vede medicul.
+- Nu compari prețuri cu alte clinici și nu promiți reduceri care nu sunt în listă.
+
 CÂND PROGRAMAREA NU REUȘEȘTE:
 - Unealta îți spune de ce. Nu inventa "problemă tehnică" și nu spune că sistemul e defect.
 - Dacă ora s-a ocupat între timp, spui exact asta și propui imediat alta: "Tocmai s-a ocupat ora aceea. Am liber la 15:00 sau joi la 10:00."
@@ -97,7 +105,6 @@ CÂND PROGRAMAREA NU REUȘEȘTE:
 
 CE NU FACI:
 - Nu dai sfaturi medicale și nu spui ce tratament îi trebuie. Pentru asta e consultația.
-- Nu spui prețuri decât dacă le ai din unealta de servicii, și le spui ca orientative.
 - Nu promiți rezultate și nu estimezi durata vindecării.
 - Dacă întrebarea e medicală sau delicată, spui că îl întrebi pe medic și revii, sau îl inviți la consultație.
 - Dacă ceva nu merge sau pacientul e nemulțumit, nu insiști: spui că îl sună cineva de la recepție.`;
@@ -188,13 +195,36 @@ function moldovaDate(offsetDays: number): string {
   }).format(now);
 }
 
+/**
+ * The service list, with the discount already resolved.
+ *
+ * The raw columns are easy to misread — a discountPrice sitting next to a
+ * higher price invites quoting the wrong one — so the decision is made here
+ * and the answer handed over as a single price plus a flag.
+ */
 async function listServices() {
   const services = await prisma.service.findMany({
     where: { isActive: true, bookable: true },
     orderBy: { order: "asc" },
     select: { slug: true, title: true, duration: true, price: true, discountPrice: true },
   });
-  return services;
+
+  return services.map((s) => {
+    const discounted =
+      s.discountPrice != null && s.price != null && s.discountPrice < s.price;
+    return {
+      slug: s.slug,
+      titlu: s.title,
+      durata: s.duration,
+      // Absent rather than zero when there is no price, so "I don't know" and
+      // "it's free" can never be confused.
+      ...(s.price != null || s.discountPrice != null
+        ? { pret: discounted ? s.discountPrice : s.price }
+        : {}),
+      areReducere: discounted,
+      ...(discounted ? { pretVechi: s.price } : {}),
+    };
+  });
 }
 
 /**
@@ -301,6 +331,23 @@ async function book(args: {
           ? "Ora tocmai a fost ocupată. Propune alta."
           : "Medicul nu are ora aceea liberă. Propune alta.",
     };
+  }
+
+  // Everything a booking normally sets off: the clinic group, the doctor's own
+  // Telegram, and the patient's WhatsApp confirmation. A booking made from
+  // chat is a booking like any other, so it goes through the same path rather
+  // than quietly landing in the calendar.
+  try {
+    const full = await prisma.appointment.findUnique({
+      where: { id: appointment.id },
+      include: { patient: true, service: true },
+    });
+    if (full) {
+      const { notifyCreated } = await import("@/lib/notifications");
+      await notifyCreated(full);
+    }
+  } catch (error) {
+    console.error("notifyCreated after chat booking failed:", error);
   }
 
   // A lead that turned into a patient is no longer a lead.

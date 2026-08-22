@@ -948,57 +948,19 @@ function AppointmentForm({
             </p>
           </div>
 
-          {/* Free hours for the selected doctor */}
-          {teamMemberId && (
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">
-                Ore libere
-              </label>
-              {slotsLoading ? (
-                <p className="text-sm text-muted-foreground">Se încarcă...</p>
-              ) : (freeSlots[teamMemberId]?.length ?? 0) === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  Doctorul nu are ore disponibile în această zi.
-                </p>
-              ) : (
-                <div className="flex flex-wrap gap-1.5">
-                  {freeSlots[teamMemberId].map((h) => {
-                    const active = Number(dateTime.slice(11, 13)) === h;
-                    return (
-                      <button
-                        key={h}
-                        type="button"
-                        onClick={() =>
-                          setDateTime(
-                            `${dateTime.slice(0, 11)}${String(h).padStart(2, "0")}:00`,
-                          )
-                        }
-                        className={`px-3 py-1.5 text-sm border transition-colors ${
-                          active
-                            ? "bg-foreground text-background border-foreground"
-                            : "bg-background border-border hover:border-foreground/50"
-                        }`}
-                      >
-                        {String(h).padStart(2, "0")}:00
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Date / Duration */}
+          {/* Day / Duration */}
           <div className="grid grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">
-                Data și ora *
+                Ziua *
               </label>
               <input
-                type="datetime-local"
+                type="date"
                 required
-                value={dateTime}
-                onChange={(e) => setDateTime(e.target.value)}
+                value={dateTime.slice(0, 10)}
+                onChange={(e) =>
+                  setDateTime(`${e.target.value}T${dateTime.slice(11, 16) || "09:00"}`)
+                }
                 className="w-full px-3 py-2 border border-border bg-background text-sm"
               />
             </div>
@@ -1015,6 +977,55 @@ function AppointmentForm({
                 className="w-full px-3 py-2 border border-border bg-background text-sm"
               />
             </div>
+          </div>
+
+          {/* Hour — whole hours only, and from the doctor's calendar when
+              there is one, so reception cannot book an hour the doctor never
+              opened. Without a doctor the whole working day is offered. */}
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+              Ora *
+            </label>
+            {teamMemberId && slotsLoading ? (
+              <p className="text-sm text-muted-foreground">Se încarcă...</p>
+            ) : teamMemberId && (freeSlots[teamMemberId]?.length ?? 0) === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Doctorul nu a bifat nicio oră liberă în această zi. Alegeți altă
+                zi sau alt doctor, ori completați calendarul.
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-1.5">
+                {(teamMemberId
+                  ? freeSlots[teamMemberId]
+                  : Array.from({ length: 16 }, (_, i) => i + 8)
+                ).map((h) => {
+                  const active = Number(dateTime.slice(11, 13)) === h;
+                  return (
+                    <button
+                      key={h}
+                      type="button"
+                      onClick={() =>
+                        setDateTime(
+                          `${dateTime.slice(0, 11)}${String(h).padStart(2, "0")}:00`,
+                        )
+                      }
+                      className={`px-3 py-1.5 text-sm border transition-colors ${
+                        active
+                          ? "bg-foreground text-background border-foreground"
+                          : "bg-background border-border hover:border-foreground/50"
+                      }`}
+                    >
+                      {String(h).padStart(2, "0")}:00
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            <p className="text-[11px] text-muted-foreground mt-1">
+              {teamMemberId
+                ? "Doar orele bifate de doctor în calendar."
+                : "Alegeți un doctor mai sus ca să vedeți doar orele lui libere."}
+            </p>
           </div>
 
           {/* Notes */}
