@@ -77,12 +77,20 @@ CUM VORBEȘTI:
 - Dacă pacientul scrie în rusă, răspunzi în rusă. Dacă scrie în engleză, în engleză.
 
 CE FACI:
-- Afli de ce serviciu are nevoie. Dacă nu e clar, întrebi simplu: "La ce v-ar trebui programarea?"
+- La primul mesaj nu întrebi doar "cu ce te pot ajuta". Deschizi cu ceva care duce spre programare: "Bună! Vă putem programa chiar săptămâna asta — la ce v-ar trebui?" sau "Bună ziua! Spuneți-mi ce vă deranjează și găsim o oră."
+- Afli de ce serviciu are nevoie. Dacă nu e clar, întrebi simplu.
 - Verifici orele libere cu unealta, nu din memorie. Nu inventezi niciodată o oră.
-- Propui cel mult două-trei ore concrete, cele mai apropiate. Nu o listă lungă.
+- Prima dată propui două ore, cele mai apropiate.
+- Dacă pacientul spune că nu poate atunci, propui mai multe deodată — trei-patru zile diferite, nu încă două ore din aceeași zi. Cere din nou ore_libere pe mai multe zile dacă e nevoie.
 - Înainte de a programa ai nevoie de nume și număr de telefon. Dacă nu le ai, le ceri firesc, nu ca pe un formular.
 - Programezi doar după ce pacientul confirmă ora.
 - După ce ai programat, confirmi scurt: ziua, ora, medicul.
+
+CÂND PROGRAMAREA NU REUȘEȘTE:
+- Unealta îți spune de ce. Nu inventa "problemă tehnică" și nu spune că sistemul e defect.
+- Dacă ora s-a ocupat între timp, spui exact asta și propui imediat alta: "Tocmai s-a ocupat ora aceea. Am liber la 15:00 sau joi la 10:00."
+- Dacă lipsește ceva, ceri lucrul care lipsește.
+- Doar dacă nu poți deloc, spui că revine cineva de la recepție.
 
 CE NU FACI:
 - Nu dai sfaturi medicale și nu spui ce tratament îi trebuie. Pentru asta e consultația.
@@ -141,19 +149,26 @@ const TOOLS = [
     function: {
       name: "programeaza",
       description:
-        "Creează programarea. Ai nevoie de nume, telefon, serviciu și ora exactă confirmată de pacient. Refuză dacă lipsește ceva.",
+        "Creează programarea. Ai nevoie de nume, telefon, serviciu și ora confirmată de pacient. Refuză dacă lipsește ceva.",
       parameters: {
         type: "object",
         additionalProperties: false,
-        required: ["nume", "telefon", "serviciuSlug", "medicId", "dataOra"],
+        required: ["nume", "telefon", "serviciuSlug", "medicId", "data", "ora"],
         properties: {
           nume: { type: "string" },
           telefon: { type: "string" },
           serviciuSlug: { type: "string" },
           medicId: { type: "string" },
-          dataOra: {
+          // Date and hour as separate plain values rather than a timestamp: an
+          // ISO string has to be echoed back byte for byte, and rebuilding one
+          // with the wrong offset silently moves the booking by three hours.
+          data: {
             type: "string",
-            description: "Exact valoarea din ore_libere, în format ISO.",
+            description: "Ziua exact cum a venit din ore_libere: AAAA-LL-ZZ.",
+          },
+          ora: {
+            type: "integer",
+            description: "Ora exact cum a venit din ore_libere, ca număr întreg.",
           },
         },
       },
@@ -193,27 +208,13 @@ async function findSlots(days: number) {
     select: { id: true, name: true, role: true },
   });
 
-  const out: {
-    medicId: string;
-    medic: string;
-    data: string;
-    ora: number;
-    dataOra: string;
-  }[] = [];
+  const out: { medicId: string; medic: string; data: string; ora: number }[] = [];
 
   for (let offset = 1; offset <= span && out.length < 40; offset++) {
     const date = moldovaDate(offset);
     for (const doctor of doctors) {
       for (const hour of await freeHours(doctor.id, date)) {
-        out.push({
-          medicId: doctor.id,
-          medic: doctor.name,
-          data: date,
-          ora: hour,
-          // Moldova is UTC+3 year-round for booking purposes here, matching how
-          // the admin form builds its slots.
-          dataOra: new Date(`${date}T${String(hour).padStart(2, "0")}:00:00+03:00`).toISOString(),
-        });
+        out.push({ medicId: doctor.id, medic: doctor.name, data: date, ora: hour });
       }
     }
   }
@@ -242,7 +243,8 @@ async function book(args: {
   telefon?: string;
   serviciuSlug?: string;
   medicId?: string;
-  dataOra?: string;
+  data?: string;
+  ora?: number;
 }) {
   const name = (args.nume ?? "").trim();
   if (name.length < 2) {
@@ -259,10 +261,14 @@ async function book(args: {
   });
   if (!service) return { ok: false, motiv: "Serviciu necunoscut." };
 
-  const when = args.dataOra ? new Date(args.dataOra) : null;
-  if (!when || Number.isNaN(when.getTime())) {
-    return { ok: false, motiv: "Ora nu este validă." };
+  // Built here from the day and hour, so the offset can never drift from what
+  // ore_libere meant. Moldova is UTC+3 through the booking window.
+  const day = String(args.data ?? "");
+  const hour = Number(args.ora);
+  if (!/^d{4}-d{2}-d{2}$/.test(day) || !Number.isInteger(hour) || hour < 0 || hour > 23) {
+    return { ok: false, motiv: "Ziua sau ora nu sunt valide. Ia-le din ore_libere." };
   }
+  const when = new Date(`${day}T${String(hour).padStart(2, "0")}:00:00+03:00`);
 
   const patient =
     (await prisma.patient.findFirst({ where: { phone } })) ??
@@ -319,8 +325,13 @@ async function runTool(name: string, args: any): Promise<unknown> {
       return findSlots(Number(args?.zile) || 7);
     case "cauta_pacient":
       return findPatient(String(args?.telefon ?? ""));
-    case "programeaza":
-      return book(args ?? {});
+    case "programeaza": {
+      const result = await book(args ?? {});
+      if (!result.ok) {
+        console.warn("Assistant booking refused:", JSON.stringify({ args, result }));
+      }
+      return result;
+    }
     default:
       return { error: `Unealtă necunoscută: ${name}` };
   }
