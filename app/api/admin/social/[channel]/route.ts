@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import type { SocialChannel } from "@prisma/client";
+import { syncSenderNames } from "@/lib/messenger";
 
 interface RouteParams {
   params: Promise<{ channel: string }>;
@@ -19,6 +20,12 @@ export async function GET(_request: Request, { params }: RouteParams) {
   }
 
   try {
+    // Fills in any names Meta now knows and we do not. Cheap, and this is the
+    // moment they matter — nobody reads the inbox to see identifiers.
+    await syncSenderNames().catch((error) =>
+      console.warn("syncSenderNames failed:", error),
+    );
+
     const messages = await prisma.socialMessage.findMany({
       where: { channel },
       orderBy: { createdAt: "desc" },

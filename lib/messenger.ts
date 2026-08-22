@@ -40,6 +40,77 @@ async function lastInboundAt(channel: SocialChannel, senderId: string): Promise<
  * which is only correct because these replies are typed by clinic staff in
  * the admin inbox — never generated automatically.
  */
+/**
+ * Fills in sender names from the Page's own conversation list.
+ *
+ * Looking a PSID up directly (`GET /{psid}`) needs Business Asset User Profile
+ * Access, which is still in review — that is why the inbox shows raw ids. But
+ * the Page's conversation list carries participant names already, needs only
+ * the messaging scopes we hold, and answers the same question for everyone at
+ * once instead of one person at a time.
+ *
+ * Never throws: names are a nicety, and the inbox must open without them.
+ */
+export async function syncSenderNames(): Promise<number> {
+  if (!isMessengerConfigured()) return 0;
+
+  const pageId = process.env.FACEBOOK_PAGE_ID || "";
+  const igId = process.env.INSTAGRAM_USER_ID || "";
+  const ours = new Set([pageId, igId].filter(Boolean));
+
+  // Instagram refuses anything but a tiny page size on this edge, so the two
+  // platforms are walked with different budgets rather than one shared setting.
+  const plans: { channel: SocialChannel; limit: number; pages: number }[] = [
+    { channel: "messenger", limit: 100, pages: 3 },
+    { channel: "instagram", limit: 1, pages: 10 },
+  ];
+
+  let updated = 0;
+
+  for (const plan of plans) {
+    let url =
+      `${GRAPH}/me/conversations?platform=${plan.channel}` +
+      `&fields=participants&limit=${plan.limit}` +
+      `&access_token=${encodeURIComponent(PAGE_TOKEN)}`;
+
+    for (let page = 0; page < plan.pages && url; page++) {
+      let body: {
+        data?: { participants?: { data?: { id: string; name?: string; username?: string }[] } }[];
+        paging?: { next?: string };
+        error?: { message: string };
+      };
+      try {
+        body = await (await fetch(url)).json();
+      } catch {
+        break;
+      }
+      if (body.error) {
+        console.warn(`syncSenderNames ${plan.channel}: ${body.error.message}`);
+        break;
+      }
+
+      for (const conversation of body.data ?? []) {
+        for (const person of conversation.participants?.data ?? []) {
+          const name = person.name || person.username;
+          if (!name || ours.has(person.id)) continue;
+
+          // Only fills gaps. A name typed by reception is a better label than
+          // a Facebook nickname, so it is never overwritten.
+          const { count } = await prisma.socialMessage.updateMany({
+            where: { channel: plan.channel, senderId: person.id, senderName: null },
+            data: { senderName: name },
+          });
+          updated += count;
+        }
+      }
+
+      url = body.paging?.next ?? "";
+    }
+  }
+
+  return updated;
+}
+
 export async function sendSocialReply(
   channel: SocialChannel,
   senderId: string,
