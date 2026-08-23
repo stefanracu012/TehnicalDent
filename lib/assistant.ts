@@ -70,8 +70,9 @@ CUM VORBEȘTI:
 - Mesaje scurte. Una-două propoziții de obicei. Ca pe WhatsApp, nu ca într-un email.
 - Saluți o singură dată, la începutul conversației. Nu la fiecare mesaj.
 - Nu repeți întrebarea pacientului înainte să răspunzi.
-- Nu spui niciodată "Vă pot ajuta cu altceva?", "Cu plăcere!", "Desigur!", "Sunt aici să vă ajut".
-- Nu folosești liste cu liniuțe. Dacă ai două variante, le spui în propoziție.
+- Nu spui niciodată "Vă pot ajuta cu altceva?", "Cu plăcere!", "Desigur!", "Sunt aici să vă ajut", "O zi frumoasă!", "nu ezitați".
+- Când pacientul îți mulțumește, răspunzi scurt și omenesc — "Cu drag, vă așteptăm" — și te oprești. Nu mai oferi ajutor și nu mai închei cu urări.
+- NICIODATĂ liste cu liniuțe sau puncte, nici măcar când propui mai multe ore. Le spui în propoziție: "Am liber miercuri la 9 sau 10, iar joi la 13 sau 14." Dacă ai patru ore de propus, tot într-o frază intră.
 - Nu spui că ești asistent virtual, AI sau bot. Dacă te întreabă direct dacă ești robot, spui că ești de la recepție și treci mai departe.
 - Fără emoji, fără majuscule de accent, fără semne de exclamare în lanț.
 - Diacritice corecte când scrii în română.
@@ -95,6 +96,8 @@ CE FACI:
 - Înainte de a programa ai nevoie de nume și număr de telefon. Dacă nu le ai, le ceri firesc, nu ca pe un formular.
 - Programezi doar după ce pacientul confirmă ora.
 - După ce ai programat, confirmi scurt ziua și ora. Fără numele medicului. Poți adăuga că, dacă apare ceva, poate suna la 060 355 350.
+- Chemi "programeaza" O SINGURĂ DATĂ pentru o programare. Dacă ți-a răspuns ok, gata — mesajele care vin după ("da", "confirm", "mulțumesc") nu sunt o comandă nouă. Îi răspunzi pacientului, nu unealta.
+- Argumentele pentru "programeaza" le iei exact din ce ți-a întors "ore_libere": medicId, data și ora, copiate, nu ghicite. Dacă nu le mai ai în față, ceri din nou ore_libere.
 
 CÂND TE ÎNTREABĂ DE PREȚ:
 - Ceri de fiecare dată lista cu unealta "servicii". Niciodată din memorie și niciodată aproximat.
@@ -166,16 +169,20 @@ const TOOLS = [
     function: {
       name: "programeaza",
       description:
-        "Creează programarea. Ai nevoie de nume, telefon, serviciu și ora confirmată de pacient. Refuză dacă lipsește ceva.",
+        "Creează programarea. Ai nevoie de nume, telefon, serviciu și ora confirmată de pacient. Cheam-o o singură dată pentru o programare. Refuză dacă lipsește ceva.",
       parameters: {
         type: "object",
         additionalProperties: false,
-        required: ["nume", "telefon", "serviciuSlug", "medicId", "data", "ora"],
+        required: ["nume", "telefon", "serviciuSlug", "data", "ora"],
         properties: {
           nume: { type: "string" },
           telefon: { type: "string" },
           serviciuSlug: { type: "string" },
-          medicId: { type: "string" },
+          medicId: {
+            type: "string",
+            description:
+              "Opțional. Dacă îl ai din ore_libere, copiază-l exact; dacă nu ești sigur, lasă-l gol — medicul e găsit după zi și oră.",
+          },
           // Date and hour as separate plain values rather than a timestamp: an
           // ISO string has to be echoed back byte for byte, and rebuilding one
           // with the wrong offset silently moves the booking by three hours.
@@ -299,7 +306,19 @@ async function book(args: {
   const service = await prisma.service.findUnique({
     where: { slug: args.serviciuSlug ?? "" },
   });
-  if (!service) return { ok: false, motiv: "Serviciu necunoscut." };
+  if (!service) {
+    // Naming the valid ones costs one line and saves a round trip: the model
+    // invents plausible slugs ("consultatie-terapeutica") when it has to
+    // remember them, and a bare "unknown" gives it nothing to correct with.
+    const valid = await prisma.service.findMany({
+      where: { isActive: true, bookable: true },
+      select: { slug: true },
+    });
+    return {
+      ok: false,
+      motiv: `Serviciu necunoscut. Alege unul din: ${valid.map((s) => s.slug).join(", ")}`,
+    };
+  }
 
   // Built here from the day and hour, so the offset can never drift from what
   // ore_libere meant. Moldova is UTC+3 through the booking window.
@@ -310,15 +329,80 @@ async function book(args: {
   }
   const when = new Date(`${day}T${String(hour).padStart(2, "0")}:00:00+03:00`);
 
+  // A day already gone means the model invented the arguments instead of
+  // reading them back from ore_libere — the year is usually the giveaway.
+  if (when.getTime() < Date.now()) {
+    return { ok: false, motiv: "Ziua aceea a trecut deja. Ia data exact din ore_libere." };
+  }
+
+  // The doctor is resolved here rather than trusted from the call.
+  //
+  // A 24-character hex id is exactly the kind of thing a language model
+  // retypes with a character missing, and it did: the booking failed on a
+  // malformed ObjectID for an hour that was perfectly free. Since the hour
+  // itself already identifies who is working, the id is optional — given, it
+  // is verified; missing or mistyped, the doctor who opened that hour is
+  // found from the calendar.
+  const claimed = String(args.medicId ?? "");
+  let medicId = /^[0-9a-fA-F]{24}$/.test(claimed) ? claimed : "";
+
+  if (medicId && !(await freeHours(medicId, day)).includes(hour)) {
+    medicId = "";
+  }
+
+  if (!medicId) {
+    const doctors = await prisma.teamMember.findMany({
+      where: { isActive: true },
+      orderBy: { order: "asc" },
+      select: { id: true },
+    });
+    for (const doctor of doctors) {
+      if ((await freeHours(doctor.id, day)).includes(hour)) {
+        medicId = doctor.id;
+        break;
+      }
+    }
+  }
+
+  if (!medicId) {
+    return {
+      ok: false,
+      motiv: "Niciun medic nu are ora aceea liberă. Cere din nou ore_libere și propune alta.",
+    };
+  }
+
   const patient =
     (await prisma.patient.findFirst({ where: { phone } })) ??
     (await prisma.patient.create({ data: { name, phone } }));
+
+  // Booking the same person into the same hour twice is what happens when the
+  // patient answers "da, confirm" after it is already done and the model reads
+  // that as a fresh instruction. Saying yes to the booking that already exists
+  // is both true and harmless; creating a second one is neither.
+  const existing = await prisma.appointment.findFirst({
+    where: {
+      patientId: patient.id,
+      dateTime: when,
+      status: { notIn: ["cancelled", "noshow"] },
+    },
+    include: { service: { select: { title: true } } },
+  });
+  if (existing) {
+    return {
+      ok: true,
+      dejaExista: true,
+      pacient: patient.name,
+      cand: existing.dateTime.toISOString(),
+      serviciu: existing.service.title,
+      motiv: "Programarea era deja făcută. Confirmă-i-o, nu o face din nou.",
+    };
+  }
 
   const appointment = await prisma.appointment.create({
     data: {
       patientId: patient.id,
       serviceId: service.id,
-      teamMemberId: args.medicId,
+      teamMemberId: medicId,
       dateTime: when,
       duration: service.duration,
       notes: "Programare făcută prin chat.",
@@ -328,7 +412,7 @@ async function book(args: {
   try {
     // The same guard the admin form goes through: it re-checks the doctor's
     // availability and loses the race cleanly if the hour went in the meantime.
-    await claimSlot(args.medicId ?? "", when, appointment.id);
+    await claimSlot(medicId, when, appointment.id);
   } catch (error) {
     await prisma.appointment.delete({ where: { id: appointment.id } });
     return {
@@ -489,8 +573,31 @@ export async function assistantReply(
           JSON.parse(call.function.arguments || "{}"),
         );
       } catch (error) {
-        result = { error: (error as Error).message };
+        console.error(`Assistant tool ${call.function.name} threw:`, error);
+        // The raw message carries stack frames and file paths, and the model
+        // repeats what it is given — that is how a database error ended up
+        // being read out to a patient as a broken system.
+        result = {
+          ok: false,
+          motiv: "Unealta nu a putut rula acum. Nu inventa o cauză. Încearcă o singură dată cu date luate din nou din ore_libere, apoi spune că revine cineva de la recepție.",
+        };
+        if (call.function.name === "programeaza") {
+          await reportFailedBooking(
+            JSON.parse(call.function.arguments || "{}"),
+            `Eroare tehnică: ${(error as Error).message}`.slice(0, 300),
+          );
+        }
       }
+      // Every call, not only the refusals: when a patient says an hour was
+      // never booked, this is the only record of what the assistant actually
+      // asked for and what came back.
+      console.info(
+        "Assistant tool:",
+        call.function.name,
+        call.function.arguments,
+        "->",
+        JSON.stringify(result).slice(0, 300),
+      );
       messages.push({
         role: "tool",
         tool_call_id: call.id,
