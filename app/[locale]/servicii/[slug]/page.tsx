@@ -95,14 +95,14 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
       />
       <BreadcrumbSchema
         items={[
-          { name: "TehnicalDent", url: `https://tehnicaldent.com/${locale}` },
+          { name: "TehnicalDent", url: `https://www.tehnicaldent.com/${locale}` },
           {
             name: tNav("servicii"),
-            url: `https://tehnicaldent.com/${locale}/servicii`,
+            url: `https://www.tehnicaldent.com/${locale}/servicii`,
           },
           {
             name: title,
-            url: `https://tehnicaldent.com/${locale}/servicii/${service.slug}`,
+            url: `https://www.tehnicaldent.com/${locale}/servicii/${service.slug}`,
           },
         ]}
       />

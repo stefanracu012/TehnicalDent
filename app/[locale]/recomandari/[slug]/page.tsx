@@ -106,14 +106,14 @@ export default async function BlogPostPage({ params }: Props) {
       />
       <BreadcrumbSchema
         items={[
-          { name: "TehnicalDent", url: `https://tehnicaldent.com/${locale}` },
+          { name: "TehnicalDent", url: `https://www.tehnicaldent.com/${locale}` },
           {
             name: "Recomandări",
-            url: `https://tehnicaldent.com/${locale}/recomandari`,
+            url: `https://www.tehnicaldent.com/${locale}/recomandari`,
           },
           {
             name: post.title,
-            url: `https://tehnicaldent.com/${locale}/recomandari/${post.slug}`,
+            url: `https://www.tehnicaldent.com/${locale}/recomandari/${post.slug}`,
           },
         ]}
       />

@@ -45,16 +45,16 @@ export function DentistSchema({ locale }: { locale: string }) {
   const data = {
     "@context": "https://schema.org",
     "@type": ["Dentist", "MedicalBusiness", "LocalBusiness"],
-    "@id": "https://tehnicaldent.com/#clinic",
+    "@id": "https://www.tehnicaldent.com/#clinic",
     name: CLINIC.name,
     // "Tehnical Dent" is how the Google Business Profile spells it and by far
     // the most common way people search for us — declare both so the entity
     // resolves to one business instead of two.
     alternateName: ["Tehnical Dent", names[locale] || names.ro],
     description: descriptions[locale] || descriptions.ro,
-    url: "https://tehnicaldent.com",
-    logo: "https://tehnicaldent.com/images/logo.png",
-    image: "https://tehnicaldent.com/images/hero-dentist.jpg",
+    url: "https://www.tehnicaldent.com",
+    logo: "https://www.tehnicaldent.com/images/logo.png",
+    image: "https://www.tehnicaldent.com/images/hero-dentist.jpg",
     telephone: CLINIC.telephone,
     email: CLINIC.email,
     // Mirrors the Google Business Profile listing field for field — a mismatch
@@ -134,12 +134,12 @@ export function ServiceSchema({
     "@type": "MedicalProcedure",
     name: title,
     description,
-    url: `https://tehnicaldent.com/ro/servicii/${slug}`,
+    url: `https://www.tehnicaldent.com/ro/servicii/${slug}`,
     category,
     provider: {
       "@type": "Dentist",
       name: "TehnicalDent",
-      url: "https://tehnicaldent.com",
+      url: "https://www.tehnicaldent.com",
     },
     ...(image ? { image } : {}),
   };
@@ -170,7 +170,7 @@ export function ArticleSchema({
     "@type": "BlogPosting",
     headline: title,
     description,
-    url: `https://tehnicaldent.com/ro/recomandari/${slug}`,
+    url: `https://www.tehnicaldent.com/ro/recomandari/${slug}`,
     datePublished,
     author: {
       "@type": "Organization",
@@ -181,13 +181,13 @@ export function ArticleSchema({
       name: "TehnicalDent",
       logo: {
         "@type": "ImageObject",
-        url: "https://tehnicaldent.com/images/logo.png",
+        url: "https://www.tehnicaldent.com/images/logo.png",
       },
     },
     ...(image ? { image } : {}),
     mainEntityOfPage: {
       "@type": "WebPage",
-      "@id": `https://tehnicaldent.com/ro/recomandari/${slug}`,
+      "@id": `https://www.tehnicaldent.com/ro/recomandari/${slug}`,
     },
   };
 

@@ -23,7 +23,7 @@ const PAGE_ID = process.env.FACEBOOK_PAGE_ID || "";
 const IG_USER_ID = process.env.INSTAGRAM_USER_ID || "";
 const BLOB_TOKEN = process.env.TEHNICAL_READ_WRITE_TOKEN || "";
 const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL || "https://tehnicaldent.com"
+  process.env.NEXT_PUBLIC_SITE_URL || "https://www.tehnicaldent.com"
 ).replace(/\/$/, "");
 
 /** Instagram truncates at 2200 characters; leave room for the closing lines. */

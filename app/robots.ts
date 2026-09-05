@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ["/admin/", "/api/"],
       },
     ],
-    sitemap: "https://tehnicaldent.com/sitemap.xml",
+    sitemap: "https://www.tehnicaldent.com/sitemap.xml",
   };
 }

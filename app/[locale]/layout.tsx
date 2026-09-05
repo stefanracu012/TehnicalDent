@@ -67,16 +67,16 @@ export async function generateMetadata({
       ],
       apple: "/apple-icon.png",
     },
-    metadataBase: new URL("https://tehnicaldent.com"),
+    metadataBase: new URL("https://www.tehnicaldent.com"),
     alternates: getAlternates("", locale),
     openGraph: {
       type: "website",
       locale: getOgLocale(locale),
       siteName: "TehnicalDent",
-      url: `https://tehnicaldent.com/${locale}`,
+      url: `https://www.tehnicaldent.com/${locale}`,
       images: [
         {
-          url: "https://tehnicaldent.com/images/hero-dentist.jpg",
+          url: "https://www.tehnicaldent.com/images/hero-dentist.jpg",
           width: 1200,
           height: 630,
           alt: "TehnicalDent — Clinică Stomatologică",
@@ -87,7 +87,7 @@ export async function generateMetadata({
       card: "summary_large_image",
       title: t("title"),
       description: t("description"),
-      images: ["https://tehnicaldent.com/images/hero-dentist.jpg"],
+      images: ["https://www.tehnicaldent.com/images/hero-dentist.jpg"],
     },
   };
 }

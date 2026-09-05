@@ -2,7 +2,7 @@
  * Shared SEO helpers for generating hreflang alternates and canonical URLs.
  */
 
-const BASE_URL = "https://tehnicaldent.com";
+const BASE_URL = "https://www.tehnicaldent.com";
 const LOCALES = ["ro", "en", "ru", "it"];
 
 /**
