@@ -605,7 +605,7 @@ export async function notifyRecall(a: AppointmentFull) {
 
   if (a.patient.email) {
     const email = buildEmailHtml(a, {
-      title: "V-aă şteaptă o nouă vizită la TehnicalDent",
+      title: "Vă așteaptă o nouă vizită la Tehnical Dent",
       intro: `Bună ziua, ${a.patient.name}! Au trecut 6 luni de la ultima dvs. vizită. Vă recomandăm o nouă consultaţie.`,
       showActions: false,
       footer: "Pentru a vă programa, ne puteţi contacta telefonic sau prin formularul de pe site.",

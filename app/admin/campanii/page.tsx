@@ -353,7 +353,7 @@ export default function AdminCampaniiPage() {
                   </p>
                   <p className="text-xs text-foreground whitespace-pre-line leading-relaxed">
                     {`Bună ziua, ${"{nume}"}!
-Avem o ofertă specială la clinica TEHNICAL DENT:
+Avem o ofertă specială la clinica Tehnical Dent:
 Promoție de ${season || "…"} la ${service || "…"}, cu reducere de ${discount || "…"}.
 
 Doriți să vă programăm?

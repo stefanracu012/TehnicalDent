@@ -13,7 +13,7 @@ export const SEASONAL_OFFER_TEMPLATE = {
   category: "MARKETING",
   // {{1}} nume, {{2}} sezon, {{3}} serviciu, {{4}} reducere
   body: `Bună ziua, {{1}}!
-Avem o ofertă specială la clinica TEHNICAL DENT:
+Avem o ofertă specială la clinica Tehnical Dent:
 Promoție de {{2}} la {{3}}, cu reducere de {{4}}.
 
 Doriți să vă programăm?
