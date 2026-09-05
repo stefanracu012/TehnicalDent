@@ -404,6 +404,9 @@ model Patient {
   phone     String
   email     String?
   notes     String?  // medical notes / observations
+  // Set when the patient writes STOP on WhatsApp. Appointment messages still
+  // go out — those are why they came to us; only campaigns are held back.
+  marketingOptOutAt DateTime?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

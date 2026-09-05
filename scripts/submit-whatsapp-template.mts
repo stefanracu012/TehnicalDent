@@ -128,6 +128,7 @@ async function submit() {
           text: SEASONAL_OFFER_TEMPLATE.body,
           example: { body_text: [[...SEASONAL_OFFER_TEMPLATE.example]] },
         },
+        { type: "FOOTER", text: SEASONAL_OFFER_TEMPLATE.footer },
       ],
     }),
   });

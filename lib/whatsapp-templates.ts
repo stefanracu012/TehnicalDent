@@ -22,6 +22,9 @@ Răspundeți la acest mesaj sau sunați-ne:
 📞 060 355 350
 
 O zi frumoasă! 🦷`,
+  // Meta looks for a way out on marketing templates, and the webhook honours
+  // this one: STOP stops campaigns, appointment messages carry on.
+  footer: "Scrieți STOP dacă nu doriți să primiți oferte.",
   // Meta requires a filled-in example for every variable, and judges the
   // template on it — so these are real values, not placeholders.
   example: ["Mihaela", "TOAMNĂ", "igienizarea dentară", "-10%"],

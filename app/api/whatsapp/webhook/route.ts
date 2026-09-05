@@ -22,6 +22,7 @@ import prisma from "@/lib/prisma";
 import { captureLead } from "@/lib/leads";
 import { shouldReply, assistantReply } from "@/lib/assistant";
 import { normalizePhone } from "@/lib/appointments";
+import { handleOptOut, optOutKeyword } from "@/lib/marketing-optout";
 import { sendWhatsAppText, sendTelegramToTopic, TELEGRAM_TOPICS } from "@/lib/notifications";
 
 const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || "";
@@ -162,6 +163,25 @@ export async function POST(request: Request) {
         );
 
         try {
+          // "STOP" is answered before anything else looks at the message. It
+          // is not a question for the assistant, and letting a model decide
+          // whether someone unsubscribed is not a decision worth delegating.
+          const optOut = await handleOptOut(phone, text);
+          if (optOut) {
+            await sendWhatsAppText(phone, optOut);
+            await prisma.whatsAppMessage.create({
+              data: { phone, direction: "out", body: optOut, patientId: patient?.id },
+            });
+            await sendTelegramToTopic(
+              `🔕 <b>${who}</b> (<code>${phone}</code>) a scris „${text.trim()}”. ` +
+                (optOutKeyword(text) === "stop"
+                  ? "Nu îi mai trimitem campanii."
+                  : "Primește din nou campanii."),
+              TELEGRAM_TOPICS.mesaje,
+            );
+            continue;
+          }
+
           // The assistant answers only where it has been switched on. Anywhere
           // else the old fixed acknowledgement stands, so turning the feature
           // off never leaves a patient with silence.

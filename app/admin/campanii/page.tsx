@@ -8,6 +8,7 @@ interface Patient {
   name: string;
   phone: string;
   email?: string | null;
+  marketingOptOutAt?: string | null;
 }
 
 interface Service {
@@ -50,7 +51,12 @@ export default function AdminCampaniiPage() {
   const [channelEmail, setChannelEmail] = useState(true);
 
   const [sending, setSending] = useState(false);
-  const [result, setResult] = useState<{ sent: number; skipped: number; total: number } | null>(null);
+  const [result, setResult] = useState<{
+    sent: number;
+    skipped: number;
+    optedOut?: number;
+    total: number;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -200,6 +206,14 @@ export default function AdminCampaniiPage() {
                     <input type="checkbox" checked={selected.has(p.id)} onChange={() => toggle(p.id)} />
                     <span className="flex-1">
                       {p.name} <span className="text-muted-foreground">— {p.phone}</span>
+                      {p.marketingOptOutAt && (
+                        <span
+                          className="ml-2 text-[10px] uppercase tracking-wide text-amber-700 bg-amber-100 px-1.5 py-0.5"
+                          title="A scris STOP pe WhatsApp. Primește în continuare mesajele despre programări."
+                        >
+                          dezabonat
+                        </span>
+                      )}
                     </span>
                   </label>
                 ))
@@ -413,7 +427,8 @@ O zi frumoasă! 🦷`}
             {result && (
               <div className="rounded border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-800 mb-4">
                 Trimis către {result.sent} din {result.total} pacienți
-                {result.skipped > 0 ? ` (${result.skipped} săriți — fără telefon/email)` : ""}.
+                {result.skipped > 0 ? ` · ${result.skipped} săriți (fără telefon/email)` : ""}
+                {result.optedOut ? ` · ${result.optedOut} dezabonați` : ""}.
               </div>
             )}
 

@@ -74,15 +74,25 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Niciun pacient selectat." }, { status: 400 });
     }
 
+    // Honoured here rather than at the selection screen, so it holds however
+    // the patients were picked — including "select all".
+    const optedOut = patients.filter((p) => p.marketingOptOutAt);
+    const willReceive = patients.filter((p) => !p.marketingOptOutAt);
+
     let sent = 0;
     let skipped = 0;
-    for (const patient of patients) {
+    for (const patient of willReceive) {
       const result = await sendCampaignToPatient(patient, payload, channels);
       if (result.whatsapp || result.email) sent++;
       else skipped++;
     }
 
-    return NextResponse.json({ sent, skipped, total: patients.length });
+    return NextResponse.json({
+      sent,
+      skipped,
+      optedOut: optedOut.length,
+      total: patients.length,
+    });
   } catch (error) {
     console.error("Error sending campaign:", error);
     return NextResponse.json({ error: "Eroare la trimiterea campaniei." }, { status: 500 });
