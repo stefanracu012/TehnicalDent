@@ -8,6 +8,7 @@ interface CampaignRequestBody {
   templateKey?: string;
   service?: string;
   discount?: string;
+  season?: string;
   detail?: string;
   channels?: { whatsapp?: boolean; email?: boolean };
 }
@@ -21,6 +22,7 @@ export async function POST(request: Request) {
     const body = sanitizeObject(rawBody as unknown as Record<string, unknown>, [
       "service",
       "discount",
+      "season",
       "detail",
     ]) as unknown as CampaignRequestBody;
 
@@ -43,6 +45,17 @@ export async function POST(request: Request) {
         );
       }
       payload = { templateKey: "oferta_promo", service, discount };
+    } else if (body.templateKey === "oferta_sezon") {
+      const season = String(body.season || "").trim();
+      const service = String(body.service || "").trim();
+      const discount = String(body.discount || "").trim();
+      if (!season || !service || !discount) {
+        return NextResponse.json(
+          { error: "Sezonul, serviciul și reducerea sunt obligatorii pentru oferta sezonieră." },
+          { status: 400 },
+        );
+      }
+      payload = { templateKey: "oferta_sezon", season, service, discount };
     } else if (body.templateKey === "reminder_control") {
       const detail = String(body.detail || "").trim();
       if (!detail) {

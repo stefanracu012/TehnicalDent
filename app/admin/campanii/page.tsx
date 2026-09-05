@@ -15,9 +15,24 @@ interface Service {
   title: string;
 }
 
-type TemplateKey = "oferta_promo" | "reminder_control";
+type TemplateKey = "oferta_promo" | "oferta_sezon" | "reminder_control";
 
 const ALL_SERVICES_LABEL = "Toate serviciile";
+
+// The word dropped into "Promoție de ___". Anything can be typed instead —
+// these are only the ones that come round every year.
+const SEASONS = [
+  "TOAMNĂ",
+  "IARNĂ",
+  "PRIMĂVARĂ",
+  "VARĂ",
+  "ANUL NOU",
+  "CRĂCIUN",
+  "PAȘTE",
+  "8 MARTIE",
+  "BLACK FRIDAY",
+  "1 IUNIE",
+];
 
 export default function AdminCampaniiPage() {
   const [patients, setPatients] = useState<Patient[]>([]);
@@ -29,6 +44,7 @@ export default function AdminCampaniiPage() {
   const [templateKey, setTemplateKey] = useState<TemplateKey>("oferta_promo");
   const [service, setService] = useState("");
   const [discount, setDiscount] = useState("");
+  const [season, setSeason] = useState(SEASONS[0]);
   const [detail, setDetail] = useState("");
   const [channelWhatsapp, setChannelWhatsapp] = useState(true);
   const [channelEmail, setChannelEmail] = useState(true);
@@ -85,7 +101,11 @@ export default function AdminCampaniiPage() {
   const canSend =
     selected.size > 0 &&
     (channelWhatsapp || channelEmail) &&
-    (templateKey === "oferta_promo" ? service.trim() && discount.trim() : detail.trim());
+    (templateKey === "oferta_promo"
+      ? service.trim() && discount.trim()
+      : templateKey === "oferta_sezon"
+        ? season.trim() && service.trim() && discount.trim()
+        : detail.trim());
 
   const send = async () => {
     if (!canSend) return;
@@ -101,8 +121,15 @@ export default function AdminCampaniiPage() {
         body: JSON.stringify({
           patientIds: Array.from(selected),
           templateKey,
-          service: templateKey === "oferta_promo" ? service.trim() : undefined,
-          discount: templateKey === "oferta_promo" ? discount.trim() : undefined,
+          service:
+            templateKey === "oferta_promo" || templateKey === "oferta_sezon"
+              ? service.trim()
+              : undefined,
+          discount:
+            templateKey === "oferta_promo" || templateKey === "oferta_sezon"
+              ? discount.trim()
+              : undefined,
+          season: templateKey === "oferta_sezon" ? season.trim() : undefined,
           detail: templateKey === "reminder_control" ? detail.trim() : undefined,
           channels: { whatsapp: channelWhatsapp, email: channelEmail },
         }),
@@ -206,6 +233,17 @@ export default function AdminCampaniiPage() {
               </button>
               <button
                 type="button"
+                onClick={() => setTemplateKey("oferta_sezon")}
+                className={`flex-1 px-3 py-2 text-sm border ${
+                  templateKey === "oferta_sezon"
+                    ? "bg-foreground text-background border-foreground"
+                    : "border-border hover:bg-muted"
+                }`}
+              >
+                🍂 Promoție sezonieră
+              </button>
+              <button
+                type="button"
                 onClick={() => setTemplateKey("reminder_control")}
                 className={`flex-1 px-3 py-2 text-sm border ${
                   templateKey === "reminder_control"
@@ -254,6 +292,78 @@ export default function AdminCampaniiPage() {
                   <b>{service || "…"}</b>, cu reducere de <b>{discount || "…"}</b>. Doriți să vă
                   programăm? Răspundeți la acest mesaj sau sunați-ne!"
                 </p>
+              </div>
+            ) : templateKey === "oferta_sezon" ? (
+              <div className="space-y-3 mb-4">
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">
+                    Sezonul / ocazia
+                  </label>
+                  <input
+                    type="text"
+                    list="sezoane"
+                    value={season}
+                    onChange={(e) => setSeason(e.target.value)}
+                    placeholder="ex: TOAMNĂ"
+                    className="w-full px-3 py-2 border border-border bg-background text-sm"
+                  />
+                  <datalist id="sezoane">
+                    {SEASONS.map((s) => (
+                      <option key={s} value={s} />
+                    ))}
+                  </datalist>
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Alegeți din listă sau scrieți altceva. Intră în text ca
+                    „Promoție de {season || "…"}”.
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">
+                    Serviciu
+                  </label>
+                  <select
+                    value={service}
+                    onChange={(e) => setService(e.target.value)}
+                    className="w-full px-3 py-2 border border-border bg-background text-sm"
+                  >
+                    <option value="">Alege serviciul...</option>
+                    <option value={ALL_SERVICES_LABEL}>Toate serviciile</option>
+                    {services.map((s) => (
+                      <option key={s.id} value={s.title}>
+                        {s.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted-foreground mb-1">
+                    Reducere
+                  </label>
+                  <input
+                    type="text"
+                    value={discount}
+                    onChange={(e) => setDiscount(e.target.value)}
+                    placeholder="ex: -10%"
+                    className="w-full px-3 py-2 border border-border bg-background text-sm"
+                  />
+                </div>
+                <div className="border border-border bg-muted/40 p-3">
+                  <p className="text-[11px] font-medium text-muted-foreground mb-2">
+                    Exact ce primește pacientul pe WhatsApp:
+                  </p>
+                  <p className="text-xs text-foreground whitespace-pre-line leading-relaxed">
+                    {`Bună ziua, ${"{nume}"}!
+Avem o ofertă specială la clinica TEHNICAL DENT:
+Promoție de ${season || "…"} la ${service || "…"}, cu reducere de ${discount || "…"}.
+
+Doriți să vă programăm?
+
+Răspundeți la acest mesaj sau sunați-ne:
+📞 060 355 350
+
+O zi frumoasă! 🦷`}
+                  </p>
+                </div>
               </div>
             ) : (
               <div className="space-y-3 mb-4">

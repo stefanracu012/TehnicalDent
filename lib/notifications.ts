@@ -15,6 +15,9 @@ import {
 import { buildConfirmUrl, formatDateTimeRo, toWhatsAppPhone } from "@/lib/appointments";
 import { TELEGRAM_TOPICS, sendTelegramMessage, sendTelegramToTopic, isTelegramConfigured } from "@/lib/telegram";
 import { refreshDigestIfRelevant } from "@/lib/telegram-digest";
+import { SEASONAL_OFFER_TEMPLATE, seasonalOfferText } from "@/lib/whatsapp-templates";
+
+export { SEASONAL_OFFER_TEMPLATE, seasonalOfferText };
 
 export { TELEGRAM_TOPICS, sendTelegramToTopic };
 
@@ -630,7 +633,9 @@ export async function notifyRecall(a: AppointmentFull) {
 
 export type CampaignPayload =
   | { templateKey: "oferta_promo"; service: string; discount: string }
+  | { templateKey: "oferta_sezon"; season: string; service: string; discount: string }
   | { templateKey: "reminder_control"; detail: string };
+
 
 function buildCampaignEmailHtml(
   patientName: string,
@@ -683,7 +688,9 @@ export async function sendCampaignToPatient(
   const waParams =
     payload.templateKey === "oferta_promo"
       ? [patient.name, serviceLabel(payload.service), payload.discount]
-      : [patient.name, payload.detail];
+      : payload.templateKey === "oferta_sezon"
+        ? [patient.name, payload.season, serviceLabel(payload.service), payload.discount]
+        : [patient.name, payload.detail];
 
   if (channels.whatsapp && patient.phone) {
     await queueAndSend({
@@ -706,10 +713,15 @@ export async function sendCampaignToPatient(
             title: "Ofertă specială — TehnicalDent",
             body: `Avem o ofertă specială pentru dvs.: <b>${serviceLabel(payload.service)}</b>, cu reducere de <b>${payload.discount}</b>. Doriți să vă programăm? Răspundeți la acest email sau sunați-ne!`,
           }
-        : {
-            title: "Reamintire control — TehnicalDent",
-            body: payload.detail,
-          };
+        : payload.templateKey === "oferta_sezon"
+          ? {
+              title: `Promoție de ${payload.season} — TehnicalDent`,
+              body: `Promoție de <b>${payload.season}</b> la <b>${serviceLabel(payload.service)}</b>, cu reducere de <b>${payload.discount}</b>. Doriți să vă programăm? Răspundeți la acest email sau sunați-ne la 060 355 350.`,
+            }
+          : {
+              title: "Reamintire control — TehnicalDent",
+              body: payload.detail,
+            };
     const email = buildCampaignEmailHtml(patient.name, title, body);
     await queueAndSend({
       type: "campaign",

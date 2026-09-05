@@ -11,7 +11,8 @@
     "check-meta": "node scripts/check-meta-access.mjs",
     "create-admin": "node scripts/create-admin.mjs",
     "get-page-token": "node scripts/get-page-token.mjs",
-    "grant-permissions": "node scripts/grant-permissions.mjs"
+    "grant-permissions": "node scripts/grant-permissions.mjs",
+    "submit-template": "tsx scripts/submit-whatsapp-template.mts"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
