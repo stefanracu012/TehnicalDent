@@ -20,7 +20,7 @@ import crypto from "crypto";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { captureLead } from "@/lib/leads";
-import { shouldReply, assistantReply } from "@/lib/assistant";
+import { shouldReply, assistantReply, pausedUntil } from "@/lib/assistant";
 import { normalizePhone } from "@/lib/appointments";
 import { handleOptOut, optOutKeyword } from "@/lib/marketing-optout";
 import { sendWhatsAppText, sendTelegramToTopic, TELEGRAM_TOPICS } from "@/lib/notifications";
@@ -204,6 +204,16 @@ export async function POST(request: Request) {
           // The assistant answers only where it has been switched on. Anywhere
           // else the old fixed acknowledgement stands, so turning the feature
           // off never leaves a patient with silence.
+          // A colleague is already in this conversation, so nothing automatic
+          // goes out — not the assistant, and not the fixed acknowledgement
+          // either. That acknowledgement exists to cover the assistant being
+          // switched off, which is a different situation: there, nobody is
+          // answering. Here somebody is, and "we will contact you shortly"
+          // landing under their reply is worse than saying nothing.
+          if (await pausedUntil("whatsapp", phone)) {
+            continue;
+          }
+
           let reply = AUTO_REPLY;
 
           if (await shouldReply("whatsapp", phone)) {

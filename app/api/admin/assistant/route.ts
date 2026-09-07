@@ -127,7 +127,12 @@ export async function POST(request: Request) {
       if (!handle) {
         return NextResponse.json({ error: "Lipsește conversația." }, { status: 400 });
       }
-      await prisma.assistantPause.deleteMany({ where: { channel, handle } });
+      // Same key shape the pause was written with, so "Reia acum" works
+      // for a number stored in either format.
+      const digits = handle.replace(/[^0-9]/g, "");
+      const key =
+        channel === "whatsapp" && digits.length > 8 ? digits.slice(-8) : handle;
+      await prisma.assistantPause.deleteMany({ where: { channel, handle: key } });
       return NextResponse.json({ resumed: true });
     }
 

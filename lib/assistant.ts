@@ -40,6 +40,21 @@ export async function channelMode(
 export const HUMAN_TAKEOVER_MINUTES = 120;
 
 /**
+ * One key per conversation, whatever shape the number arrived in.
+ *
+ * The same patient is "+37368046719" in one place and "068046719" in another,
+ * because normalisation only strips spaces. Keying the pause on the raw string
+ * would mean a colleague takes over one spelling of a number while the
+ * assistant carries on answering the other. The last eight digits are the
+ * subscriber number either way.
+ */
+function pauseKey(channel: AssistantChannelName, handle: string): string {
+  if (channel !== "whatsapp") return handle;
+  const digits = handle.replace(/[^0-9]/g, "");
+  return digits.length > 8 ? digits.slice(-8) : digits;
+}
+
+/**
  * Steps aside after someone from the clinic has answered.
  *
  * A patient talking to a real person does not want a second voice joining in,
@@ -53,9 +68,10 @@ export async function pauseAssistant(
   reason?: string,
 ): Promise<Date> {
   const until = new Date(Date.now() + HUMAN_TAKEOVER_MINUTES * 60_000);
+  const key = pauseKey(channel, handle);
   await prisma.assistantPause.upsert({
-    where: { channel_handle: { channel, handle } },
-    create: { channel, handle, until, reason: reason ?? null },
+    where: { channel_handle: { channel, handle: key } },
+    create: { channel, handle: key, until, reason: reason ?? null },
     update: { until, reason: reason ?? null },
   });
   return until;
@@ -67,7 +83,7 @@ export async function pausedUntil(
   handle: string,
 ): Promise<Date | null> {
   const row = await prisma.assistantPause.findUnique({
-    where: { channel_handle: { channel, handle } },
+    where: { channel_handle: { channel, handle: pauseKey(channel, handle) } },
   });
   if (!row) return null;
   return row.until.getTime() > Date.now() ? row.until : null;
