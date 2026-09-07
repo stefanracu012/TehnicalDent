@@ -17,6 +17,7 @@ import {
   isValidPhone,
   normalizePhone,
   parseDateTime,
+  parseMoldovaDateTime,
   findOverlappingAppointment,
   generateConfirmToken,
   formatDateTimeRo,
@@ -267,9 +268,10 @@ async function cmdProgramareNoua(rest: string): Promise<string> {
   const duration =
     durStr_parsed && /^\d+$/.test(durStr_parsed) ? parseInt(durStr_parsed, 10) : serviceDuration;
 
-  // Accept "YYYY-MM-DD HH:MM" by converting space to 'T'
-  const isoCandidate = dateStr.includes("T") ? dateStr : dateStr.replace(" ", "T");
-  const dt = parseDateTime(isoCandidate);
+  // Read as a Chișinău wall clock. Plain parsing would take it as the
+  // server's own time, and the server runs on UTC — which is how 16:00
+  // became 19:00.
+  const dt = parseMoldovaDateTime(dateStr);
   if (!dt) return "❌ Dată/oră invalidă (folosește YYYY-MM-DD HH:MM).";
   if (dt.getTime() < Date.now() - 60_000) return "❌ Data este în trecut.";
 

@@ -75,6 +75,7 @@ export function parseDateTime(input: unknown): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
+
 // ---- Overlap detection ----
 
 interface OverlapCheckParams {

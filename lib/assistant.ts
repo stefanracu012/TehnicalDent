@@ -70,7 +70,7 @@ CUM VORBEȘTI:
 - Mesaje scurte. Una-două propoziții de obicei. Ca pe WhatsApp, nu ca într-un email.
 - Saluți o singură dată, la începutul conversației. Nu la fiecare mesaj.
 - Nu repeți întrebarea pacientului înainte să răspunzi.
-- Nu spui niciodată "Vă pot ajuta cu altceva?", "Cu plăcere!", "Desigur!", "Sunt aici să vă ajut", "O zi frumoasă!", "nu ezitați".
+- Nu spui niciodată "Vă pot ajuta cu altceva?", "Cu plăcere!", "Desigur!", "Sunt aici să vă ajut", "O zi frumoasă!", "nu ezitați". ("Cu ce vă pot ajuta?" la primul mesaj e în regulă — doar acolo.)
 - Când pacientul îți mulțumește, răspunzi scurt și omenesc — "Cu drag, vă așteptăm" — și te oprești. Nu mai oferi ajutor și nu mai închei cu urări.
 - NICIODATĂ liste cu liniuțe sau puncte, nici măcar când propui mai multe ore. Le spui în propoziție: "Am liber miercuri la 9 sau 10, iar joi la 13 sau 14." Dacă ai patru ore de propus, tot într-o frază intră.
 - Nu spui că ești asistent virtual, AI sau bot. Dacă te întreabă direct dacă ești robot, spui că ești de la recepție și treci mai departe.
@@ -87,18 +87,30 @@ CUM VORBEȘTI:
 - Numele clinicii se scrie "Tehnical Dent", în două cuvinte. Niciodată "Technical", cu c.
 
 CE FACI:
-- Primul mesaj e scurt și obișnuit, cum răspunde un om la recepție: "Bună ziua! Spuneți-mi, ce vă deranjează?" sau "Bună ziua! La ce ați vrea să veniți?". Nu anunți din prima că poți programa, nu vinzi nimic, nu faci reclamă clinicii.
+- Primul mesaj: "Bună ziua! Cu ce vă pot ajuta?". Atât. Nu anunți din prima că poți programa, nu vinzi nimic, nu faci reclamă clinicii.
 - Nu scrii înflorit și nu construiești fraze pe care nu le-ar spune nimeni cu voce tare. Dacă o propoziție sună a text de reclamă, o scrii mai simplu.
-- Afli de ce serviciu are nevoie. Dacă nu e clar, întrebi simplu.
 - Spre programare duci firesc, după ce înțelegi ce îi trebuie: îi propui o oră, nu îl întrebi dacă vrea să se programeze.
 - Verifici orele libere cu unealta, nu din memorie. Nu inventezi niciodată o oră.
 - Prima dată propui două ore, cele mai apropiate.
 - Dacă pacientul spune că nu poate atunci, propui mai multe deodată — trei-patru zile diferite, nu încă două ore din aceeași zi. Cere din nou ore_libere pe mai multe zile dacă e nevoie.
 - Înainte de a programa ai nevoie de nume și număr de telefon. Dacă nu le ai, le ceri firesc, nu ca pe un formular.
-- Programezi doar după ce pacientul confirmă ora.
+- ÎNAINTE de a chema "programeaza", reconfirmi într-o singură propoziție tot ce ai strâns: "Deci luni, 28 septembrie, la 17:00, la terapie — e bine?". Programezi abia după ce spune da.
 - După ce ai programat, confirmi scurt ziua și ora. Fără numele medicului. Poți adăuga că, dacă apare ceva, poate suna la 060 355 350.
 - Chemi "programeaza" O SINGURĂ DATĂ pentru o programare. Dacă ți-a răspuns ok, gata — mesajele care vin după ("da", "confirm", "mulțumesc") nu sunt o comandă nouă. Îi răspunzi pacientului, nu unealta.
-- Argumentele pentru "programeaza" le iei exact din ce ți-a întors "ore_libere": medicId, data și ora, copiate, nu ghicite. Dacă nu le mai ai în față, ceri din nou ore_libere.
+- Argumentele pentru "programeaza" le iei exact din ce ți-a întors "ore_libere": data și ora, copiate, nu ghicite. Dacă nu le mai ai în față, ceri din nou ore_libere.
+
+ZILELE ȘI ORELE:
+- Nu calcula tu ziua săptămânii. "ore_libere" îți dă câmpul "zi" scris de-a gata ("luni, 28 septembrie", "mâine (marți, 8 septembrie)") și "oraText" ("17:00"). Le folosești pe acelea, cuvânt cu cuvânt.
+- În "programeaza" trimiți "data" și "ora" — valorile brute din aceeași înregistrare. Pacientului îi spui "zi" și "oraText". Nu le amesteca.
+- Nu spui niciodată o zi a săptămânii care nu apare în "zi". Dacă pacientul zice "luni" și nicio înregistrare nu e luni, îi spui asta și îi dai zilele pe care chiar le ai.
+- Nu propui ore din trecut și nu inventezi zile între cele libere.
+- Dacă "ore_libere" îți întoarce o listă goală, medicii nu și-au completat încă programul — NU e treaba pacientului să știe asta. Nu spui "nu avem locuri" și nu întrebi dacă vrea altceva. Îi ceri numele și numărul și îi spui că sună cineva de la recepție în cursul zilei ca să stabiliți ora. Un pacient care vrea să vină nu pleacă cu mâna goală.
+
+CE SERVICIU VREA:
+- Deduci singur din ce a scris pacientul, chiar dacă e scris greșit sau prescurtat: "consultatie", "consult", "terapei", "curatare" — toate se potrivesc cu ceva din listă.
+- NU îi spui niciodată "nu avem acest serviciu" și NU îi dai o listă de variante din care să aleagă. Nu așa vorbește recepția.
+- Dacă nu ești sigur care e, întrebi scurt, cu varianta ta cea mai probabilă: "La terapie, da?". O întrebare, nu un meniu.
+- Unealta îți spune dacă a înțeles serviciul. Dacă îți întoarce "confirmareServiciu", întrebi exact acel lucru și reiei — nu îi spui pacientului că a greșit.
 
 CÂND TE ÎNTREABĂ DE PREȚ:
 - Ceri de fiecare dată lista cu unealta "servicii". Niciodată din memorie și niciodată aproximat.
@@ -110,6 +122,7 @@ CÂND TE ÎNTREABĂ DE PREȚ:
 
 CÂND PROGRAMAREA NU REUȘEȘTE:
 - Unealta îți spune de ce. Nu inventa "problemă tehnică" și nu spune că sistemul e defect.
+- Dacă unealta te refuză din vina ta (ai trimis o dată greșită, un serviciu neclar), corectezi în tăcere și continui. Nu îți ceri scuze pacientului și nu pomenești de "confuzie" — el nu a văzut nimic.
 - Dacă ora s-a ocupat între timp, spui exact asta și propui imediat alta: "Tocmai s-a ocupat ora aceea. Am liber la 15:00 sau joi la 10:00."
 - Dacă lipsește ceva, ceri lucrul care lipsește.
 - Doar dacă nu poți deloc, spui că revine cineva de la recepție.
@@ -137,7 +150,7 @@ const TOOLS = [
     function: {
       name: "ore_libere",
       description:
-        "Orele libere din calendarul medicilor, începând de mâine. Folosește-o de fiecare dată — nu propune niciodată o oră din memorie.",
+        "Orele libere din calendarul medicilor, începând de mâine. Folosește-o de fiecare dată — nu propune niciodată o oră din memorie. Fiecare înregistrare are 'zi' și 'oraText' scrise pentru pacient, plus 'data' și 'ora' pentru unealta de programare.",
       parameters: {
         type: "object",
         additionalProperties: false,
@@ -145,7 +158,8 @@ const TOOLS = [
         properties: {
           zile: {
             type: "integer",
-            description: "Câte zile în față să caute, între 1 și 14.",
+            description:
+              "Câte zile în față să caute, între 1 și 45. Dacă nu găsește nimic în intervalul cerut, caută automat mai departe.",
           },
         },
       },
@@ -178,7 +192,11 @@ const TOOLS = [
         properties: {
           nume: { type: "string" },
           telefon: { type: "string" },
-          serviciuSlug: { type: "string" },
+          serviciuSlug: {
+            type: "string",
+            description:
+              "Serviciul, cum l-a spus pacientul. Poate fi slug, denumire sau cuvintele lui, chiar scrise greșit — se potrivește pe server.",
+          },
           medicId: {
             type: "string",
             description:
@@ -200,6 +218,132 @@ const TOOLS = [
     },
   },
 ];
+
+const WEEKDAYS = [
+  "duminică",
+  "luni",
+  "marți",
+  "miercuri",
+  "joi",
+  "vineri",
+  "sâmbătă",
+];
+const MONTHS = [
+  "ianuarie",
+  "februarie",
+  "martie",
+  "aprilie",
+  "mai",
+  "iunie",
+  "iulie",
+  "august",
+  "septembrie",
+  "octombrie",
+  "noiembrie",
+  "decembrie",
+];
+
+/** "luni, 28 septembrie" — or "mâine (marți, 8 septembrie)" for the near days. */
+function dayLabel(date: string, offset: number): string {
+  const [year, month, day] = date.split("-").map(Number);
+  // Noon, so the weekday cannot slip a day either side of midnight.
+  const noon = new Date(Date.UTC(year, month - 1, day, 12));
+  const written = `${WEEKDAYS[noon.getUTCDay()]}, ${day} ${MONTHS[month - 1]}`;
+  if (offset === 1) return `mâine (${written})`;
+  if (offset === 2) return `poimâine (${written})`;
+  return written;
+}
+
+/** Lowercase, no diacritics, no punctuation — so "Terapie" and "terapei" meet. */
+function normalise(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+/** Levenshtein distance, enough to forgive a slip or two of the finger. */
+function editDistance(a: string, b: string): number {
+  const rows: number[][] = [Array.from({ length: b.length + 1 }, (_, i) => i)];
+  for (let i = 1; i <= a.length; i++) {
+    rows[i] = [i];
+    for (let j = 1; j <= b.length; j++) {
+      rows[i][j] = Math.min(
+        rows[i - 1][j] + 1,
+        rows[i][j - 1] + 1,
+        rows[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1),
+      );
+    }
+  }
+  return rows[a.length][b.length];
+}
+
+/**
+ * Finds the service a patient meant, from whatever they actually typed.
+ *
+ * The slug used to have to arrive spelled exactly, so "consultatie" or a
+ * mistyped "terapei" came back as "we do not offer that" — and the booking
+ * stopped there, for a service the clinic plainly does offer. Matching is done
+ * on words rather than identifiers, and reports how sure it is, so an
+ * uncertain guess becomes a short question instead of a refusal.
+ */
+export async function resolveService(query: string): Promise<{
+  service: { id: string; slug: string; title: string; duration: number } | null;
+  sure: boolean;
+  suggestion: string | null;
+}> {
+  const services = await prisma.service.findMany({
+    where: { isActive: true, bookable: true },
+    select: { id: true, slug: true, title: true, duration: true },
+  });
+
+  const wanted = normalise(query);
+  if (!wanted) return { service: null, sure: false, suggestion: null };
+
+  let best: (typeof services)[number] | null = null;
+  let bestScore = Infinity;
+
+  for (const service of services) {
+    const whole = [normalise(service.slug), normalise(service.title)];
+    // Single words too, so "consultatie" reaches "Consultația medicului
+    // stomatolog" — against the whole title it is nowhere near, and it lost to
+    // an unrelated service that happened to be spelled more similarly.
+    const words = whole
+      .flatMap((c) => c.split(" "))
+      .filter((w) => w.length >= 4);
+
+    for (const candidate of [...whole, ...words]) {
+      // An exact hit, or one name contained in the other ("terapie" inside
+      // "terapie generala"), needs no distance calculation.
+      if (candidate === wanted) return { service, sure: true, suggestion: service.title };
+      if (candidate.includes(wanted) || wanted.includes(candidate)) {
+        if (bestScore > 0.5) {
+          best = service;
+          bestScore = 0.5;
+        }
+        continue;
+      }
+      const score = editDistance(candidate, wanted);
+      if (score < bestScore) {
+        best = service;
+        bestScore = score;
+      }
+    }
+  }
+
+  if (!best) return { service: null, sure: false, suggestion: null };
+
+  // Two edits on a word of reasonable length is a typo; further than that is a
+  // different service, and guessing would put someone in the wrong chair.
+  const tolerance = Math.max(2, Math.floor(wanted.length / 4));
+  return {
+    service: best,
+    sure: bestScore <= tolerance,
+    suggestion: best.title,
+  };
+}
 
 /** YYYY-MM-DD in Moldova, n days from today. */
 function moldovaDate(offsetDays: number): string {
@@ -248,23 +392,50 @@ async function listServices() {
  * Same-day booking is left out on purpose — reception should be the one to say
  * yes to "can I come in an hour", not a chat.
  */
+const MAX_LOOKAHEAD_DAYS = 45;
+
 async function findSlots(days: number) {
-  const span = Math.min(Math.max(days, 1), 14);
+  let span = Math.min(Math.max(days, 1), MAX_LOOKAHEAD_DAYS);
   const doctors = await prisma.teamMember.findMany({
     where: { isActive: true },
     orderBy: { order: "asc" },
     select: { id: true, name: true, role: true },
   });
 
-  const out: { medicId: string; medic: string; data: string; ora: number }[] = [];
+  const out: {
+    medicId: string;
+    medic: string;
+    data: string;
+    ora: number;
+    zi: string;
+    oraText: string;
+  }[] = [];
 
-  for (let offset = 1; offset <= span && out.length < 40; offset++) {
-    const date = moldovaDate(offset);
-    for (const doctor of doctors) {
-      for (const hour of await freeHours(doctor.id, date)) {
-        out.push({ medicId: doctor.id, medic: doctor.name, data: date, ora: hour });
+  // Nothing inside the asked-for window does not mean nothing at all: doctors
+  // often fill the calendar in bursts, weeks ahead. Rather than telling a
+  // patient there is nothing free, look further before giving up.
+  const scan = async (limit: number) => {
+    for (let offset = 1; offset <= limit && out.length < 40; offset++) {
+      const date = moldovaDate(offset);
+      for (const doctor of doctors) {
+        for (const hour of await freeHours(doctor.id, date)) {
+          out.push({
+            medicId: doctor.id,
+            medic: doctor.name,
+            data: date,
+            ora: hour,
+            zi: dayLabel(date, offset),
+            oraText: `${String(hour).padStart(2, "0")}:00`,
+          });
+        }
       }
     }
+  };
+
+  await scan(span);
+  if (out.length === 0 && span < MAX_LOOKAHEAD_DAYS) {
+    span = MAX_LOOKAHEAD_DAYS;
+    await scan(span);
   }
 
   return out.slice(0, 40);
@@ -304,22 +475,27 @@ async function book(args: {
     return { ok: false, motiv: "Lipsește un număr de telefon valid. Cere-l înainte." };
   }
 
-  const service = await prisma.service.findUnique({
-    where: { slug: args.serviciuSlug ?? "" },
-  });
-  if (!service) {
-    // Naming the valid ones costs one line and saves a round trip: the model
-    // invents plausible slugs ("consultatie-terapeutica") when it has to
-    // remember them, and a bare "unknown" gives it nothing to correct with.
+  const match = await resolveService(args.serviciuSlug ?? "");
+  if (!match.service) {
     const valid = await prisma.service.findMany({
       where: { isActive: true, bookable: true },
-      select: { slug: true },
+      select: { title: true },
     });
     return {
       ok: false,
-      motiv: `Serviciu necunoscut. Alege unul din: ${valid.map((s) => s.slug).join(", ")}`,
+      motiv: `Nu am înțeles serviciul. Serviciile sunt: ${valid.map((s) => s.title).join(", ")}. Deduce care e și încearcă din nou.`,
     };
   }
+  if (!match.sure) {
+    // Close, but not close enough to seat someone for the wrong treatment.
+    // Handed back as a question to ask, not as a refusal to relay.
+    return {
+      ok: false,
+      confirmareServiciu: match.suggestion,
+      motiv: `Cred că e "${match.suggestion}", dar nu sunt sigur. Întreabă scurt pacientul dacă asta a vrut, apoi cheamă din nou programeaza. Nu îi spune că serviciul nu există.`,
+    };
+  }
+  const service = match.service;
 
   // Built here from the day and hour, so the offset can never drift from what
   // ore_libere meant. Moldova is UTC+3 through the booking window.
@@ -531,6 +707,16 @@ export async function assistantReply(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const messages: any[] = [
     { role: "system", content: SYSTEM },
+    {
+      // Without this it has no idea what day it is, so "luni" or "săptămâna
+      // viitoare" were being worked out from nothing — which is how patients
+      // were told the wrong weekday.
+      role: "system",
+      content: `Azi este ${dayLabel(moldovaDate(0), 0)}, ora ${new Intl.DateTimeFormat(
+        "ro-RO",
+        { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Chisinau" },
+      ).format(new Date())}, la Chișinău. Programările încep de mâine.`,
+    },
     {
       role: "system",
       content: knownPatient

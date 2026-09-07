@@ -15,7 +15,7 @@ import type { Prisma } from "@prisma/client";
 import {
   isValidPhone,
   normalizePhone,
-  parseDateTime,
+  parseMoldovaDateTime,
   findOverlappingAppointment,
   generateConfirmToken,
   formatDateTimeRo,
@@ -462,8 +462,8 @@ async function handleProgramareNouaStep(
   }
 
   if (step === "datetime") {
-    const isoCandidate = t.includes("T") ? t : t.replace(" ", "T");
-    const dt = parseDateTime(isoCandidate);
+    // Chișinău wall clock, not the server's. See parseMoldovaDateTime.
+    const dt = parseMoldovaDateTime(t);
     if (!dt) {
       await sendTelegramMessage("❌ Dată/oră invalidă. Format: YYYY-MM-DD HH:MM", { threadId });
       return;
