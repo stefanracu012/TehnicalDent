@@ -14,7 +14,7 @@
 
 import prisma from "@/lib/prisma";
 import { freeHours, claimSlot } from "@/lib/slots";
-import { normalizePhone, isValidPhone } from "@/lib/appointments";
+import { normalizePhone, isValidPhone, parseMoldovaDateTime } from "@/lib/appointments";
 import { sendTelegramToTopic, TELEGRAM_TOPICS } from "@/lib/telegram";
 import type { AssistantMode } from "@prisma/client";
 
@@ -66,6 +66,11 @@ const SYSTEM = `Ești Ana, asistentă la recepția clinicii stomatologice Tehnic
 
 Vorbești cu pacienții pe chat. Scrii ca un om, nu ca un sistem.
 
+REGULA DE BAZĂ, peste toate celelalte:
+- La SERVICII ai voie să aproximezi și trebuie s-o faci. Pacientul nu știe denumirile noastre. Deduci din cuvintele lui, din simptomul descris, din cum a scris greșit. Nu îl pui să ghicească.
+- La DATE și ORE nu aproximezi NICIODATĂ. Nu calculezi, nu deduci, nu îți amintești, nu rotunjești. Singura sursă e unealta "ore_libere", iar tu repeți exact ce ți-a dat. Dacă nu ai lista în față, o ceri din nou înainte să spui o zi sau o oră.
+- Un serviciu ghicit greșit se corectează la fața locului. O oră greșită înseamnă un pacient care vine degeaba și un scaun gol.
+
 CUM VORBEȘTI:
 - Mesaje scurte. Una-două propoziții de obicei. Ca pe WhatsApp, nu ca într-un email.
 - Saluți o singură dată, la începutul conversației. Nu la fiecare mesaj.
@@ -109,8 +114,12 @@ ZILELE ȘI ORELE:
 CE SERVICIU VREA:
 - Deduci singur din ce a scris pacientul, chiar dacă e scris greșit sau prescurtat: "consultatie", "consult", "terapei", "curatare" — toate se potrivesc cu ceva din listă.
 - NU îi spui niciodată "nu avem acest serviciu" și NU îi dai o listă de variante din care să aleagă. Nu așa vorbește recepția.
-- Dacă nu ești sigur care e, întrebi scurt, cu varianta ta cea mai probabilă: "La terapie, da?". O întrebare, nu un meniu.
+- Dacă unealta ți-a acceptat serviciul, NU mai întrebi nimic. Programezi. "Curățire" e curățire — nu întrebi "detartraj?", nu ceri lămuriri, nu repeți cuvântul în alt fel.
+- Vorbești cu cuvântul pacientului, nu cu cel din fișă. Dacă el a zis "curățire", tu spui "curățire". Nu-i arunca "detartraj", "igienizare profesională" sau "endodonție" — sunt cuvintele noastre, nu ale lui.
+- O întrebare de lămurire se pune O SINGURĂ DATĂ. Dacă pacientul repetă același cuvânt în loc să răspundă, ăsta E răspunsul: mergi mai departe cu ce ai înțeles și programează-l. Nu întrebi a doua oară, sub nicio formă.
+- Dacă chiar nu ești sigur, întrebi scurt și în cuvinte simple, cu varianta ta cea mai probabilă. O întrebare, nu un meniu.
 - Unealta îți spune dacă a înțeles serviciul. Dacă îți întoarce "confirmareServiciu", întrebi exact acel lucru și reiei — nu îi spui pacientului că a greșit.
+- Dacă unealta nu recunoaște cuvântul lui, deduci TU. Ceri lista cu "servicii" și citești câmpul "acopera" al fiecăruia — acolo scrie ce tratează. Alegi serviciul potrivit pentru ce a descris pacientul și programezi cu titlul acela. Pacienții descriu simptome, nu denumiri: "mi s-a rupt un dinte", "am o umflătură", "mi-a căzut plomba".
 
 CÂND TE ÎNTREABĂ DE PREȚ:
 - Ceri de fiecare dată lista cu unealta "servicii". Niciodată din memorie și niciodată aproximat.
@@ -125,6 +134,7 @@ CÂND PROGRAMAREA NU REUȘEȘTE:
 - Dacă unealta te refuză din vina ta (ai trimis o dată greșită, un serviciu neclar), corectezi în tăcere și continui. Nu îți ceri scuze pacientului și nu pomenești de "confuzie" — el nu a văzut nimic.
 - Dacă ora s-a ocupat între timp, spui exact asta și propui imediat alta: "Tocmai s-a ocupat ora aceea. Am liber la 15:00 sau joi la 10:00."
 - Dacă lipsește ceva, ceri lucrul care lipsește.
+- NU propui niciodată ore din memorie după un refuz. Ceri din nou "ore_libere" și spui doar ce ți-a întors. O oră inventată e un pacient care vine degeaba.
 - Doar dacă nu poți deloc, spui că revine cineva de la recepție.
 
 CE NU FACI:
@@ -141,7 +151,7 @@ const TOOLS = [
     function: {
       name: "servicii",
       description:
-        "Lista serviciilor pentru care se poate face programare, cu durata și prețul dacă există.",
+        "Lista serviciilor pentru care se poate face programare, cu durata, prețul și câmpul 'acopera' care spune ce tratează fiecare. Folosește 'acopera' ca să deduci serviciul potrivit când pacientul descrie o problemă în cuvintele lui.",
       parameters: { type: "object", additionalProperties: false, required: [], properties: {} },
     },
   },
@@ -455,7 +465,18 @@ async function listServices() {
   const services = await prisma.service.findMany({
     where: { isActive: true, bookable: true },
     orderBy: { order: "asc" },
-    select: { slug: true, title: true, duration: true, price: true, discountPrice: true },
+    select: {
+      slug: true,
+      title: true,
+      duration: true,
+      price: true,
+      discountPrice: true,
+      // What each one actually covers, so a complaint nobody has written a
+      // synonym for can still be reasoned about. "Tratament de Canal
+      // (Endodonție)" means nothing to a patient describing a throbbing tooth;
+      // the description is what connects the two.
+      shortDesc: true,
+    },
   });
 
   return services.map((s) => {
@@ -465,6 +486,7 @@ async function listServices() {
       slug: s.slug,
       titlu: s.title,
       durata: s.duration,
+      ...(s.shortDesc ? { acopera: s.shortDesc.slice(0, 160) } : {}),
       // Absent rather than zero when there is no price, so "I don't know" and
       // "it's free" can never be confused.
       ...(s.price != null || s.discountPrice != null
@@ -587,19 +609,72 @@ async function book(args: {
   }
   const service = match.service;
 
-  // Built here from the day and hour, so the offset can never drift from what
-  // ore_libere meant. Moldova is UTC+3 through the booking window.
   const day = String(args.data ?? "");
-  const hour = Number(args.ora);
+  let hour = Number(args.ora);
+
+  // "10:00" arrives as 1000 often enough to be worth handling rather than
+  // bouncing back — the patient is waiting while the two of them argue about
+  // a format.
+  if (Number.isInteger(hour) && hour >= 100 && hour <= 2359 && hour % 100 === 0) {
+    hour = Math.floor(hour / 100);
+  }
+
   if (!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(day) || !Number.isInteger(hour) || hour < 0 || hour > 23) {
     return { ok: false, motiv: "Ziua sau ora nu sunt valide. Ia-le din ore_libere." };
   }
-  const when = new Date(`${day}T${String(hour).padStart(2, "0")}:00:00+03:00`);
 
-  // A day already gone means the model invented the arguments instead of
-  // reading them back from ore_libere — the year is usually the giveaway.
-  if (when.getTime() < Date.now()) {
-    return { ok: false, motiv: "Ziua aceea a trecut deja. Ia data exact din ore_libere." };
+  // A wrong year is the other recurring slip: the right day and month, filed
+  // under 2023. Rather than refuse, the same day is tried in the years that
+  // could plausibly be meant — and accepted only if the hour is genuinely free
+  // then. A repair that has to match the real calendar cannot invent a
+  // booking; it can only recover the one that was meant.
+  let resolvedDay = day;
+  if (parseMoldovaDateTime(`${day}T${String(hour).padStart(2, "0")}:00`)!.getTime() < Date.now()) {
+    const thisYear = new Date().getUTCFullYear();
+    resolvedDay = "";
+    for (const year of [thisYear, thisYear + 1]) {
+      const candidate = `${year}-${day.slice(5)}`;
+      const at = parseMoldovaDateTime(`${candidate}T${String(hour).padStart(2, "0")}:00`);
+      if (!at || at.getTime() < Date.now()) continue;
+      // An hour this patient already holds counts as a match too. Otherwise a
+      // repeated call right after a successful booking finds the hour taken —
+      // by itself — and reports the day as long past, which is both wrong and
+      // alarming to read.
+      const already = await prisma.appointment.findFirst({
+        where: {
+          patient: { phone },
+          dateTime: at,
+          status: { notIn: ["cancelled", "noshow"] },
+        },
+        select: { id: true },
+      });
+      if (already) {
+        resolvedDay = candidate;
+        break;
+      }
+
+      const doctors = await prisma.teamMember.findMany({
+        where: { isActive: true },
+        select: { id: true },
+      });
+      for (const doctor of doctors) {
+        if ((await freeHours(doctor.id, candidate)).includes(hour)) {
+          resolvedDay = candidate;
+          break;
+        }
+      }
+      if (resolvedDay) break;
+    }
+    if (!resolvedDay) {
+      return { ok: false, motiv: "Ziua aceea a trecut deja. Ia data exact din ore_libere." };
+    }
+  }
+
+  const when = parseMoldovaDateTime(
+    `${resolvedDay}T${String(hour).padStart(2, "0")}:00`,
+  );
+  if (!when) {
+    return { ok: false, motiv: "Ziua sau ora nu sunt valide. Ia-le din ore_libere." };
   }
 
   // The doctor is resolved here rather than trusted from the call.
@@ -613,7 +688,7 @@ async function book(args: {
   const claimed = String(args.medicId ?? "");
   let medicId = /^[0-9a-fA-F]{24}$/.test(claimed) ? claimed : "";
 
-  if (medicId && !(await freeHours(medicId, day)).includes(hour)) {
+  if (medicId && !(await freeHours(medicId, resolvedDay)).includes(hour)) {
     medicId = "";
   }
 
@@ -624,7 +699,7 @@ async function book(args: {
       select: { id: true },
     });
     for (const doctor of doctors) {
-      if ((await freeHours(doctor.id, day)).includes(hour)) {
+      if ((await freeHours(doctor.id, resolvedDay)).includes(hour)) {
         medicId = doctor.id;
         break;
       }
