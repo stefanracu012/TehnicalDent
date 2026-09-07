@@ -29,7 +29,7 @@ const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || "";
 const APP_SECRET = process.env.WHATSAPP_APP_SECRET || "";
 
 const AUTO_REPLY =
-  "Bună ziua! Am primit mesajul dvs. Vă vom contacta în cel mai scurt timp posibil. — TehnicalDent";
+  "Bună ziua! Am primit mesajul dvs. Vă vom contacta în cel mai scurt timp posibil. — Tehnical Dent";
 
 // ---------- Meta webhook payload shapes (subset we care about) ----------
 
@@ -61,7 +61,10 @@ interface WaChangeValue {
 
 interface WaWebhookBody {
   object?: string;
-  entry?: { changes?: { value: WaChangeValue; field: string }[] }[];
+  // entry.id is the WhatsApp Business Account id. Meta sends it on every
+  // event; nothing else exposes it — the Graph API will not hand it over from
+  // a phone-number token, and it is needed to read or edit message templates.
+  entry?: { id?: string; changes?: { value: WaChangeValue; field: string }[] }[];
 }
 
 function messageText(m: WaMessage): string {
@@ -116,6 +119,22 @@ export async function POST(request: Request) {
   }
 
   for (const entry of body.entry || []) {
+    // Recorded once, then available to the template tooling without anyone
+    // having to go and find it in Business Suite.
+    if (entry.id) {
+      await prisma.siteSettings
+        .upsert({
+          where: { key: "whatsapp_waba_id" },
+          create: {
+            key: "whatsapp_waba_id",
+            value: entry.id,
+            description: "WhatsApp Business Account id, captured from a webhook",
+          },
+          update: { value: entry.id },
+        })
+        .catch((error) => console.warn("Could not record the WABA id:", error));
+    }
+
     for (const change of entry.changes || []) {
       const value = change.value;
 
