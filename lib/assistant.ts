@@ -36,11 +36,52 @@ export async function channelMode(
   return row?.mode ?? "oprit";
 }
 
+/** How long the assistant stays out of a conversation a colleague has entered. */
+export const HUMAN_TAKEOVER_MINUTES = 120;
+
+/**
+ * Steps aside after someone from the clinic has answered.
+ *
+ * A patient talking to a real person does not want a second voice joining in,
+ * and staff cannot work a conversation the bot keeps replying in. Silence is
+ * for a fixed stretch rather than forever, so a conversation left overnight
+ * comes back to the assistant on its own.
+ */
+export async function pauseAssistant(
+  channel: AssistantChannelName,
+  handle: string,
+  reason?: string,
+): Promise<Date> {
+  const until = new Date(Date.now() + HUMAN_TAKEOVER_MINUTES * 60_000);
+  await prisma.assistantPause.upsert({
+    where: { channel_handle: { channel, handle } },
+    create: { channel, handle, until, reason: reason ?? null },
+    update: { until, reason: reason ?? null },
+  });
+  return until;
+}
+
+/** When the assistant may speak here again, or null if it may now. */
+export async function pausedUntil(
+  channel: AssistantChannelName,
+  handle: string,
+): Promise<Date | null> {
+  const row = await prisma.assistantPause.findUnique({
+    where: { channel_handle: { channel, handle } },
+  });
+  if (!row) return null;
+  return row.until.getTime() > Date.now() ? row.until : null;
+}
+
 export async function shouldReply(
   channel: AssistantChannelName,
   handle: string,
 ): Promise<boolean> {
   if (!isAssistantConfigured()) return false;
+
+  // Checked before the channel mode: a colleague who has taken the
+  // conversation over outranks any switch on the settings page.
+  if (await pausedUntil(channel, handle)) return false;
 
   const mode = await channelMode(channel);
   if (mode === "oprit") return false;

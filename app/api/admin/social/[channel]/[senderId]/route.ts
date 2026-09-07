@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendSocialReply } from "@/lib/messenger";
+import { pauseAssistant } from "@/lib/assistant";
 import type { SocialChannel } from "@prisma/client";
 
 interface RouteParams {
@@ -47,7 +48,14 @@ export async function POST(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Mesajul nu poate fi gol." }, { status: 400 });
     }
 
-    await sendSocialReply(channel, decodeURIComponent(senderId), text);
+    const handle = decodeURIComponent(senderId);
+    await sendSocialReply(channel, handle, text);
+
+    // A colleague has taken this conversation over. The assistant keeps out of
+    // it for the next couple of hours rather than answering over their head.
+    await pauseAssistant(channel, handle, "Răspuns manual din panou").catch(
+      (error) => console.warn("Could not pause the assistant:", error),
+    );
     return NextResponse.json({ ok: true }, { status: 201 });
   } catch (error) {
     console.error("Error sending social reply:", error);

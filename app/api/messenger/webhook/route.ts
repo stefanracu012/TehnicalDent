@@ -22,7 +22,7 @@ import prisma from "@/lib/prisma";
 import { sendTelegramToTopic, TELEGRAM_TOPICS } from "@/lib/telegram";
 import { captureLead } from "@/lib/leads";
 import { findNameInConversations, sendSocialReply } from "@/lib/messenger";
-import { shouldReply, assistantReply } from "@/lib/assistant";
+import { shouldReply, assistantReply, pauseAssistant } from "@/lib/assistant";
 import type { SocialChannel } from "@prisma/client";
 
 const VERIFY_TOKEN = process.env.MESSENGER_VERIFY_TOKEN || "";
@@ -200,9 +200,40 @@ export async function POST(request: Request) {
     }
 
     for (const event of entry.messaging || []) {
-      // Echo of our own outbound message, sent back by Instagram with the
-      // Page as "sender" — not a real inbound message from a patient.
-      if (event.message?.is_echo) continue;
+      // An echo is an outbound message coming back to us. Ours are already in
+      // the database with this id; anything else was typed by a colleague in
+      // the Facebook or Instagram app, which is the whole point of catching it
+      // — the assistant must not answer over someone who is already talking.
+      if (event.message?.is_echo) {
+        const handle = event.recipient.id;
+        const mid = event.message.mid;
+        const ours = mid
+          ? await prisma.socialMessage.findFirst({
+              where: { metaMessageId: mid },
+              select: { id: true },
+            })
+          : null;
+        if (ours) continue;
+
+        // Recorded too, so the admin inbox shows the whole conversation rather
+        // than only the half that went through it.
+        await prisma.socialMessage.create({
+          data: {
+            channel,
+            senderId: handle,
+            senderName: await resolveSenderName(channel, handle).catch(() => null),
+            direction: "out",
+            body: eventText(event),
+            metaMessageId: mid,
+            pageId: entry.id,
+          },
+        });
+
+        await pauseAssistant(channel, handle, "Răspuns trimis din aplicația Meta").catch(
+          (error) => console.warn("Could not pause the assistant:", error),
+        );
+        continue;
+      }
 
       // Meta retries webhook delivery on failure — skip anything already stored.
       if (event.message?.mid) {

@@ -71,6 +71,20 @@ export async function GET() {
         orderBy: { createdAt: "desc" },
       }),
       candidates: await candidates(),
+      // Conversations a colleague has taken over. Expired ones are dropped on
+      // the way out rather than by a scheduled job — the list is short and it
+      // is read often enough to keep itself tidy.
+      paused: await prisma.assistantPause
+        .findMany({ where: { until: { gt: new Date() } }, orderBy: { until: "desc" } })
+        .then((rows) =>
+          rows.map((r) => ({
+            id: r.id,
+            channel: r.channel,
+            handle: r.handle,
+            reason: r.reason,
+            until: r.until.toISOString(),
+          })),
+        ),
       configured: isAssistantConfigured(),
     });
   } catch (error) {
@@ -106,6 +120,15 @@ export async function POST(request: Request) {
         update: { mode: mode as AssistantMode },
       });
       return NextResponse.json(saved);
+    }
+
+    if (body.action === "resume") {
+      const handle = String(body.handle ?? "").trim();
+      if (!handle) {
+        return NextResponse.json({ error: "Lipsește conversația." }, { status: 400 });
+      }
+      await prisma.assistantPause.deleteMany({ where: { channel, handle } });
+      return NextResponse.json({ resumed: true });
     }
 
     if (body.action === "allow") {

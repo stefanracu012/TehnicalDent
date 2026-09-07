@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sendWhatsAppText } from "@/lib/notifications";
+import { pauseAssistant } from "@/lib/assistant";
 
 interface RouteParams {
   params: Promise<{ phone: string }>;
@@ -38,6 +39,11 @@ export async function POST(request: Request, { params }: RouteParams) {
     }
 
     await sendWhatsAppText(decoded, text);
+
+    // Same as the social inboxes: whoever answered by hand owns the thread now.
+    await pauseAssistant("whatsapp", decoded, "Răspuns manual din panou").catch(
+      (error) => console.warn("Could not pause the assistant:", error),
+    );
 
     const patient = await prisma.patient.findFirst({
       where: { phone: { contains: decoded.replace(/^\+/, "").slice(-9) } },

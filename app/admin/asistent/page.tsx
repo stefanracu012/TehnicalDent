@@ -10,6 +10,14 @@ interface Allowed {
   label: string | null;
 }
 
+interface Paused {
+  id: string;
+  channel: string;
+  handle: string;
+  reason: string | null;
+  until: string;
+}
+
 interface Candidate {
   channel: string;
   handle: string;
@@ -49,6 +57,7 @@ export default function AdminAssistantPage() {
   const [channels, setChannels] = useState<Record<string, string>>({});
   const [allowed, setAllowed] = useState<Allowed[]>([]);
   const [candidates, setCandidates] = useState<Candidate[]>([]);
+  const [paused, setPaused] = useState<Paused[]>([]);
   const [configured, setConfigured] = useState(true);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -62,6 +71,7 @@ export default function AdminAssistantPage() {
       setChannels(data.channels ?? {});
       setAllowed(data.allowed ?? []);
       setCandidates(data.candidates ?? []);
+      setPaused(data.paused ?? []);
       setConfigured(data.configured);
     } catch (e) {
       setError((e as Error).message);
@@ -210,6 +220,49 @@ export default function AdminAssistantPage() {
                 );
               })}
             </section>
+
+            {paused.length > 0 && (
+              <section>
+                <h2 className="font-serif text-xl font-medium text-foreground mb-1">
+                  Preluate de echipă
+                </h2>
+                <p className="text-sm text-muted-foreground mb-5 max-w-2xl leading-relaxed">
+                  Cineva a răspuns aici cu mâna, așa că asistentul tace două ore
+                  ca să nu vorbească peste el. Revine singur după, sau imediat
+                  dacă apeși butonul.
+                </p>
+                <div className="bg-background border border-border divide-y divide-border">
+                  {paused.map((p) => (
+                    <div
+                      key={p.id}
+                      className="flex items-center justify-between gap-3 px-5 py-3"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm text-foreground truncate">{p.handle}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {p.channel}
+                          {p.reason ? ' · ' + p.reason : ''} · tace până la{' '}
+                          {new Date(p.until).toLocaleTimeString('ro-RO', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            timeZone: 'Europe/Chisinau',
+                          })}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() =>
+                          send({ action: 'resume', channel: p.channel, handle: p.handle })
+                        }
+                        disabled={busy}
+                        className="text-xs font-semibold px-3 py-1.5 border border-border hover:bg-muted transition-colors disabled:opacity-50 shrink-0"
+                      >
+                        Reia acum
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
 
             <section>
               <h2 className="font-serif text-xl font-medium text-foreground mb-1">

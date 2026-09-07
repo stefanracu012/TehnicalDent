@@ -189,6 +189,11 @@ export async function sendSocialReply(
     throw new Error(`Send API ${res.status}: ${err.slice(0, 300)}`);
   }
 
+  // Meta echoes every outbound message back through the webhook, including the
+  // ones sent from the Facebook app by a colleague. Keeping the id of what we
+  // sent is what lets the two be told apart later.
+  const sent = (await res.json().catch(() => ({}))) as { message_id?: string };
+
   // Carry the name we already know onto the outbound row. Without this the
   // reply becomes the newest message for this sender with a null name, and
   // the conversation list falls back to showing the raw PSID/IGSID.
@@ -204,6 +209,7 @@ export async function sendSocialReply(
       senderName: known?.senderName ?? null,
       direction: "out",
       body: text,
+      metaMessageId: sent.message_id ?? null,
     },
   });
 }

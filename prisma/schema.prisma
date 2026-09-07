@@ -562,3 +562,18 @@ model TelegramLink {
   usedAt      DateTime?
   createdAt   DateTime  @default(now())
 }
+
+// Silences the assistant on one conversation after a member of staff has
+// answered it themselves. Two people replying to the same patient — one of
+// them a bot — reads worse than no bot at all.
+model AssistantPause {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  channel   String // whatsapp | messenger | instagram
+  handle    String // phone number, PSID or IGSID
+  until     DateTime
+  reason    String? // who took over, for the admin page
+  createdAt DateTime @default(now())
+
+  @@unique([channel, handle])
+  @@index([until])
+}
