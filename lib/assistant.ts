@@ -260,8 +260,90 @@ function normalise(text: string): string {
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-z0-9]+/g, " ")
+    // Cyrillic is kept: half the patients here write in Russian, and stripping
+    // it would leave nothing to match against.
+    .replace(/[^a-z0-9Ѐ-ӿ]+/g, " ")
     .trim();
+}
+
+/**
+ * What patients call things, against what the clinic calls them.
+ *
+ * Nobody asks for "igienizare dentară" — they ask for a cleaning, or say the
+ * tartar should come off. String similarity cannot bridge that: "curățire"
+ * and "igienizare" share almost no letters. So the everyday words are listed,
+ * in both languages people write here, and mapped onto the clinic's own name.
+ */
+const SPOKEN_AS: { said: string[]; means: string }[] = [
+  {
+    said: [
+      "curatire", "curatare", "curatat", "curatenie", "detartraj", "tartru",
+      "piatra", "igiena", "profilaxie", "airflow", "periaj",
+      "чистка", "чистку", "чистки", "гигиена", "гигиену", "камень", "камни",
+    ],
+    means: "igienizare",
+  },
+  {
+    said: [
+      "consultatie", "consult", "control", "verificare", "examinare", "vizita",
+      "консультаци", "осмотр", "проверка",
+    ],
+    means: "consultatie",
+  },
+  {
+    said: [
+      "plomba", "plombare", "carie", "carii", "durere", "doare", "masea",
+      "пломб", "кариес", "болит",
+    ],
+    means: "terapie",
+  },
+  {
+    said: [
+      "canal", "nerv", "devitalizare", "pulpita", "abces",
+      "канал", "нерв", "пульпит",
+    ],
+    means: "endodontie",
+  },
+  {
+    said: [
+      "coroana", "coroane", "punte", "proteza", "protetica",
+      "коронк", "мост", "протез",
+    ],
+    means: "protetica",
+  },
+  {
+    said: [
+      "fatete", "albire", "estetic", "zambet",
+      "виниры", "отбеливание", "эстетик",
+    ],
+    means: "estetica",
+  },
+  { said: ["implant", "surub", "имплант"], means: "implantologie" },
+  {
+    said: ["copil", "copii", "pediatric", "pedodontie", "ребен", "дети", "детск"],
+    means: "copii",
+  },
+  {
+    said: [
+      "gingii", "gingie", "sangereaza", "parodontoza", "parodontita",
+      "десн", "кровоточ", "пародонт",
+    ],
+    means: "parodontologie",
+  },
+];
+
+/** Rewrites a patient's own words into the clinic's, when it recognises them. */
+function spokenToService(query: string): string | null {
+  const text = normalise(query);
+  if (!text) return null;
+  for (const entry of SPOKEN_AS) {
+    for (const word of entry.said) {
+      // Substring, not whole word: "curatire dentara", "ma doare o masea" and
+      // "чистку зубов" all carry the term inside a longer phrase.
+      if (text.includes(word)) return entry.means;
+    }
+  }
+  return null;
 }
 
 /** Levenshtein distance, enough to forgive a slip or two of the finger. */
@@ -299,7 +381,10 @@ export async function resolveService(query: string): Promise<{
     select: { id: true, slug: true, title: true, duration: true },
   });
 
-  const wanted = normalise(query);
+  // The patient's own words first: "curățire" becomes "igienizare" before any
+  // letters are compared, because comparing them would never have worked.
+  const spoken = spokenToService(query);
+  const wanted = normalise(spoken ?? query);
   if (!wanted) return { service: null, sure: false, suggestion: null };
 
   let best: (typeof services)[number] | null = null;
@@ -337,7 +422,12 @@ export async function resolveService(query: string): Promise<{
 
   // Two edits on a word of reasonable length is a typo; further than that is a
   // different service, and guessing would put someone in the wrong chair.
-  const tolerance = Math.max(2, Math.floor(wanted.length / 4));
+  // A recognised everyday word is a deliberate mapping, not a guess, so it is
+  // allowed a wider margin — "curățire" should land on the cleaning even
+  // though the clinic spells it nothing like that.
+  const tolerance = spoken
+    ? Math.max(6, wanted.length)
+    : Math.max(2, Math.floor(wanted.length / 4));
   return {
     service: best,
     sure: bestScore <= tolerance,

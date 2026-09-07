@@ -152,7 +152,10 @@ export function verifyConfirmToken(
 // ---- Public-facing URLs ----
 
 export function buildConfirmUrl(appointmentId: string): string {
-  const base = process.env.NEXT_PUBLIC_SITE_URL || "https://tehnicaldent.md";
+  // The clinic is on .com. The old default pointed at a .md domain that does
+  // not exist, so every confirm link sent while NEXT_PUBLIC_SITE_URL was unset
+  // led nowhere — and it was unset in production.
+  const base = process.env.NEXT_PUBLIC_SITE_URL || "https://www.tehnicaldent.com";
   const token = generateConfirmToken(appointmentId);
   return `${base}/programare/${appointmentId}?token=${token}`;
 }

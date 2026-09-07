@@ -35,7 +35,8 @@ const SMTP_USER = process.env.SMTP_USER || "";
 const SMTP_PASS = process.env.SMTP_PASS || "";
 const SMTP_SECURE =
   process.env.SMTP_SECURE === "true" || SMTP_PORT === 465;
-const EMAIL_FROM = process.env.EMAIL_FROM || "TehnicalDent <noreply@tehnicaldent.md>";
+const EMAIL_FROM =
+  process.env.EMAIL_FROM || "Tehnical Dent <noreply@tehnicaldent.com>";
 
 let _transporter: Transporter | null = null;
 function getTransporter(): Transporter {
