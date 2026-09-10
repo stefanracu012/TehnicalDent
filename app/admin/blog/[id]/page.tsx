@@ -39,6 +39,8 @@ interface BlogPost {
   translations?: Translations | null;
   sections?: BlogSection[] | null;
   shareToSocial: boolean;
+  shareToFacebook?: boolean;
+  shareToInstagram?: boolean;
   linkOnFacebook: boolean;
   linkOnInstagram: boolean;
   facebookPostId: string | null;
@@ -75,6 +77,8 @@ export default function EditBlogPostPage({
     author: "TehnicalDent",
     isPublished: false,
     shareToSocial: false,
+    shareToFacebook: true,
+    shareToInstagram: true,
     linkOnFacebook: true,
     linkOnInstagram: true,
     metaTitle: "",
@@ -110,6 +114,10 @@ export default function EditBlogPostPage({
           author: post.author,
           isPublished: post.isPublished,
           shareToSocial: post.shareToSocial ?? false,
+          // Absent on posts written before the fields existed, and absent
+          // means yes — that was the behaviour then.
+          shareToFacebook: post.shareToFacebook !== false,
+          shareToInstagram: post.shareToInstagram !== false,
           linkOnFacebook: post.linkOnFacebook ?? true,
           linkOnInstagram: post.linkOnInstagram ?? true,
           metaTitle: post.metaTitle ?? "",
@@ -587,50 +595,61 @@ export default function EditBlogPostPage({
                 </div>
 
                 {formData.shareToSocial && (
-                  <div className="ml-7 space-y-3">
-                    <p className="text-sm text-foreground">
-                      Trimite cititorii către articol
-                      <span className="block text-xs text-foreground/50 mt-0.5">
-                        Adaugă linkul articolului la finalul postării. Lasă
-                        nebifat dacă imaginea spune deja tot.
-                      </span>
-                    </p>
+                  <div className="ml-7 space-y-4">
                     {(
                       [
                         {
-                          key: "linkOnFacebook",
-                          label: "Pe Facebook",
-                          hint: "linkul e clicabil",
+                          network: "shareToFacebook",
+                          link: "linkOnFacebook",
+                          label: "Facebook",
+                          hint: "linkul articolului e clicabil",
                         },
                         {
-                          key: "linkOnInstagram",
-                          label: "Pe Instagram",
-                          hint: "apare ca text — Instagram nu face linkurile clicabile",
+                          network: "shareToInstagram",
+                          label: "Instagram",
+                          link: "linkOnInstagram",
+                          hint: "linkul apare ca text — Instagram nu îl face clicabil",
                         },
                       ] as const
                     ).map((n) => (
-                      <label
-                        key={n.key}
-                        className="flex items-start gap-3 text-sm cursor-pointer"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={formData[n.key]}
-                          onChange={(e) =>
-                            setFormData((p) => ({
-                              ...p,
-                              [n.key]: e.target.checked,
-                            }))
-                          }
-                          className="w-4 h-4 mt-0.5"
-                        />
-                        <span>
-                          {n.label}
-                          <span className="block text-xs text-foreground/50">
-                            {n.hint}
-                          </span>
-                        </span>
-                      </label>
+                      <div key={n.network}>
+                        <label className="flex items-start gap-3 text-sm cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={formData[n.network]}
+                            onChange={(e) =>
+                              setFormData((p) => ({
+                                ...p,
+                                [n.network]: e.target.checked,
+                              }))
+                            }
+                            className="w-4 h-4 mt-0.5"
+                          />
+                          <span className="font-medium">Publică pe {n.label}</span>
+                        </label>
+
+                        {formData[n.network] && (
+                          <label className="flex items-start gap-3 text-sm cursor-pointer ml-7 mt-2">
+                            <input
+                              type="checkbox"
+                              checked={formData[n.link]}
+                              onChange={(e) =>
+                                setFormData((p) => ({
+                                  ...p,
+                                  [n.link]: e.target.checked,
+                                }))
+                              }
+                              className="w-4 h-4 mt-0.5"
+                            />
+                            <span>
+                              Adaugă linkul articolului
+                              <span className="block text-xs text-foreground/50">
+                                {n.hint}
+                              </span>
+                            </span>
+                          </label>
+                        )}
+                      </div>
                     ))}
                   </div>
                 )}

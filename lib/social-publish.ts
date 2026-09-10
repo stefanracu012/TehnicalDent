@@ -588,9 +588,16 @@ export async function shareBlogPostById(id: string): Promise<ShareResult | null>
   const post = await prisma.blogPost.findUnique({ where: { id } });
   if (!post?.isPublished || !post.shareToSocial) return null;
 
+  // Compared against false rather than read as truthy: these fields were added
+  // after existing posts were written, so MongoDB has no value for them and
+  // Prisma supplies the default on read.
+  const skipFacebook = post.shareToFacebook === false;
+  const skipInstagram = post.shareToInstagram === false;
+  if (skipFacebook && skipInstagram) return null;
+
   const alreadyEverywhere =
-    (post.facebookPostId || !isFacebookPublishConfigured()) &&
-    (post.instagramPostId || !isInstagramPublishConfigured());
+    (post.facebookPostId || skipFacebook || !isFacebookPublishConfigured()) &&
+    (post.instagramPostId || skipInstagram || !isInstagramPublishConfigured());
   if (alreadyEverywhere) return null;
 
   const result = await shareBlogPost(
@@ -606,8 +613,8 @@ export async function shareBlogPostById(id: string): Promise<ShareResult | null>
       linkOnInstagram: post.linkOnInstagram,
     },
     {
-      skipFacebook: Boolean(post.facebookPostId),
-      skipInstagram: Boolean(post.instagramPostId),
+      skipFacebook: skipFacebook || Boolean(post.facebookPostId),
+      skipInstagram: skipInstagram || Boolean(post.instagramPostId),
     },
   );
 

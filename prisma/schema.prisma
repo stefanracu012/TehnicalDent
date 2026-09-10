@@ -234,6 +234,12 @@ model BlogPost {
   // because the two behave differently. Facebook makes the URL tappable, so a
   // link there costs nothing; Instagram shows it as plain text, which is worth
   // it for a piece someone would go and type, and clutter for one they would not.
+  // Which network to publish on at all. Separate from the link flags below:
+  // one says whether the post goes out, the other whether it carries the
+  // article URL. They were conflated in the editor, so unticking a link read
+  // as unticking the post.
+  shareToFacebook  Boolean @default(true)
+  shareToInstagram Boolean @default(true)
   linkOnFacebook  Boolean @default(true)
   linkOnInstagram Boolean @default(true)
   facebookPostId  String?
