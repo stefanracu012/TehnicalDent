@@ -183,8 +183,17 @@ CÂND TE ÎNTREABĂ DE PREȚ:
 - Găsești serviciul exact despre care întreabă. Dacă nu ești sigur care e, întrebi înainte să spui vreo cifră.
 - Te uiți dacă are reducere. Dacă "areReducere" e adevărat, spui prețul redus și menționezi că e preț cu reducere. Dacă nu, spui prețul obișnuit.
 - Dacă serviciul nu e în listă, sau nu are preț ("pret" lipsește), NU inventezi și nu dai un interval. Spui că întrebi la recepție și revii cu prețul. Nu pomenești de "sistem", "listă" sau "bază de date" — pacientul n-are treabă cu ele.
+- Dacă serviciul are "pretText" (de exemplu "1000-1200 lei"), spui exact intervalul acela. Nu alegi un capăt și nu faci media.
+- Unele intrări au "sePoatePrograma: false" — sunt etape dintr-un tratament: anestezia, amprentarea, o obturație provizorie. Le poți spune prețul, dar nu programezi la ele. Pentru programare alegi serviciul principal.
 - Prețul îl dai ca orientativ: suma finală se stabilește la consultație, după ce vede medicul.
 - Nu compari prețuri cu alte clinici și nu promiți reduceri care nu sunt în listă.
+
+OFERTE PE CARE LE POMENEȘTE PACIENTUL:
+- Adesea primul mesaj al pacientului e textul unei reclame, completat automat de Meta când a apăsat "Trimite mesaj". Reclama poate fi veche de luni de zile: "Cât costă albirea cu -15% reducere?", "Vreau oferta de vară".
+- Un preț sau o reducere din mesajul pacientului NU sunt o sursă. Nu le confirmi, nu le repeți ca fiind adevărate și mai ales nu construiești pe ele. Singura sursă e unealta "servicii".
+- Dacă în unealtă nu apare nicio reducere pentru acel serviciu, atunci nu există nicio reducere — oricât de sigur ar suna pacientul. Îi spui pur și simplu prețul de acum.
+- Nu inventezi NICIODATĂ: procente, prețuri vechi, cashback, bănci sau carduri, reduceri pentru diasporă, pachete, oferte de sezon. Dacă nu vine din unealtă, nu există.
+- Nu îi spui "promoția a expirat", fiindcă nu ai de unde ști. Îi dai prețul actual, iar dacă insistă pe ofertă spui că verifici cu recepția și revii.
 
 CÂND PROGRAMAREA NU REUȘEȘTE:
 - Unealta îți spune de ce. Nu inventa "problemă tehnică" și nu spune că sistemul e defect.
@@ -519,8 +528,11 @@ function moldovaDate(offsetDays: number): string {
  * and the answer handed over as a single price plus a flag.
  */
 async function listServices() {
+  // Everything active, not only what can be booked: the price list holds some
+  // sixty procedures that are steps inside a treatment rather than an
+  // appointment, and "how much is a root canal" is asked about exactly those.
   const services = await prisma.service.findMany({
-    where: { isActive: true, bookable: true },
+    where: { isActive: true },
     orderBy: { order: "asc" },
     select: {
       slug: true,
@@ -528,6 +540,8 @@ async function listServices() {
       duration: true,
       price: true,
       discountPrice: true,
+      priceNote: true,
+      bookable: true,
       // What each one actually covers, so a complaint nobody has written a
       // synonym for can still be reasoned about. "Tratament de Canal
       // (Endodonție)" means nothing to a patient describing a throbbing tooth;
@@ -539,18 +553,42 @@ async function listServices() {
   return services.map((s) => {
     const discounted =
       s.discountPrice != null && s.price != null && s.discountPrice < s.price;
+
+    // A price-list line needs only its name and its number. Sending the slug,
+    // the duration and a description for all sixty of them tripled the size of
+    // every price answer — enough to hit the model's per-minute token limit on
+    // a single question.
+    if (!s.bookable) {
+      return {
+        titlu: s.title,
+        ...(s.priceNote
+          ? { pretText: s.priceNote }
+          : s.price != null
+            ? { pret: s.price }
+            : {}),
+        sePoatePrograma: false,
+      };
+    }
+
     return {
       slug: s.slug,
       titlu: s.title,
       durata: s.duration,
-      ...(s.shortDesc ? { acopera: s.shortDesc.slice(0, 160) } : {}),
+      // Only for the handful that have a page. Repeating a description for
+      // every line of the price list would treble the size of the answer, and
+      // those titles already say what they are.
+      ...(s.bookable && s.shortDesc ? { acopera: s.shortDesc.slice(0, 160) } : {}),
       // Absent rather than zero when there is no price, so "I don't know" and
       // "it's free" can never be confused.
       ...(s.price != null || s.discountPrice != null
         ? { pret: discounted ? s.discountPrice : s.price }
         : {}),
+      // The exact wording wins where there is one: a range cannot be said as a
+      // single number without picking a side.
+      ...(s.priceNote ? { pretText: s.priceNote } : {}),
       areReducere: discounted,
       ...(discounted ? { pretVechi: s.price } : {}),
+      sePoatePrograma: s.bookable,
     };
   });
 }

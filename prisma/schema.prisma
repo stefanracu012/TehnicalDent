@@ -116,6 +116,13 @@ model Service {
   discountPrice Float?
   duration     Int      @default(30) // minutes — used for booking module
   bookable     Boolean  @default(true) // whether this service can be selected for appointments
+  // Off for the price-list entries: they exist so the assistant can quote a
+  // price, not to be read by patients on the site. The clinic has some sixty
+  // of them, which would bury the eight that are actually pages.
+  showOnSite   Boolean  @default(true)
+  // The exact wording where a single number will not do: "1000-1200 lei",
+  // "+800 lei". price keeps the lower bound so sorting still works.
+  priceNote    String?
   order        Int      @default(0)
   isActive     Boolean  @default(true)
   translations Json?

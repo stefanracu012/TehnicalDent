@@ -12,6 +12,7 @@ interface Service {
   shortDesc: string;
   category: string;
   isActive: boolean;
+  showOnSite: boolean;
   order: number;
   images: string[];
 }
@@ -42,6 +43,19 @@ export default function AdminServicesPage() {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ isActive: !isActive }),
+      });
+      fetchServices();
+    } catch (error) {
+      console.error("Error updating service:", error);
+    }
+  };
+
+  const toggleOnSite = async (id: string, showOnSite: boolean) => {
+    try {
+      await secureFetch(`/api/admin/services/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ showOnSite: !showOnSite }),
       });
       fetchServices();
     } catch (error) {
@@ -178,6 +192,14 @@ export default function AdminServicesPage() {
                         >
                           {service.isActive ? "Activ" : "Inactiv"}
                         </span>
+                        {!service.showOnSite && (
+                          <span
+                            className="ml-2 inline-flex px-2 py-1 text-xs font-medium bg-amber-100 text-amber-800"
+                            title="Nu apare pe site. Există doar ca asistentul să știe prețul."
+                          >
+                            Doar preț
+                          </span>
+                        )}
                       </td>
                       <td className="py-4 px-6">
                         <div className="flex justify-end gap-2">
@@ -188,6 +210,17 @@ export default function AdminServicesPage() {
                             className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                           >
                             {service.isActive ? "Dezactivează" : "Activează"}
+                          </button>
+                          <button
+                            onClick={() => toggleOnSite(service.id, service.showOnSite)}
+                            title={
+                              service.showOnSite
+                                ? "Scoate-l de pe site. Rămâne pentru prețuri, în asistent."
+                                : "Pune-l înapoi pe site, cu pagină proprie."
+                            }
+                            className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                          >
+                            {service.showOnSite ? "Scoate de pe site" : "Pune pe site"}
                           </button>
                           <Link
                             href={`/admin/servicii/${service.slug}`}

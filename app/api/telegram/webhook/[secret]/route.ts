@@ -161,6 +161,7 @@ function parsePacientComma(rest: string): {
 
 async function cmdServicii(): Promise<string> {
   const services = await prisma.service.findMany({
+    where: { isActive: true, bookable: true },
     orderBy: { title: "asc" },
     select: { slug: true, title: true },
     take: 80,

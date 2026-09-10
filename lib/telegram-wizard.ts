@@ -533,7 +533,10 @@ export async function handleWizardCallback(
     if (!patient) return "Pacient inexistent.";
 
     const data = session.data as unknown as SessionData;
+    // Bookable only. The price list is in the same table, and an appointment
+    // for "Amprentare" is not a thing anyone should be able to create.
     const services = await prisma.service.findMany({
+      where: { isActive: true, bookable: true },
       orderBy: { title: "asc" },
       take: 20,
       select: { id: true, title: true },

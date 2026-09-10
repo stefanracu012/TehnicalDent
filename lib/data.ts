@@ -353,10 +353,21 @@ const mockGalleryImages: GalleryImage[] = [
 // Data fetching functions with database fallback to mock data
 export async function getServices(): Promise<Service[]> {
   try {
-    const services = await prisma.service.findMany({
+    // showOnSite keeps the price list out of here. Those rows exist so the
+    // assistant can quote a figure; sixty procedures on the services page
+    // would bury the eight that patients actually read.
+    const rows = await prisma.service.findMany({
       where: { isActive: true },
       orderBy: { order: "asc" },
     });
+
+    // Filtered here rather than in the query. showOnSite was added after these
+    // documents were written, so in MongoDB the field is simply absent on them
+    // and no equality filter matches — not "= true", and not "not false"
+    // either. Prisma applies the default when it reads, so this sees true.
+    // Filtering in the query would have emptied the services page.
+    const services = rows.filter((s) => s.showOnSite !== false);
+
     if (services.length > 0) {
       return services.map((s) => ({
         ...s,
@@ -375,7 +386,9 @@ export async function getServiceBySlug(slug: string): Promise<Service | null> {
     const service = await prisma.service.findUnique({
       where: { slug },
     });
-    if (service) {
+    // A price-list row has no page written for it, so a direct link to one
+    // would render an almost empty article.
+    if (service && service.showOnSite) {
       return {
         ...service,
         images: Array.isArray(service.images) ? service.images.filter(Boolean) : [],

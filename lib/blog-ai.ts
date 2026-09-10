@@ -124,16 +124,22 @@ async function chatJson<T>({
 /** What the clinic actually treats, so drafts never invent a service. */
 async function clinicContext(): Promise<string> {
   const [services, posts] = await Promise.all([
+    // Blog ideas come from what the clinic presents on the site, not from
+    // the price list — nobody wants an article about taking an impression.
+    // Filtered after reading, because the field is absent on older documents
+    // and no MongoDB filter matches those.
     prisma.service.findMany({
       where: { isActive: true },
-      select: { title: true, shortDesc: true },
+      select: { title: true, shortDesc: true, showOnSite: true },
     }),
     prisma.blogPost.findMany({ select: { title: true } }),
   ]);
 
   return [
     "Servicii oferite de clinică:",
-    ...services.map((s) => `- ${s.title}: ${s.shortDesc}`),
+    ...services
+      .filter((s) => s.showOnSite !== false)
+      .map((s) => `- ${s.title}: ${s.shortDesc}`),
     "",
     "Articole care există deja pe blog (nu le repeta):",
     ...posts.map((p) => `- ${p.title}`),
