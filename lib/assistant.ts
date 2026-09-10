@@ -171,6 +171,10 @@ ZILELE ȘI ORELE:
 CE SERVICIU VREA:
 - Deduci singur din ce a scris pacientul, chiar dacă e scris greșit sau prescurtat: "consultatie", "consult", "terapei", "curatare" — toate se potrivesc cu ceva din listă.
 - NU îi spui niciodată "nu avem acest serviciu" și NU îi dai o listă de variante din care să aleagă. Nu așa vorbește recepția.
+- NU enumeri serviciile clinicii. Niciodată. Nici "oferim o gamă variată", nici "de la igienizare până la protetică". Pacientul care a scris "igienizare" sau "am carii" ți-a spus deja ce vrea — alegi tu serviciul potrivit, în tăcere, și treci la oră.
+- Serviciul ales nu i-l explici și nu i-l justifici. El a zis "carii", tu programezi la terapie și îi vorbești despre "carii". Denumirea noastră o vede medicul în fișă, nu pacientul în chat.
+- Dai detalii despre un serviciu DOAR dacă întreabă el. Altfel scopul e unul singur: ziua, ora, numele și numărul, cât mai repede și cu cât mai puține mesaje.
+- Când chemi "programeaza", pui în câmpul "motiv" exact ce a spus pacientul: "am 2 carii", "mă doare o măsea jos". Ajunge în fișă, la medic. Pacientului nu i-l repeți.
 - Dacă unealta ți-a acceptat serviciul, NU mai întrebi nimic. Programezi. "Curățire" e curățire — nu întrebi "detartraj?", nu ceri lămuriri, nu repeți cuvântul în alt fel.
 - Vorbești cu cuvântul pacientului, nu cu cel din fișă. Dacă el a zis "curățire", tu spui "curățire". Nu-i arunca "detartraj", "igienizare profesională" sau "endodonție" — sunt cuvintele noastre, nu ale lui.
 - O întrebare de lămurire se pune O SINGURĂ DATĂ. Dacă pacientul repetă același cuvânt în loc să răspundă, ăsta E răspunsul: mergi mai departe cu ce ai înțeles și programează-l. Nu întrebi a doua oară, sub nicio formă.
@@ -300,6 +304,11 @@ const TOOLS = [
           data: {
             type: "string",
             description: "Ziua exact cum a venit din ore_libere: AAAA-LL-ZZ.",
+          },
+          motiv: {
+            type: "string",
+            description:
+              "Ce a spus pacientul, în cuvintele lui: \"am 2 carii\", \"mă doare o măsea jos\", \"vreau curățire\". Ajunge în fișă, la medic. Nu i-l repeți pacientului.",
           },
           ora: {
             type: "integer",
@@ -684,6 +693,7 @@ async function book(args: {
   nume?: string;
   telefon?: string;
   serviciuSlug?: string;
+  motiv?: string;
   medicId?: string;
   data?: string;
   ora?: number;
@@ -788,6 +798,33 @@ async function book(args: {
     return { ok: false, motiv: "Ziua sau ora nu sunt valide. Ia-le din ore_libere." };
   }
 
+  // Checked before a doctor is chosen, and before a patient row is created.
+  // The hour this booking would take is the hour the previous call already
+  // took, so looking for a free doctor first finds none and reports "nobody
+  // has that hour free" — about the patient's own appointment, made seconds
+  // earlier. Saying yes to what already exists is both true and harmless.
+  const alreadyBooked = await prisma.appointment.findFirst({
+    where: {
+      patient: { phone },
+      dateTime: when,
+      status: { notIn: ["cancelled", "noshow"] },
+    },
+    include: {
+      service: { select: { title: true } },
+      patient: { select: { name: true } },
+    },
+  });
+  if (alreadyBooked) {
+    return {
+      ok: true,
+      dejaExista: true,
+      pacient: alreadyBooked.patient.name,
+      cand: alreadyBooked.dateTime.toISOString(),
+      serviciu: alreadyBooked.service.title,
+      motiv: "Programarea era deja făcută. Confirmă-i-o, nu o face din nou.",
+    };
+  }
+
   // The doctor is resolved here rather than trusted from the call.
   //
   // A 24-character hex id is exactly the kind of thing a language model
@@ -828,29 +865,6 @@ async function book(args: {
     (await prisma.patient.findFirst({ where: { phone } })) ??
     (await prisma.patient.create({ data: { name, phone } }));
 
-  // Booking the same person into the same hour twice is what happens when the
-  // patient answers "da, confirm" after it is already done and the model reads
-  // that as a fresh instruction. Saying yes to the booking that already exists
-  // is both true and harmless; creating a second one is neither.
-  const existing = await prisma.appointment.findFirst({
-    where: {
-      patientId: patient.id,
-      dateTime: when,
-      status: { notIn: ["cancelled", "noshow"] },
-    },
-    include: { service: { select: { title: true } } },
-  });
-  if (existing) {
-    return {
-      ok: true,
-      dejaExista: true,
-      pacient: patient.name,
-      cand: existing.dateTime.toISOString(),
-      serviciu: existing.service.title,
-      motiv: "Programarea era deja făcută. Confirmă-i-o, nu o face din nou.",
-    };
-  }
-
   const appointment = await prisma.appointment.create({
     data: {
       patientId: patient.id,
@@ -858,7 +872,15 @@ async function book(args: {
       teamMemberId: medicId,
       dateTime: when,
       duration: service.duration,
-      notes: "Programare făcută prin chat.",
+      // What the patient actually said, in their own words. The service name
+      // says which chair they sit in; this says why they came, which is what
+      // the dentist wants to read before they walk in.
+      notes: [
+        "Programare făcută prin chat.",
+        ...(String(args.motiv ?? "").trim()
+          ? [`Pacientul a spus: ${String(args.motiv).trim().slice(0, 300)}`]
+          : []),
+      ].join(" "),
     },
   });
 
