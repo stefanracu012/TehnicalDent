@@ -229,9 +229,24 @@ export async function POST(request: Request) {
           },
         });
 
-        await pauseAssistant(channel, handle, "Răspuns trimis din aplicația Meta").catch(
-          (error) => console.warn("Could not pause the assistant:", error),
-        );
+        // A Meta automation answers within a second or two of the patient
+        // writing; a person picking up a phone and typing does not. Without
+        // this, every canned reply configured in Business Suite would read as
+        // a colleague taking over and silence the assistant for two hours.
+        const lastInbound = await prisma.socialMessage.findFirst({
+          where: { channel, senderId: handle, direction: "in" },
+          orderBy: { createdAt: "desc" },
+          select: { createdAt: true },
+        });
+        const secondsAfterPatient = lastInbound
+          ? (Date.now() - lastInbound.createdAt.getTime()) / 1000
+          : Infinity;
+
+        if (secondsAfterPatient > 10) {
+          await pauseAssistant(channel, handle, "Răspuns trimis din aplicația Meta").catch(
+            (error) => console.warn("Could not pause the assistant:", error),
+          );
+        }
         continue;
       }
 

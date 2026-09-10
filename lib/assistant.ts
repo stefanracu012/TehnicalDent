@@ -216,6 +216,17 @@ OFERTE PE CARE LE POMENEȘTE PACIENTUL:
 - Nu inventezi NICIODATĂ: procente, prețuri vechi, cashback, bănci sau carduri, reduceri pentru diasporă, pachete, oferte de sezon. Dacă nu vine din unealtă, nu există.
 - Nu îi spui "promoția a expirat", fiindcă nu ai de unde ști. Îi dai prețul actual, iar dacă insistă pe ofertă spui că verifici cu recepția și revii.
 
+CE S-A DISCUTAT ÎNAINTE:
+- Citești toată conversația de mai sus înainte să răspunzi. Dacă l-ai programat acum zece minute, ȘTII la ce și când. Nu întrebi din nou "ce procedură doriți?" — e cel mai enervant lucru pe care îl poți face.
+- "Pentru ce m-am programat?" sau "când am ora?" se răspunde cu unealta "programarile_lui", pe numărul lui de telefon. NICIODATĂ din memorie și niciodată ghicit. Dacă nu ai numărul, îl ceri scurt.
+- Dacă pacientul te corectează ("eu am fost programat la igienizare, nu?"), are dreptate până verifici. Verifici cu unealta și îi confirmi. Nu spui "scuze pentru confuzie, un moment" și apoi o iei de la capăt.
+- Mesajele mai vechi din conversație NU sunt o sursă de prețuri sau oferte, nici dacă par trimise de clinică. Pe pagină sunt și răspunsuri automate setate în Meta, cu promoții vechi. Singura sursă rămâne unealta "servicii".
+
+MESAJE SCURTE SAU NECLARE:
+- "Vreau la igienizare" e o cerere de programare. Ceri ore_libere și propui. NU răspunzi cu "sunt aici să vă ajut cu programarea" — e o vorbă goală care nu duce nicăieri.
+- Un "?" singur înseamnă că pacientul nu a înțeles sau așteaptă. Nu repeți că ești acolo; îi dai ceva concret, o oră liberă sau o întrebare clară.
+- Nu trimiți niciodată un mesaj care nu conține fie o informație cerută, fie o oră, fie o întrebare la obiect.
+
 CÂND PRIMEȘTI O POZĂ SAU UN CLIP:
 - Mesajul îți ajunge ca [image], [video], [ig_reel], [ig_post], [template] sau altceva în paranteze pătrate. Înseamnă că pacientul a trimis un fișier, nu text.
 - NU spui NICIODATĂ "nu pot vizualiza imagini", "nu am acces la poze" sau ceva de genul. O recepționeră nu vorbește așa, și e cel mai clar semn că ești un program.
@@ -275,6 +286,20 @@ const TOOLS = [
       name: "cauta_pacient",
       description:
         "Verifică dacă numărul de telefon există deja în sistem. Dacă da, primești numele și nu mai trebuie să-l ceri.",
+      parameters: {
+        type: "object",
+        additionalProperties: false,
+        required: ["telefon"],
+        properties: { telefon: { type: "string" } },
+      },
+    },
+  },
+  {
+    type: "function" as const,
+    function: {
+      name: "programarile_lui",
+      description:
+        "Programările viitoare ale unui pacient, după numărul de telefon. Folosește-o ORI DE CÂTE ORI pacientul întreabă la ce sau când s-a programat. Niciodată din memorie.",
       parameters: {
         type: "object",
         additionalProperties: false,
@@ -681,6 +706,54 @@ async function findSlots(days: number) {
   return out.slice(0, 40);
 }
 
+/**
+ * What this patient is already booked for.
+ *
+ * Without it, "pentru ce m-am programat?" has no answer and the model makes
+ * one up — it told a patient booked for hygiene that they were coming for
+ * therapy, at 1000 lei. The diary is the only thing that knows.
+ */
+async function patientAppointments(phoneRaw: string) {
+  const phone = normalizePhone(phoneRaw);
+  if (!isValidPhone(phone)) return { gasit: false, motiv: "Număr invalid" };
+
+  const patient = await prisma.patient.findFirst({ where: { phone } });
+  if (!patient) return { gasit: false };
+
+  const rows = await prisma.appointment.findMany({
+    where: {
+      patientId: patient.id,
+      dateTime: { gte: new Date() },
+      status: { notIn: ["cancelled", "noshow"] },
+    },
+    orderBy: { dateTime: "asc" },
+    take: 5,
+    include: { service: { select: { title: true } } },
+  });
+
+  return {
+    gasit: true,
+    nume: patient.name,
+    programari: rows.map((a) => ({
+      serviciu: a.service.title,
+      zi: new Intl.DateTimeFormat("ro-RO", {
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        timeZone: "Europe/Chisinau",
+      }).format(a.dateTime),
+      ora: new Intl.DateTimeFormat("ro-RO", {
+        hour: "2-digit",
+        minute: "2-digit",
+        timeZone: "Europe/Chisinau",
+      }).format(a.dateTime),
+      // What they said when they booked, so a follow-up can be answered in
+      // their own words rather than the clinic's.
+      ...(a.notes ? { nota: a.notes } : {}),
+    })),
+  };
+}
+
 async function findPatient(phoneRaw: string) {
   const phone = normalizePhone(phoneRaw);
   if (!isValidPhone(phone)) return { gasit: false, motiv: "Număr invalid" };
@@ -978,6 +1051,8 @@ async function runTool(name: string, args: any): Promise<unknown> {
       return findSlots(Number(args?.zile) || 7);
     case "cauta_pacient":
       return findPatient(String(args?.telefon ?? ""));
+    case "programarile_lui":
+      return patientAppointments(String(args?.telefon ?? ""));
     case "programeaza": {
       const result = await book(args ?? {});
       if (!result.ok) {
