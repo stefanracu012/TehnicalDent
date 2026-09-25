@@ -36,7 +36,7 @@ export default async function HomePage({
     localizeGalleryImage(g, locale),
   );
   const aboutOverrides = {};
-  const t = await getTranslations("Home");
+  const t = await getTranslations({ locale, namespace: "Home" });
 
   return (
     <>

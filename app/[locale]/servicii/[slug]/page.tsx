@@ -20,7 +20,7 @@ interface ServicePageProps {
 export async function generateMetadata({ params }: ServicePageProps) {
   const { slug, locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations("ServiceDetail");
+  const t = await getTranslations({ locale, namespace: "ServiceDetail" });
   const service = await getServiceBySlug(slug);
   if (!service) return { title: t("serviciuNegasit") };
   const localized = localizeService(service, locale);
@@ -54,8 +54,8 @@ export async function generateStaticParams() {
 export default async function ServiceDetailPage({ params }: ServicePageProps) {
   const { slug, locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations("ServiceDetail");
-  const tNav = await getTranslations("Nav");
+  const t = await getTranslations({ locale, namespace: "ServiceDetail" });
+  const tNav = await getTranslations({ locale, namespace: "Nav" });
   const service = await getServiceBySlug(slug);
   if (!service) notFound();
 

@@ -32,8 +32,8 @@ export default async function AboutPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations("About");
-  const tNav = await getTranslations("Nav");
+  const t = await getTranslations({ locale, namespace: "About" });
+  const tNav = await getTranslations({ locale, namespace: "Nav" });
   const teamMembers = (await getTeamMembers()).map((m) =>
     localizeTeamMember(m, locale),
   );

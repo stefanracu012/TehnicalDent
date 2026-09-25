@@ -36,7 +36,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug, locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations("BlogDetail");
+  const t = await getTranslations({ locale, namespace: "BlogDetail" });
   const post = await getPublishedBlogPost(slug, locale);
   if (!post) return { title: t("articolNegasit") };
 
@@ -63,7 +63,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function BlogPostPage({ params }: Props) {
   const { slug, locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations("BlogDetail");
+  const t = await getTranslations({ locale, namespace: "BlogDetail" });
   const post = await getPublishedBlogPost(slug, locale);
 
   if (!post) notFound();

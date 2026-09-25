@@ -16,7 +16,7 @@ export async function generateMetadata({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations("Gallery");
+  const t = await getTranslations({ locale, namespace: "Gallery" });
   return {
     title: t("heroTitle"),
     description: t("heroDescription"),

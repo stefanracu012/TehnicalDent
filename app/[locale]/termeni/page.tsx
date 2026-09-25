@@ -14,7 +14,7 @@ export async function generateMetadata({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations("Terms");
+  const t = await getTranslations({ locale, namespace: "Terms" });
   return {
     title: t("metaTitle"),
     description: t("metaDescription"),
@@ -29,8 +29,8 @@ export default async function TermeniConditii({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations("Terms");
-  const tNav = await getTranslations("Nav");
+  const t = await getTranslations({ locale, namespace: "Terms" });
+  const tNav = await getTranslations({ locale, namespace: "Nav" });
 
   return (
     <>

@@ -16,7 +16,7 @@ export async function generateMetadata({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations("Blog");
+  const t = await getTranslations({ locale, namespace: "Blog" });
   return {
     title: t("metaTitle"),
     description: t("metaDescription"),
@@ -32,7 +32,7 @@ export default async function RecomandariPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations("Blog");
+  const t = await getTranslations({ locale, namespace: "Blog" });
   const posts = await getPublishedBlogPosts(locale);
 
   return (

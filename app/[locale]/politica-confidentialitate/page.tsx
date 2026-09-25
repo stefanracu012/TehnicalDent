@@ -20,7 +20,7 @@ export async function generateMetadata({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations("Privacy");
+  const t = await getTranslations({ locale, namespace: "Privacy" });
   return {
     title: t("metaTitle"),
     description: t("metaDescription"),
@@ -35,8 +35,8 @@ export default async function PoliticaConfidentialitate({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
-  const t = await getTranslations("Privacy");
-  const tNav = await getTranslations("Nav");
+  const t = await getTranslations({ locale, namespace: "Privacy" });
+  const tNav = await getTranslations({ locale, namespace: "Nav" });
 
   return (
     <>
