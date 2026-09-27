@@ -13,7 +13,8 @@
     "get-page-token": "node scripts/get-page-token.mjs",
     "grant-permissions": "node scripts/grant-permissions.mjs",
     "submit-template": "tsx scripts/submit-whatsapp-template.mts",
-    "seed-price-list": "tsx scripts/seed-price-list.mts"
+    "seed-price-list": "tsx scripts/seed-price-list.mts",
+    "translate-missing": "tsx scripts/translate-missing.mts"
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"
