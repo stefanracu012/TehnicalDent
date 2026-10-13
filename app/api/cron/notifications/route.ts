@@ -4,6 +4,7 @@ import { retryFailed, runRecallScan, runReminderScan } from "@/lib/notifications
 import { sendEveningReminder } from "@/lib/daily-briefing";
 import { sendDoctorMorningBriefings } from "@/lib/doctor-notify";
 import { refreshStaleDigests } from "@/lib/telegram-digest";
+import { runLeadFollowUps } from "@/lib/lead-telegram";
 
 // Marks `key` as run for `todayStr` ("YYYY-MM-DD") — returns true only the
 // first time it's called for a given day, so repeated cron invocations
@@ -128,6 +129,14 @@ async function handle(request: Request) {
 
     await refreshStaleDigests();
 
+    // Leads whose follow-up day has come. Safe on every run: each date is
+    // announced once, so the 08:00 run sends the morning digest and the 20:00
+    // one only picks up dates set for today during the day.
+    const leadFollowUps = await runLeadFollowUps().catch((error) => {
+      console.error("Lead follow-ups failed:", error);
+      return { error: true };
+    });
+
     let evening: { sent?: number; skipped?: boolean } = { skipped: true };
     if (inEveningWindow && (await claimDailyRun("evening-reminder", todayStr))) {
       evening = await sendEveningReminder();
@@ -138,7 +147,15 @@ async function handle(request: Request) {
       morning = await sendDoctorMorningBriefings();
     }
 
-    return NextResponse.json({ ok: true, reminders, recalls, retried, evening, morning });
+    return NextResponse.json({
+      ok: true,
+      reminders,
+      recalls,
+      retried,
+      evening,
+      morning,
+      leadFollowUps,
+    });
   } catch (error) {
     console.error("Cron error:", error);
     return NextResponse.json(

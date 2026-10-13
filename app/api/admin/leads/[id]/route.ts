@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sanitizeObject, validateNoInjection } from "@/lib/security";
 import { convertLeadToPatient, LeadError, normalisePhone } from "@/lib/leads";
+import { notifyAssigned } from "@/lib/lead-telegram";
 import { LEAD_SOURCES, LEAD_STATUS_VALUES } from "@/lib/leads-config";
 import type { LeadSource, LeadStatus } from "@prisma/client";
 
@@ -85,10 +86,16 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     }
     if ("followUpAt" in body) {
       data.followUpAt = body.followUpAt ? new Date(body.followUpAt as string) : null;
+      // A new date puts the lead back in the queue of reminders to announce.
+      data.followUpNotifiedAt = null;
     }
     if ("assignedToId" in body) {
       data.assignedToId = body.assignedToId ? String(body.assignedToId) : null;
     }
+    const before =
+      "assignedToId" in data
+        ? await prisma.lead.findUnique({ where: { id }, select: { assignedToId: true } })
+        : null;
 
     // A lead that arrived through a channel keeps that source — the inbox
     // matches conversations to leads by it. Only hand-entered ones can change.
@@ -140,6 +147,11 @@ export async function PATCH(request: Request, { params }: RouteParams) {
         });
       }
       lead = await prisma.lead.findUniqueOrThrow({ where: { id } });
+    }
+
+    // A new owner gets the lead in private, if they connected Telegram.
+    if (before && lead.assignedToId && lead.assignedToId !== before.assignedToId) {
+      await notifyAssigned(lead);
     }
 
     return NextResponse.json({ ...lead, converted });

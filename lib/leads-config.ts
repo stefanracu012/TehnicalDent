@@ -10,6 +10,7 @@
 
 export type LeadStatusValue =
   | "nou"
+  | "urgent"
   | "fara_raspuns"
   | "contactat"
   | "follow_up_1"
@@ -47,6 +48,7 @@ export interface LeadStatusInfo {
 /** The order here is the order of the pipeline, and of every dropdown. */
 export const LEAD_STATUSES: LeadStatusInfo[] = [
   { value: "nou", label: "Lead nou", emoji: "🔵", className: "bg-blue-100 text-blue-800 border-blue-300", group: "nou" },
+  { value: "urgent", label: "Urgent — răspunde adminul", emoji: "🚨", className: "bg-red-600 text-white border-red-700", group: "nou" },
   { value: "fara_raspuns", label: "Fără răspuns", emoji: "🔘", className: "bg-gray-100 text-gray-700 border-gray-300", group: "lucru" },
   { value: "contactat", label: "Contactat", emoji: "🟡", className: "bg-yellow-100 text-yellow-800 border-yellow-300", group: "lucru" },
   { value: "follow_up_1", label: "Follow up 1", emoji: "📞", className: "bg-yellow-50 text-yellow-800 border-yellow-200", group: "lucru" },
@@ -65,6 +67,22 @@ export const LEAD_STATUS_VALUES = LEAD_STATUSES.map((s) => s.value);
 
 /** A lead in one of these is finished: no follow-up is owed on it. */
 export const CLOSED_STATUSES: LeadStatusValue[] = ["convertit", "pierdut"];
+
+/**
+ * Where a conversation still is before anything has been booked. The
+ * assistant may move a lead between these, and only these — a lead somebody
+ * has already moved on (booked, came in, in treatment, closed) is not the
+ * assistant's to move back. "urgent" is the exception, see setLeadFromChat.
+ */
+export const EARLY_STATUSES: LeadStatusValue[] = [
+  "nou",
+  "fara_raspuns",
+  "contactat",
+  "follow_up_1",
+  "follow_up_2",
+  "se_gandeste",
+  "mai_tarziu",
+];
 
 export function getStatus(value: string): LeadStatusInfo {
   return (

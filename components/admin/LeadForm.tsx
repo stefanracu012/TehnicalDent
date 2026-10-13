@@ -234,6 +234,10 @@ export default function LeadForm({
                 </option>
               ))}
             </select>
+            <p className="text-[11px] text-gray-500 mt-0.5">
+              Primește leadul și reminderele de recontactare pe Telegram, în privat — dacă și-a
+              conectat Telegram din Contul meu.
+            </p>
           </div>
           <div>
             <label className={label}>Recontactează pe</label>

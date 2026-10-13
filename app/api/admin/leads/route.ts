@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sanitizeObject, validateNoInjection } from "@/lib/security";
 import { normalisePhone } from "@/lib/leads";
+import { notifyAssigned } from "@/lib/lead-telegram";
 import {
   CLOSED_STATUSES,
   LEAD_SOURCE_VALUES,
@@ -265,6 +266,9 @@ export async function POST(request: Request) {
         assignedToId: (body.assignedToId as string) || null,
       },
     });
+
+    // Given to someone from the start: it reaches them in private.
+    if (lead.assignedToId) await notifyAssigned(lead);
 
     return NextResponse.json(lead, { status: 201 });
   } catch (error) {

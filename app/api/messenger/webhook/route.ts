@@ -19,8 +19,8 @@
 import crypto from "crypto";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { sendTelegramToTopic, TELEGRAM_TOPICS } from "@/lib/telegram";
-import { captureLead } from "@/lib/leads";
+import { captureLead, setLeadFromChat, type ChatConversation } from "@/lib/leads";
+import { notifyLead } from "@/lib/lead-telegram";
 import { findNameInConversations, sendSocialReply } from "@/lib/messenger";
 import { shouldReply, assistantReply, pauseAssistant } from "@/lib/assistant";
 import type { SocialChannel } from "@prisma/client";
@@ -185,7 +185,6 @@ export async function POST(request: Request) {
   }
 
   const channel = body.object === "instagram" ? "instagram" : "messenger";
-  const source = channel === "instagram" ? "Instagram" : "Messenger";
 
   for (const entry of body.entry || []) {
     // entry.id is the Page (or Instagram account) the event belongs to. The app
@@ -274,43 +273,64 @@ export async function POST(request: Request) {
         },
       });
 
-      await captureLead({
+      const captured = await captureLead({
         source: channel,
         reference: event.sender.id,
         name: senderName,
         message: text,
       });
+      const conversation: ChatConversation = { channel, handle: event.sender.id };
 
-      await sendTelegramToTopic(
-        `💬 <b>Mesaj ${source}</b> de la <code>${senderName || event.sender.id}</code>\n${text}`,
-        TELEGRAM_TOPICS.mesaje,
-      );
-
+      // Telegram no longer hears about every message — only about a chat a
+      // person has to act on (see lib/lead-telegram.ts). The inbox shows the
+      // rest as unread.
+      //
       // Silence unless the assistant has been switched on for this channel and
       // this conversation. There is no fixed fallback here — these inboxes are
       // answered by a person today, and a bot chiming in beside them would be
       // worse than nothing.
       if (await shouldReply(channel, event.sender.id)) {
+        let answered = false;
         try {
           const recent = await prisma.socialMessage.findMany({
             where: { channel, senderId: event.sender.id },
             orderBy: { createdAt: "desc" },
-            take: 12,
-            select: { direction: true, body: true },
+            take: 60,
+            select: { direction: true, body: true, createdAt: true },
           });
 
           const answer = await assistantReply(
             recent.reverse().map((m) => ({
               role: m.direction === "in" ? ("user" as const) : ("assistant" as const),
               content: m.body,
+              at: m.createdAt,
             })),
             null,
+            { channel, handle: event.sender.id },
           );
 
-          if (answer) await sendSocialReply(channel, event.sender.id, answer);
+          if (answer) {
+            await sendSocialReply(channel, event.sender.id, answer);
+            answered = true;
+          }
         } catch (error) {
           console.error(`Assistant reply on ${channel} failed:`, error);
         }
+        // Switched on, but nothing went out: the patient is now waiting on a person.
+        if (!answered) {
+          await setLeadFromChat(
+            conversation,
+            "urgent",
+            "Asistentul nu a putut răspunde — pacientul așteaptă un răspuns.",
+          );
+        }
+      } else if (captured?.created) {
+        // Somebody new, in a conversation nobody answers automatically: the one
+        // chat message reception has to hear about straight away. Once — the
+        // messages after it are in the inbox.
+        await notifyLead("nou", captured.lead, {
+          why: "Asistentul nu răspunde în această conversație — scrieți-i din Mesaje.",
+        });
       }
     }
   }

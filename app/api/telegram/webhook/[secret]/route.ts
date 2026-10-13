@@ -368,7 +368,7 @@ interface TelegramMessage {
 }
 interface TelegramCallbackQuery {
   id: string;
-  from: { id: number };
+  from: { id: number; first_name?: string };
   message?: {
     message_id: number;
     chat: { id: number };
@@ -426,6 +426,18 @@ export async function POST(request: Request, { params }: RouteParams) {
         await answerCallbackQuery(cq.id, feedback);
       } catch (err) {
         console.error("Wizard callback error:", err);
+        await answerCallbackQuery(cq.id, "❌ Eroare.");
+      }
+      return NextResponse.json({ ok: true });
+    }
+
+    // ---- Status buttons on a lead card (group topic or someone's private chat) ----
+    if (data.startsWith("lead:")) {
+      try {
+        const { handleLeadButton } = await import("@/lib/lead-telegram");
+        await handleLeadButton(cq);
+      } catch (err) {
+        console.error("Lead button error:", err);
         await answerCallbackQuery(cq.id, "❌ Eroare.");
       }
       return NextResponse.json({ ok: true });

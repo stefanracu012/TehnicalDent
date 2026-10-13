@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { sendSocialReply } from "@/lib/messenger";
 import { sendWhatsAppText } from "@/lib/notifications";
 import { pauseAssistant } from "@/lib/assistant";
+import { clearUrgent } from "@/lib/leads";
 import {
   diagnose,
   findConversation,
@@ -105,6 +106,8 @@ export async function POST(request: Request) {
     await pauseAssistant(platform, recipientId, "Răspuns manual din panou").catch(
       (error) => console.warn("Could not pause the assistant:", error),
     );
+    // A person has answered, so whatever the assistant flagged as urgent is in hand.
+    await clearUrgent({ channel: platform, handle: recipientId });
 
     // Our own reply must not light the conversation up as unread. Meta stamps
     // it with its clock, so the mark leaves a little room.

@@ -13,16 +13,17 @@
 //   WHATSAPP_APP_SECRET    - app secret, used to verify X-Hub-Signature-256
 //                            on incoming POSTs (optional but recommended)
 //   TELEGRAM_BOT_TOKEN / TELEGRAM_ADMIN_CHAT_ID (or TELEGRAM_CHAT_ID)
-//                          - where incoming patient replies get forwarded
+//                          - where a conversation that needs a person is
+//                            announced (not every message — see lib/lead-telegram.ts)
 // =============================================
 
 import crypto from "crypto";
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { captureLead } from "@/lib/leads";
+import { captureLead, setLeadFromChat } from "@/lib/leads";
 import { shouldReply, assistantReply, pausedUntil } from "@/lib/assistant";
 import { normalizePhone } from "@/lib/appointments";
-import { handleOptOut, optOutKeyword } from "@/lib/marketing-optout";
+import { handleOptOut } from "@/lib/marketing-optout";
 import { sendWhatsAppText, sendTelegramToTopic, TELEGRAM_TOPICS } from "@/lib/notifications";
 
 const VERIFY_TOKEN = process.env.WHATSAPP_VERIFY_TOKEN || "";
@@ -152,7 +153,6 @@ export async function POST(request: Request) {
           where: { phone: { contains: msg.from.slice(-9) } },
           select: { id: true, name: true },
         });
-        const who = patient?.name || contact?.profile?.name || phone;
         const text = messageText(msg);
 
         await prisma.whatsAppMessage.create({
@@ -176,28 +176,20 @@ export async function POST(request: Request) {
           });
         }
 
-        await sendTelegramToTopic(
-          `💬 <b>Mesaj WhatsApp</b> de la ${who} (<code>${phone}</code>)\n${text}`,
-          TELEGRAM_TOPICS.mesaje,
-        );
+        // Telegram no longer hears about every message — only about a
+        // conversation a person has to act on, below. The inbox shows the rest.
 
         try {
           // "STOP" is answered before anything else looks at the message. It
           // is not a question for the assistant, and letting a model decide
           // whether someone unsubscribed is not a decision worth delegating.
+          // Nobody has to act on it, so nobody is pinged.
           const optOut = await handleOptOut(phone, text);
           if (optOut) {
             await sendWhatsAppText(phone, optOut);
             await prisma.whatsAppMessage.create({
               data: { phone, direction: "out", body: optOut, patientId: patient?.id },
             });
-            await sendTelegramToTopic(
-              `🔕 <b>${who}</b> (<code>${phone}</code>) a scris „${text.trim()}”. ` +
-                (optOutKeyword(text) === "stop"
-                  ? "Nu îi mai trimitem campanii."
-                  : "Primește din nou campanii."),
-              TELEGRAM_TOPICS.mesaje,
-            );
             continue;
           }
 
@@ -215,13 +207,20 @@ export async function POST(request: Request) {
           }
 
           let reply = AUTO_REPLY;
+          // The fixed reply promises that somebody will get in touch, so
+          // whenever it is what goes out, somebody has to: the conversation is
+          // flagged urgent. Telegram hears about it once, and a colleague
+          // answering from the panel clears it.
+          let needsPerson =
+            "A scris pe WhatsApp, iar asistentul nu e pornit pentru această conversație. " +
+            "A primit răspunsul automat „vă vom contacta”.";
 
           if (await shouldReply("whatsapp", phone)) {
             const recent = await prisma.whatsAppMessage.findMany({
               where: { phone },
               orderBy: { createdAt: "desc" },
-              take: 12,
-              select: { direction: true, body: true },
+              take: 60,
+              select: { direction: true, body: true, createdAt: true },
             });
 
             const answer = await assistantReply(
@@ -230,19 +229,41 @@ export async function POST(request: Request) {
                 .map((m) => ({
                   role: m.direction === "in" ? ("user" as const) : ("assistant" as const),
                   content: m.body,
+                  at: m.createdAt,
                 })),
               patient ? { name: patient.name, phone } : null,
+              { channel: "whatsapp", handle: phone },
             );
 
             // Falling back rather than staying quiet: a patient who wrote is
             // owed an answer even when the model could not produce one.
-            if (answer) reply = answer;
+            if (answer) {
+              reply = answer;
+              needsPerson = "";
+            } else {
+              needsPerson =
+                "Asistentul nu a putut răspunde, așa că a primit răspunsul automat „vă vom contacta”.";
+            }
           }
 
-          await sendWhatsAppText(phone, reply);
-          await prisma.whatsAppMessage.create({
-            data: { phone, direction: "out", body: reply, patientId: patient?.id },
-          });
+          try {
+            await sendWhatsAppText(phone, reply);
+            await prisma.whatsAppMessage.create({
+              data: { phone, direction: "out", body: reply, patientId: patient?.id },
+            });
+          } catch (sendError) {
+            console.error("WhatsApp reply could not be sent:", sendError);
+            needsPerson = "Răspunsul pe WhatsApp nu a putut fi trimis — pacientul nu a primit nimic.";
+          }
+
+          if (needsPerson) {
+            await setLeadFromChat(
+              { channel: "whatsapp", handle: phone },
+              "urgent",
+              needsPerson,
+              patient ? { name: patient.name, phone } : null,
+            );
+          }
         } catch (err) {
           console.error("WhatsApp auto-reply error:", err);
         }

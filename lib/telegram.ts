@@ -22,6 +22,10 @@ export const TELEGRAM_TOPICS = {
   anulari: topicEnv("TELEGRAM_TOPIC_ANULARI"),
   erori: topicEnv("TELEGRAM_TOPIC_ERORI"),
   pacienti: topicEnv("TELEGRAM_TOPIC_PACIENTI"),
+  // Leads that need a person: urgent ones, new ones nobody answers, the
+  // follow-up digest. Its own topic when TELEGRAM_TOPIC_LEADURI is set,
+  // otherwise the "Mesaje" one.
+  leaduri: topicEnv("TELEGRAM_TOPIC_LEADURI") ?? topicEnv("TELEGRAM_TOPIC_MESAJE"),
 } as const;
 
 export function isTelegramConfigured(): boolean {
@@ -110,6 +114,31 @@ export async function editTelegramMessage(messageId: number, text: string): Prom
     });
   } catch (e) {
     console.error("editTelegramMessage:", e);
+  }
+}
+
+/**
+ * Rewrites a message in whichever chat it lives in — the clinic group or one
+ * person's private chat — and sets its buttons. Passing null removes them.
+ */
+export async function editTelegramMessageIn(
+  chatId: string | number,
+  messageId: number,
+  text: string,
+  replyMarkup: object | null,
+): Promise<void> {
+  try {
+    await telegramCall("editMessageText", {
+      chat_id: chatId,
+      message_id: messageId,
+      text,
+      parse_mode: "HTML",
+      disable_web_page_preview: true,
+      reply_markup: replyMarkup ?? { inline_keyboard: [] },
+    });
+  } catch (e) {
+    // "message is not modified" when the same button is pressed twice.
+    if (!String(e).includes("not modified")) console.error("editTelegramMessageIn:", e);
   }
 }
 

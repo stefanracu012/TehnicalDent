@@ -1,58 +1,9 @@
 import { NextResponse } from "next/server";
 import { createContactSubmission } from "@/lib/data";
 import { captureLead, normalisePhone } from "@/lib/leads";
+import { notifyLead } from "@/lib/lead-telegram";
+import { sendTelegramToTopic, TELEGRAM_TOPICS } from "@/lib/telegram";
 import { sanitizeObject, validateNoInjection } from "@/lib/security";
-
-async function sendTelegramNotification(data: {
-  name: string;
-  phone: string;
-  email?: string;
-  service?: string;
-  message: string;
-}) {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-  if (!token || !chatId) return;
-
-  const now = new Date().toLocaleString("ro-RO", {
-    timeZone: "Europe/Chisinau",
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
-  const text = [
-    `🦷 <b>Programare nouă</b>`,
-    ``,
-    `👤 <b>Nume:</b> ${data.name}`,
-    `📞 <b>Telefon:</b> ${data.phone}`,
-    data.email ? `📧 <b>Email:</b> ${data.email}` : null,
-    data.service ? `🏥 <b>Serviciu:</b> ${data.service}` : null,
-    ``,
-    `💬 <b>Mesaj:</b>`,
-    data.message,
-    ``,
-    `🕐 ${now}`,
-  ]
-    .filter(Boolean)
-    .join("\n");
-
-  try {
-    await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text,
-        parse_mode: "HTML",
-      }),
-    });
-  } catch (err) {
-    console.error("Telegram notification failed:", err);
-  }
-}
 
 export async function POST(request: Request) {
   try {
@@ -106,7 +57,7 @@ export async function POST(request: Request) {
 
     // The form is the one channel that hands over a name and phone directly,
     // so the lead starts complete rather than filling in over several messages.
-    await captureLead({
+    const captured = await captureLead({
       source: "formular",
       reference: submission.id,
       name: body.name,
@@ -118,14 +69,20 @@ export async function POST(request: Request) {
       interest: body.service || null,
     });
 
-    // Send Telegram notification
-    await sendTelegramNotification({
-      name: body.name,
-      phone: body.phone,
-      email: body.email || undefined,
-      service: body.service || undefined,
-      message: body.message,
-    });
+    // Someone left a number and is waiting to be called — nobody answers a
+    // form automatically, so this is always a lead a person has to act on.
+    if (captured) {
+      await notifyLead("nou", captured.lead, {
+        why: "Formular de pe site — așteaptă să fie sunat.",
+      });
+    } else {
+      // The lead could not be saved, but the request still must not be lost.
+      const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      await sendTelegramToTopic(
+        `🎯 <b>LEAD NOU — formular site</b>\n\n👤 ${esc(body.name)}\n📱 ${esc(body.phone)}\n💬 ${esc(body.message)}`,
+        TELEGRAM_TOPICS.leaduri,
+      );
+    }
 
     return NextResponse.json(
       { message: "Mesajul a fost trimis cu succes.", id: submission.id },

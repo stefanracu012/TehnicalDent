@@ -388,6 +388,9 @@ enum LeadSource {
 // migrating. The labels live in lib/leads-config.ts.
 enum LeadStatus {
   nou
+  // Someone from the clinic has to answer: the assistant promised a callback,
+  // the patient asked for a person, complained, or described an emergency.
+  urgent
   fara_raspuns
   contactat
   follow_up_1
@@ -434,6 +437,11 @@ model Lead {
   note   String?
   /** When to chase. The list shows overdue ones first. */
   followUpAt DateTime?
+  /**
+   * When the follow-up reminder went out on Telegram. A lead is announced once
+   * per follow-up date: moving the date clears this, and it is announced again.
+   */
+  followUpNotifiedAt DateTime?
 
   /** AdminUser who is chasing it. */
   assignedToId String? @db.ObjectId

@@ -300,6 +300,22 @@ export default function AdminLeadsPage() {
         <h1 className="text-lg font-bold text-gray-900">Leaduri</h1>
         <div className="flex flex-wrap items-center gap-1.5">
           <StatChip label="Total" value={stats.total} />
+          <button
+            type="button"
+            onClick={() => setStatuses(statuses.length === 1 && statuses[0] === "urgent" ? [] : ["urgent"])}
+            title="Arată doar conversațiile la care trebuie să răspundă cineva"
+          >
+            <span
+              className={`inline-flex items-baseline gap-1 px-2 py-1 rounded-lg border ${
+                (stats.byStatus.urgent ?? 0) > 0
+                  ? "bg-red-600 border-red-700 text-white animate-pulse"
+                  : "bg-white border-gray-200 text-gray-500"
+              }`}
+            >
+              <span className="text-[10px]">🚨 Urgente</span>
+              <span className="text-xs font-bold">{stats.byStatus.urgent ?? 0}</span>
+            </span>
+          </button>
           <StatChip label="🔵 Noi" value={stats.byStatus.nou ?? 0} color="text-blue-600" />
           <StatChip label="📅 Programați" value={stats.byStatus.programat ?? 0} color="text-sky-700" />
           <StatChip label="✅ Pacienți" value={stats.byStatus.convertit ?? 0} color="text-emerald-600" />
@@ -767,14 +783,20 @@ function LeadRow({
 
   const border = expanded
     ? "border-indigo-400 shadow-sm"
-    : due
+    : lead.status === "urgent"
+      ? "border-red-400 bg-red-50/60 hover:border-red-500"
+      : due
       ? "border-red-300 hover:border-indigo-300"
       : status.group === "nou"
         ? "border-blue-300 hover:border-indigo-300"
         : "border-gray-200 hover:border-indigo-300";
 
   return (
-    <div className={`bg-white rounded-lg border transition-colors ${border}`}>
+    <div
+      className={`rounded-lg border transition-colors ${
+        lead.status === "urgent" && !expanded ? "" : "bg-white"
+      } ${border}`}
+    >
       <div className="flex items-stretch">
         <button
           type="button"
@@ -923,6 +945,7 @@ function LeadRow({
                   </option>
                 ))}
               </select>
+              <span className="text-[10px] text-gray-400">primește reminderele pe Telegram</span>
             </label>
 
             <div className="flex flex-wrap items-center gap-1.5">

@@ -16,6 +16,16 @@ import prisma from "@/lib/prisma";
 import { freeHours, claimSlot } from "@/lib/slots";
 import { normalizePhone, isValidPhone, parseMoldovaDateTime } from "@/lib/appointments";
 import { sendTelegramToTopic, TELEGRAM_TOPICS } from "@/lib/telegram";
+import {
+  CHAT_STATUSES,
+  extractPhone,
+  markLeadBooked,
+  markLeadContacted,
+  setLeadFromChat,
+  type ChatConversation,
+  type ChatStatus,
+} from "@/lib/leads";
+import { getStatus } from "@/lib/leads-config";
 import type { AssistantMode } from "@prisma/client";
 
 const API_KEY = process.env.OPENAI_API_KEY || "";
@@ -137,6 +147,8 @@ CUM VORBEȘTI:
 - Saluți o singură dată, la începutul conversației. Nu la fiecare mesaj.
 - Nu repeți întrebarea pacientului înainte să răspunzi.
 - Nu spui niciodată "Vă pot ajuta cu altceva?", "Cu plăcere!", "Desigur!", "Sunt aici să vă ajut", "O zi frumoasă!", "nu ezitați". ("Cu ce vă pot ajuta?" la primul mesaj e în regulă — doar acolo.)
+- Nici: "pot să vă ajut", "sunt aici pentru dumneavoastră", "dacă aveți nevoie de informații suplimentare", "pentru a finaliza programarea", "am notat", "am înregistrat", "am transmis". Sunt formule de program, nu de om.
+- Te adresezi cu "dumneavoastră" (vă, aveți, vă convine). Niciodată cu "tu" (ai, îți, poți), nici dacă pacientul îți scrie cu "tu".
 - Când pacientul îți mulțumește, răspunzi scurt și omenesc — "Cu drag, vă așteptăm" — și te oprești. Nu mai oferi ajutor și nu mai închei cu urări.
 - NICIODATĂ liste cu liniuțe sau puncte, nici măcar când propui mai multe ore. Le spui în propoziție: "Am liber miercuri la 9 sau 10, iar joi la 13 sau 14." Dacă ai patru ore de propus, tot într-o frază intră.
 - Nu spui că ești asistent virtual, AI sau bot. Dacă te întreabă direct dacă ești robot, spui că ești de la recepție și treci mai departe.
@@ -153,13 +165,16 @@ CUM VORBEȘTI:
 - Numele clinicii se scrie "Tehnical Dent", în două cuvinte. Niciodată "Technical", cu c.
 
 CE FACI:
-- Primul mesaj: "Bună ziua! Cu ce vă pot ajuta?". Atât. Nu anunți din prima că poți programa, nu vinzi nimic, nu faci reclamă clinicii.
+- Dacă primul mesaj al pacientului e doar un salut ("bună ziua", "salut", "здравствуйте"), răspunzi "Bună ziua! Cu ce vă pot ajuta?" și atât.
+- Dacă spune deja în primul mesaj ce vrea ("vreau la igienizare", "mă doare o măsea", "cât costă un implant"), saluți și răspunzi la asta în același mesaj. Nu-l mai întrebi cu ce îl poți ajuta — ți-a spus.
+  Exemplu, pacientul: "Bună, vreau la igienizare". Tu: "Bună ziua! Am liber mâine la 17:00 sau 18:00. Care vă convine?"
+- Nu anunți din prima că poți programa, nu vinzi nimic, nu faci reclamă clinicii.
 - Nu scrii înflorit și nu construiești fraze pe care nu le-ar spune nimeni cu voce tare. Dacă o propoziție sună a text de reclamă, o scrii mai simplu.
 - Spre programare duci firesc, după ce înțelegi ce îi trebuie: îi propui o oră, nu îl întrebi dacă vrea să se programeze.
 - Verifici orele libere cu unealta, nu din memorie. Nu inventezi niciodată o oră.
 - Prima dată propui două ore, cele mai apropiate.
 - Dacă pacientul spune că nu poate atunci, propui mai multe deodată — trei-patru zile diferite, nu încă două ore din aceeași zi. Cere din nou ore_libere pe mai multe zile dacă e nevoie.
-- Înainte de a programa ai nevoie de nume și număr de telefon. Dacă nu le ai, le ceri firesc, nu ca pe un formular.
+- Înainte de a programa ai nevoie de nume și număr de telefon. Întâi te uiți în toată conversația și în ce știe clinica despre el — dacă ți le-a dat deja, oricât de demult, le folosești. Ceri doar ce lipsește, firesc, nu ca pe un formular: "Bine, mâine la 17:00. Pe ce nume vă notez și la ce număr vă putem suna?"
 - ÎNAINTE de a chema "programeaza", reconfirmi într-o singură propoziție tot ce ai strâns: "Deci luni, 28 septembrie, la 17:00, la terapie — e bine?". Programezi abia după ce spune da.
 - După ce ai programat, confirmi scurt ziua și ora. Fără numele medicului. Poți adăuga că, dacă apare ceva, poate suna la 060 355 350.
 - Chemi "programeaza" O SINGURĂ DATĂ pentru o programare. Dacă ți-a răspuns ok, gata — mesajele care vin după ("da", "confirm", "mulțumesc") nu sunt o comandă nouă. Îi răspunzi pacientului, nu unealta.
@@ -197,6 +212,7 @@ CÂND TE ÎNTREABĂ DE PREȚ:
 - Dacă serviciul nu e în listă, sau nu are preț ("pret" lipsește), NU inventezi și nu dai un interval. Spui că întrebi la recepție și revii cu prețul. Nu pomenești de "sistem", "listă" sau "bază de date" — pacientul n-are treabă cu ele.
 - Dacă serviciul are "pretText" (de exemplu "1000-1200 lei"), spui exact intervalul acela. Nu alegi un capăt și nu faci media.
 - Unele intrări au "sePoatePrograma: false" — sunt etape dintr-un tratament: anestezia, amprentarea, o obturație provizorie. Le poți spune prețul, dar nu programezi la ele. Pentru programare alegi serviciul principal.
+- Dacă întrebarea se potrivește cu mai multe servicii din listă (de exemplu "implant", unde sunt mai multe variante), NU le înșiri. Spui într-o propoziție de la cât pornește — cel mai mic preț din listă pentru acel tip — și propui consultația, unde medicul spune exact: "Implantul cu coroană pornește de la 3800 lei, exact vă spune medicul la consultație. Am liber mâine la 17:00, vă convine?"
 - Dacă ai un preț exact, îl spui și te oprești. NU adăuga "suma finală se stabilește la consultație" — ai cifra, nu o submina. "Igienizarea costă 800 de lei." Punct.
 - Adaugi precizarea aceea DOAR când chiar nu știi suma: când prețul e un interval ("pretText"), sau când depinde de câți dinți are de tratat ori de ce vede medicul. Atunci spui pe scurt și de ce: "Depinde câte suprafețe are caria, între 1000 și 1500 de lei."
 - Nu compari prețuri cu alte clinici și nu promiți reduceri care nu sunt în listă.
@@ -217,6 +233,9 @@ OFERTE PE CARE LE POMENEȘTE PACIENTUL:
 - Nu îi spui "promoția a expirat", fiindcă nu ai de unde ști. Îi dai prețul actual, iar dacă insistă pe ofertă spui că verifici cu recepția și revii.
 
 CE S-A DISCUTAT ÎNAINTE:
+- Ții minte persoana. Ce ți-a spus mai demult — numele, numărul, ce îl doare, ce a întrebat, la ce s-a programat — e încă valabil. Nu-l pui să repete nimic din ce ți-a spus deja sau din ce știe clinica despre el.
+- Marcajele "— Mesajele de mai jos sunt din … —" îți spun când a fost scris ce urmează. "Mâine", "azi" și orele propuse în mesajele vechi NU mai sunt valabile: pentru o oră nouă ceri din nou ore_libere.
+- Dacă revine după o pauză de o zi sau mai mult, îl saluți din nou scurt și continui de unde ați rămas: "Bună ziua din nou! V-ați hotărât pentru implant?" Nu o iei de la capăt cu "Cu ce vă pot ajuta?".
 - Citești toată conversația de mai sus înainte să răspunzi. Dacă l-ai programat acum zece minute, ȘTII la ce și când. Nu întrebi din nou "ce procedură doriți?" — e cel mai enervant lucru pe care îl poți face.
 - "Pentru ce m-am programat?" sau "când am ora?" se răspunde cu unealta "programarile_lui", pe numărul lui de telefon. NICIODATĂ din memorie și niciodată ghicit. Dacă nu ai numărul, îl ceri scurt.
 - Dacă pacientul te corectează ("eu am fost programat la igienizare, nu?"), are dreptate până verifici. Verifici cu unealta și îi confirmi. Nu spui "scuze pentru confuzie, un moment" și apoi o iei de la capăt.
@@ -241,6 +260,16 @@ CÂND PROGRAMAREA NU REUȘEȘTE:
 - Dacă lipsește ceva, ceri lucrul care lipsește.
 - NU propui niciodată ore din memorie după un refuz. Ceri din nou "ore_libere" și spui doar ce ți-a întors. O oră inventată e un pacient care vine degeaba.
 - Doar dacă nu poți deloc, spui că revine cineva de la recepție.
+
+CÂND TREBUIE SĂ RĂSPUNDĂ UN OM DE LA RECEPȚIE:
+- Ori de câte ori îi spui pacientului că revine cineva, că întrebi la recepție, că îl întrebi pe medic sau că îl sună cineva, chemi în același pas "marcheaza_lead" cu status "urgent" și un motiv clar pentru recepție. Altfel promisiunea ta nu ajunge la nimeni și pacientul așteaptă degeaba.
+- Tot "urgent" când: cere explicit un om, un administrator sau medicul; e nemulțumit sau se plânge; descrie durere puternică, umflătură, sângerare sau un dinte rupt după o lovitură; vrea să anuleze sau să mute o programare pe care o are deja — pentru asta nu ai unealtă.
+- La durere puternică sau umflătură nu te oprești la marcaj: arăți scurt că înțelegi și îi propui cea mai apropiată oră din ore_libere. Recepția vede marcajul și îl poate primi mai devreme.
+  Exemplu: "Îmi pare rău, cu umflătură e bine să vă vadă medicul cât mai repede. Am liber mâine la 17:00 sau 18:00, iar o colegă de la recepție vă scrie dacă se găsește ceva mai devreme."
+- Cine spune că are deja o programare și vrea s-o mute sau s-o anuleze primește "urgent" chiar dacă "programarile_lui" nu găsește nimic — poate e pe alt număr. Îi spui că îi scrie o colegă de la recepție ca s-o mutați, și îl întrebi ce zi i-ar conveni.
+- "se_gandeste" când spune că se mai gândește, că vorbește acasă sau că revine el. "mai_tarziu" când vrea, dar mai încolo: după concediu, luna viitoare, când vine în țară. Le notezi o singură dată și îi răspunzi scurt, fără să insiști cu ore și fără să oferi "informații suplimentare": "Sigur. Când vă hotărâți, scrieți-ne aici și găsim o oră."
+- Nu marchezi nimic doar pentru că a pus o întrebare la care ai răspuns.
+- Nu-i spui niciodată pacientului că ai marcat, notat sau anunțat ceva "în sistem". Pentru el există doar "vă scrie o colegă de la recepție" sau "vă sună cineva de la recepție".
 
 CE NU FACI:
 - Nu dai sfaturi medicale și nu spui ce tratament îi trebuie. Pentru asta e consultația.
@@ -346,6 +375,27 @@ const TOOLS = [
           ora: {
             type: "integer",
             description: "Ora exact cum a venit din ore_libere, ca număr întreg.",
+          },
+        },
+      },
+    },
+  },
+  {
+    type: "function" as const,
+    function: {
+      name: "marcheaza_lead",
+      description:
+        "Notează în panoul clinicii unde e conversația. 'urgent' = trebuie să răspundă un om de la recepție (ai promis că revine cineva, cere un om, se plânge, durere puternică sau umflătură, întrebare la care nu ai răspuns). 'se_gandeste' = vrea să se mai gândească. 'mai_tarziu' = e interesat, dar mai încolo. Pacientul nu vede nimic din asta.",
+      parameters: {
+        type: "object",
+        additionalProperties: false,
+        required: ["status", "motiv"],
+        properties: {
+          status: { type: "string", enum: ["urgent", "se_gandeste", "mai_tarziu"] },
+          motiv: {
+            type: "string",
+            description:
+              "O propoziție pentru recepție: ce vrea pacientul și ce trebuie făcut. Ex: \"Întreabă dacă mai e valabilă oferta la albire — de confirmat prețul\", \"Durere puternică de ieri, umflătură — de văzut azi dacă se poate\".",
           },
         },
       },
@@ -770,15 +820,18 @@ async function findPatient(phoneRaw: string) {
  * are the difference between a booking somebody can be reached about and a
  * blocked hour nobody can trace.
  */
-async function book(args: {
-  nume?: string;
-  telefon?: string;
-  serviciuSlug?: string;
-  motiv?: string;
-  medicId?: string;
-  data?: string;
-  ora?: number;
-}) {
+async function book(
+  args: {
+    nume?: string;
+    telefon?: string;
+    serviciuSlug?: string;
+    motiv?: string;
+    medicId?: string;
+    data?: string;
+    ora?: number;
+  },
+  conversation: ChatConversation | null = null,
+) {
   const name = (args.nume ?? "").trim();
   if (name.length < 2) {
     return { ok: false, motiv: "Lipsește numele pacientului. Cere-l înainte." };
@@ -997,13 +1050,22 @@ async function book(args: {
     console.error("notifyCreated after chat booking failed:", error);
   }
 
-  // A lead that turned into a patient is no longer a lead.
-  await prisma.lead
-    .updateMany({
-      where: { phone, status: { notIn: ["convertit", "pierdut"] } },
-      data: { status: "convertit", patientId: patient.id, followUpAt: null },
-    })
-    .catch(() => {});
+  // The lead behind this chat is now booked for a consultation, and linked to
+  // the patient the booking created. "Pacient" comes later, from a person.
+  await markLeadBooked({
+    conversation,
+    phone,
+    name,
+    patientId: patient.id,
+    summary: `${new Intl.DateTimeFormat("ro-RO", {
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      hour: "2-digit",
+      minute: "2-digit",
+      timeZone: "Europe/Chisinau",
+    }).format(when)}, ${service.title}`,
+  });
 
   return {
     ok: true,
@@ -1042,9 +1104,38 @@ async function reportFailedBooking(
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function runTool(name: string, args: any): Promise<unknown> {
+/** What a tool may need to know about the chat it is running in. */
+interface TurnContext {
+  conversation: ChatConversation | null;
+  knownPatient: { name: string; phone: string } | null;
+}
+
+async function runTool(
+  name: string,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  args: any,
+  context: TurnContext,
+): Promise<unknown> {
   switch (name) {
+    case "marcheaza_lead": {
+      const status = String(args?.status ?? "") as ChatStatus;
+      if (!CHAT_STATUSES.includes(status)) {
+        return { ok: false, motiv: `Status necunoscut. Doar: ${CHAT_STATUSES.join(", ")}.` };
+      }
+      // Without a conversation (a test, the Telegram tools) there is no lead.
+      if (!context.conversation) return { ok: true };
+      const result = await setLeadFromChat(
+        context.conversation,
+        status,
+        String(args?.motiv ?? "").trim().slice(0, 500),
+        context.knownPatient,
+      );
+      return {
+        ...result,
+        instructiune:
+          "Gata. Acum scrie răspunsul pentru pacient ca și cum n-ai marcat nimic: fără \"am notat\", fără \"urgent\", fără \"sistem\". Dacă e cazul, spui doar că îi scrie o colegă de la recepție.",
+      };
+    }
     case "servicii":
       return listServices();
     case "ore_libere":
@@ -1054,7 +1145,7 @@ async function runTool(name: string, args: any): Promise<unknown> {
     case "programarile_lui":
       return patientAppointments(String(args?.telefon ?? ""));
     case "programeaza": {
-      const result = await book(args ?? {});
+      const result = await book(args ?? {}, context.conversation);
       if (!result.ok) {
         console.warn("Assistant booking refused:", JSON.stringify({ args, result }));
         // A refused booking is a patient who wanted an hour and did not get
@@ -1072,6 +1163,154 @@ async function runTool(name: string, args: any): Promise<unknown> {
 export interface AssistantTurn {
   role: "user" | "assistant";
   content: string;
+  /** When it was written — tells yesterday's "mâine" from today's. */
+  at?: Date | string;
+}
+
+// ── Memory ──────────────────────────────────────────────────────────────────
+//
+// Two kinds. The conversation itself, read back further than before and with
+// the date wherever it went quiet for hours — so a patient returning after two
+// weeks is greeted again, and "mâine" from back then is not taken as tomorrow.
+// And what the clinic already holds about the person — name and number given
+// weeks ago, what they asked about, their appointments, reception's notes —
+// which outlives any chat window and is the reason nobody gets asked twice.
+
+const HISTORY_MAX_TURNS = 60;
+const HISTORY_MAX_CHARS = 9000;
+/** A silence this long between two messages is worth pointing out. */
+const GAP_MS = 6 * 60 * 60_000;
+
+const whenLabel = (d: Date) =>
+  new Intl.DateTimeFormat("ro-RO", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Chisinau",
+  }).format(d);
+
+/** The most recent turns that fit, with a dated note at every long silence. */
+function historyMessages(history: AssistantTurn[]) {
+  const kept: AssistantTurn[] = [];
+  let chars = 0;
+  for (let i = history.length - 1; i >= 0 && kept.length < HISTORY_MAX_TURNS; i--) {
+    chars += history[i].content.length;
+    // Never fewer than the last dozen, however long they are.
+    if (chars > HISTORY_MAX_CHARS && kept.length >= 12) break;
+    kept.unshift(history[i]);
+  }
+
+  const out: { role: string; content: string }[] = [];
+  if (kept.length < history.length) {
+    out.push({
+      role: "system",
+      content: "Conversația e mai lungă; cele mai vechi mesaje nu sunt arătate. Ce știe clinica despre persoană e mai sus.",
+    });
+  }
+
+  let previous: number | null = null;
+  for (const turn of kept) {
+    const at = turn.at ? new Date(turn.at).getTime() : NaN;
+    if (!Number.isNaN(at)) {
+      const gap = previous === null ? Date.now() - at : at - previous;
+      if (gap > GAP_MS) {
+        out.push({ role: "system", content: `— Mesajele de mai jos sunt din ${whenLabel(new Date(at))}. —` });
+      }
+      previous = at;
+    }
+    out.push({ role: turn.role, content: turn.content });
+  }
+  return out;
+}
+
+const APPOINTMENT_LABEL: Record<string, string> = {
+  pending: "neconfirmată încă",
+  confirmed: "confirmată",
+  completed: "a venit",
+  cancelled: "anulată",
+  noshow: "nu a venit",
+};
+
+/**
+ * What the clinic already knows about the person in this chat, as a note for
+ * the model — and the name and number, when they are known, so a booking can
+ * go ahead without asking for them again.
+ */
+async function personMemory(
+  conversation: ChatConversation | null,
+  knownPatient: { name: string; phone: string } | null,
+): Promise<{ note: string | null; contact: { name: string; phone: string } | null }> {
+  try {
+    const lead = conversation
+      ? await prisma.lead.findUnique({
+          where: { sourceKey: `${conversation.channel}:${conversation.handle}` },
+          include: { leadNotes: { orderBy: { createdAt: "desc" }, take: 6 } },
+        })
+      : null;
+
+    const patient = lead?.patientId
+      ? await prisma.patient.findUnique({ where: { id: lead.patientId } })
+      : knownPatient || lead?.phone
+        ? await prisma.patient.findFirst({ where: { phone: knownPatient?.phone ?? lead?.phone ?? "" } })
+        : null;
+
+    const name = patient?.name ?? knownPatient?.name ?? lead?.name ?? null;
+    const phone = patient?.phone ?? knownPatient?.phone ?? lead?.phone ?? null;
+    const contact = name && phone ? { name, phone } : null;
+
+    const now = new Date();
+    const [upcoming, past] = patient
+      ? await Promise.all([
+          prisma.appointment.findMany({
+            where: { patientId: patient.id, dateTime: { gte: now }, status: { notIn: ["cancelled", "noshow"] } },
+            orderBy: { dateTime: "asc" },
+            take: 3,
+            include: { service: { select: { title: true } } },
+          }),
+          prisma.appointment.findMany({
+            where: { patientId: patient.id, dateTime: { lt: now } },
+            orderBy: { dateTime: "desc" },
+            take: 3,
+            include: { service: { select: { title: true } } },
+          }),
+        ])
+      : [[], []];
+
+    const lines: string[] = [];
+    if (name) lines.push(`- Nume: ${name}`);
+    if (phone) lines.push(`- Telefon: ${phone}`);
+    lines.push(`- E deja pacient al clinicii: ${patient ? "da" : "nu"}`);
+    if (lead?.interestedIn) lines.push(`- A întrebat de: ${lead.interestedIn}`);
+    if (lead?.firstMessage) lines.push(`- Primul lui mesaj: "${lead.firstMessage.slice(0, 200)}"`);
+    if (lead) lines.push(`- Unde e acum, pentru recepție: ${getStatus(lead.status).label}`);
+    for (const a of upcoming) {
+      lines.push(`- Programare viitoare: ${whenLabel(a.dateTime)}, ${a.service.title} (${APPOINTMENT_LABEL[a.status] ?? a.status})`);
+    }
+    for (const a of past) {
+      lines.push(`- Vizită anterioară: ${whenLabel(a.dateTime)}, ${a.service.title} (${APPOINTMENT_LABEL[a.status] ?? a.status})`);
+    }
+    for (const n of lead?.leadNotes ?? []) {
+      lines.push(`- Notă (${whenLabel(n.createdAt)}${n.authorName ? `, ${n.authorName}` : ""}): ${n.content.slice(0, 200)}`);
+    }
+    if (lead?.note) lines.push(`- Notă de la recepție: ${lead.note.slice(0, 200)}`);
+
+    // Nothing beyond "not a patient" is not worth a message.
+    if (lines.length <= 1) return { note: null, contact };
+
+    return {
+      note: [
+        "CE ȘTIE CLINICA DESPRE ACEASTĂ PERSOANĂ — din fișa ei, nu din chat. Folosești firesc, ca o recepționeră care își amintește de el. Nu spui că ai o fișă, note sau un sistem și nu citești lista.",
+        ...lines,
+        "Programările de aici sunt adevărul; dacă întreabă de ele, verifici oricum cu programarile_lui.",
+      ].join("\n"),
+      contact,
+    };
+  } catch (error) {
+    console.warn("personMemory failed:", error);
+    return { note: null, contact: knownPatient };
+  }
 }
 
 /**
@@ -1082,8 +1321,26 @@ export interface AssistantTurn {
 export async function assistantReply(
   history: AssistantTurn[],
   knownPatient?: { name: string; phone: string } | null,
+  /** The chat this is — lets the assistant move the lead behind it. */
+  conversation?: ChatConversation | null,
 ): Promise<string | null> {
   if (!isAssistantConfigured()) return null;
+
+  const memory = await personMemory(conversation ?? null, knownPatient ?? null);
+  const contact = memory.contact;
+  // A number typed in the chat, however long ago — found by code rather than
+  // left to the model, which asked for one given sixteen messages earlier.
+  const typedPhone = contact
+    ? null
+    : (history
+        .filter((t) => t.role === "user")
+        .map((t) => extractPhone(t.content))
+        .filter(Boolean)
+        .pop() ?? null);
+  const context: TurnContext = {
+    conversation: conversation ?? null,
+    knownPatient: contact,
+  };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const messages: any[] = [
@@ -1100,11 +1357,14 @@ export async function assistantReply(
     },
     {
       role: "system",
-      content: knownPatient
-        ? `Pacientul e deja în sistem: ${knownPatient.name}, ${knownPatient.phone}. Nu-i mai cere numele sau numărul.`
-        : "Pacientul nu e în sistem. Ai nevoie de nume și număr de telefon înainte de a programa.",
+      content: contact
+        ? `Ai deja numele și numărul lui: ${contact.name}, ${contact.phone}. Nu i le mai ceri — la programare le folosești pe acestea, iar dacă vrea alt număr ți-l spune el.`
+        : typedPhone
+          ? `În conversație ți-a scris deja numărul: ${typedPhone}. Nu i-l mai ceri. Caută și numele în mesajele lui de mai sus — dacă și l-a spus, îl folosești; ceri doar ce lipsește.`
+          : "Nu ai încă numele și numărul lui. Ai nevoie de amândouă înainte de a programa. Dacă și le-a spus deja în conversație, le folosești și nu le mai ceri.",
     },
-    ...history.slice(-12),
+    ...(memory.note ? [{ role: "system", content: memory.note }] : []),
+    ...historyMessages(history),
   ];
 
   for (let round = 0; round < 6; round++) {
@@ -1129,6 +1389,18 @@ export async function assistantReply(
     const calls = message.tool_calls ?? [];
     if (calls.length === 0) {
       const text = (message.content ?? "").trim();
+      // After a tool call the model sometimes ends the turn without a word —
+      // seen after flagging a conversation urgent, which left a patient who had
+      // asked for a person with no answer at all. It is asked once more.
+      if (!text && round < 5) {
+        messages.push({
+          role: "system",
+          content: "Nu ai scris niciun mesaj. Scrie acum răspunsul pentru pacient, scurt, în limba lui.",
+        });
+        continue;
+      }
+      // Answered: a lead that was waiting for a first reply has had one.
+      if (text && context.conversation) await markLeadContacted(context.conversation);
       return text || null;
     }
 
@@ -1139,6 +1411,7 @@ export async function assistantReply(
         result = await runTool(
           call.function.name,
           JSON.parse(call.function.arguments || "{}"),
+          context,
         );
       } catch (error) {
         console.error(`Assistant tool ${call.function.name} threw:`, error);
