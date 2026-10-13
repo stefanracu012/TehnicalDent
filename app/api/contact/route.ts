@@ -113,6 +113,9 @@ export async function POST(request: Request) {
       phone: normalisePhone(body.phone) ?? body.phone,
       email: body.email || null,
       message: body.message,
+      // The form's service field. It used to be visible only on the old
+      // contact-messages page, which the lead list replaced.
+      interest: body.service || null,
     });
 
     // Send Telegram notification

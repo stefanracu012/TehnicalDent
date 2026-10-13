@@ -43,8 +43,13 @@ const adminLinks = [
     href: "/admin/blog",
   },
   {
+    title: "Leaduri",
+    description: "Oamenii care au scris și încă nu sunt pacienți, cu status și follow-up",
+    href: "/admin/leads",
+  },
+  {
     title: "Mesaje",
-    description: "Vezi mesajele primite prin formularul de contact",
+    description: "Messenger, Instagram și WhatsApp într-un singur inbox",
     href: "/admin/mesaje",
   },
   {

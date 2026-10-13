@@ -39,7 +39,7 @@ export const PERMISSIONS = [
     label: "Leaduri",
     path: "/admin/leads",
     actions: ["view", "create", "edit", "delete"],
-    actionLabels: { create: "Transformă în pacient" },
+    actionLabels: { create: "Adaugă și transformă în pacient" },
   },
   {
     key: "pacienti",
@@ -84,30 +84,13 @@ export const PERMISSIONS = [
     actions: ["view", "create", "edit", "delete"],
   },
   {
-    key: "mesaje",
-    label: "Mesaje site",
+    // Messenger, Instagram and WhatsApp share one inbox at /admin/mesaje.
+    // Named "inbox" rather than reusing "mesaje": that key used to mean the
+    // contact-form messages, and an account holding it must not quietly start
+    // reading patients' chats.
+    key: "inbox",
+    label: "Mesaje (Messenger, Instagram, WhatsApp)",
     path: "/admin/mesaje",
-    actions: ["view", "edit", "delete"],
-    actionLabels: { edit: "Marchează citit" },
-  },
-  {
-    key: "whatsapp",
-    label: "WhatsApp",
-    path: "/admin/whatsapp",
-    actions: ["view", "create"],
-    actionLabels: { create: "Trimite mesaje" },
-  },
-  {
-    key: "messenger",
-    label: "Messenger",
-    path: "/admin/messenger",
-    actions: ["view", "create"],
-    actionLabels: { create: "Trimite mesaje" },
-  },
-  {
-    key: "instagram",
-    label: "Instagram",
-    path: "/admin/instagram",
     actions: ["view", "create"],
     actionLabels: { create: "Trimite mesaje" },
   },
@@ -194,8 +177,29 @@ export function grantsPermission(
   if (perms.includes(SUPER_ADMIN)) return true;
   if (perms.includes(key)) return true;
   // Pre-split keys granted the whole page, so honour them for every action.
-  return perms.includes(key.split(":")[0]);
+  if (perms.includes(key.split(":")[0])) return true;
+  // Keys of pages that were folded into another one.
+  return (LEGACY_KEYS[key] ?? []).some((legacy) => perms.includes(legacy));
 }
+
+/**
+ * The WhatsApp, Messenger and Instagram inboxes became one page. An account
+ * that could use any of them keeps the new inbox, view and send alike, until
+ * it is next saved from the Utilizatori page. "mesaje" (contact-form messages)
+ * is deliberately absent — see the "inbox" entry above.
+ */
+const LEGACY_KEYS: Record<string, readonly string[]> = {
+  "inbox:view": [
+    "whatsapp", "whatsapp:view",
+    "messenger", "messenger:view",
+    "instagram", "instagram:view",
+  ],
+  "inbox:create": [
+    "whatsapp", "whatsapp:create",
+    "messenger", "messenger:create",
+    "instagram", "instagram:create",
+  ],
+};
 
 /**
  * Which permission a path needs. Longest path wins so /admin/programari is
@@ -225,8 +229,8 @@ const API_PERMISSION_MAP: Record<string, string> = {
   testimonials: "testimoniale",
   gallery: "galerie",
   blog: "blog",
-  messages: "mesaje",
-  whatsapp: "whatsapp",
+  messages: "inbox",
+  "lead-notes": "leads",
   campaigns: "campanii",
   ads: "reclame",
   assistant: "asistent",
@@ -254,6 +258,8 @@ const METHOD_ACTION_OVERRIDES: Record<string, Partial<Record<string, PermissionA
   ads: { POST: "edit" },
   // Adding a conversation to the allowlist is configuration, not creation.
   assistant: { POST: "edit", DELETE: "edit" },
+  // A note is an edit to the lead, not a new lead.
+  "lead-notes": { POST: "edit", DELETE: "edit" },
 };
 
 export function permissionForApiPath(pathname: string, method: string): string | null {
@@ -264,12 +270,6 @@ export function permissionForApiPath(pathname: string, method: string): string |
   const upper = method.toUpperCase();
   const action =
     METHOD_ACTION_OVERRIDES[segment]?.[upper] ?? METHOD_ACTIONS[upper] ?? "view";
-
-  // /api/admin/social/messenger, /api/admin/social/instagram
-  if (segment === "social") {
-    const channel = rest.split("/")[1];
-    return permissionKey(channel === "instagram" ? "instagram" : "messenger", action);
-  }
 
   const page = API_PERMISSION_MAP[segment];
   return page ? permissionKey(page, action) : null;

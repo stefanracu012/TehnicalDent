@@ -47,6 +47,8 @@ interface CaptureInput {
   email?: string | null;
   /** Message text, scanned for a phone number when none was supplied. */
   message?: string | null;
+  /** What they asked about, when the channel says so (the form has a service field). */
+  interest?: string | null;
 }
 
 /**
@@ -76,6 +78,7 @@ export async function captureLead(input: CaptureInput): Promise<void> {
           phone,
           email: input.email ?? null,
           firstMessage: input.message?.slice(0, 500) ?? null,
+          interestedIn: input.interest ?? null,
         },
       });
       return;
@@ -85,6 +88,7 @@ export async function captureLead(input: CaptureInput): Promise<void> {
     if (!existing.name && input.name) patch.name = input.name;
     if (!existing.phone && phone) patch.phone = phone;
     if (!existing.email && input.email) patch.email = input.email;
+    if (!existing.interestedIn && input.interest) patch.interestedIn = input.interest;
 
     if (Object.keys(patch).length > 0) {
       await prisma.lead.update({ where: { sourceKey }, data: patch });
@@ -92,4 +96,65 @@ export async function captureLead(input: CaptureInput): Promise<void> {
   } catch (error) {
     console.error("captureLead failed:", error);
   }
+}
+
+/** A refusal that carries the HTTP status the route should answer with. */
+export class LeadError extends Error {
+  constructor(
+    message: string,
+    public status: number,
+  ) {
+    super(message);
+  }
+}
+
+/**
+ * Turns a lead into a patient, carrying across what is already known.
+ *
+ * A patient needs a phone, so a lead without one cannot be converted — that is
+ * the missing piece to go and ask for, not something to invent a placeholder
+ * for. An existing patient on the same number is linked rather than duplicated.
+ *
+ * Shared by the "Creează pacient" button and by moving a lead to the Pacient
+ * status, so the two can't disagree about what a converted lead looks like.
+ */
+export async function convertLeadToPatient(leadId: string) {
+  const lead = await prisma.lead.findUnique({ where: { id: leadId } });
+  if (!lead) throw new LeadError("Leadul nu există.", 404);
+  if (lead.patientId) throw new LeadError("Leadul are deja un pacient.", 409);
+  if (!lead.phone) {
+    throw new LeadError(
+      "Adaugă un număr de telefon înainte de a crea pacientul.",
+      400,
+    );
+  }
+
+  const existing = await prisma.patient.findFirst({ where: { phone: lead.phone } });
+
+  const patient =
+    existing ??
+    (await prisma.patient.create({
+      data: {
+        name: lead.name || "Pacient fără nume",
+        phone: lead.phone,
+        email: lead.email,
+        // The first message is the closest thing to a reason for the visit,
+        // so it travels with them instead of being left behind in a chat.
+        notes:
+          [
+            lead.note,
+            lead.interestedIn && `Interesat de: ${lead.interestedIn}`,
+            lead.firstMessage && `Primul mesaj: ${lead.firstMessage}`,
+          ]
+            .filter(Boolean)
+            .join("\n\n") || null,
+      },
+    }));
+
+  await prisma.lead.update({
+    where: { id: leadId },
+    data: { patientId: patient.id, status: "convertit", followUpAt: null },
+  });
+
+  return { patient, reused: Boolean(existing) };
 }

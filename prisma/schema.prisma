@@ -19,6 +19,20 @@ model CronState {
   lastRunDate String // "YYYY-MM-DD" in Europe/Chisinau
 }
 
+// Small internal state for the admin inbox: which conversations the team has
+// opened, and the last conversation list read from Meta (so a cold start opens
+// on something instead of waiting ten seconds).
+//
+// Deliberately not SiteSettings: that table is served whole by the public
+// /api/public/settings endpoint, and this one holds patients' names and the
+// start of their messages.
+model InboxState {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  key       String   @unique
+  value     String
+  updatedAt DateTime @updatedAt
+}
+
 // Tracks the Telegram messages currently posted to the "Azi"/"Mâine" forum
 // topics, so a refresh can delete the old set before posting the new one
 // instead of the topic accumulating a duplicate list on every change.
@@ -362,12 +376,28 @@ enum LeadSource {
   whatsapp
   formular
   manual
+  telefon
+  recomandare
+  la_clinica
+  alta
 }
 
+// The first, second-to-last and last three keep the values rows were saved
+// with — only their labels changed (programat = "Programat consultație",
+// convertit = "Pacient"). New values are additions, so nothing stored needs
+// migrating. The labels live in lib/leads-config.ts.
 enum LeadStatus {
   nou
+  fara_raspuns
   contactat
+  follow_up_1
+  follow_up_2
   programat
+  a_venit
+  plan_tratament
+  se_gandeste
+  mai_tarziu
+  in_tratament
   convertit
   pierdut
 }
@@ -393,15 +423,25 @@ model Lead {
    * duplicate beside it.
    */
   sourceKey    String  @unique
+  /** An @handle, a number, who recommended — what it means depends on source. */
+  sourceDetail String?
   firstMessage String?
+  /** What they want: a service, or the reason they wrote. */
+  interestedIn String?
 
   status LeadStatus @default(nou)
+  /** The single line that predates LeadNote. New notes go in leadNotes. */
   note   String?
   /** When to chase. The list shows overdue ones first. */
   followUpAt DateTime?
 
+  /** AdminUser who is chasing it. */
+  assignedToId String? @db.ObjectId
+
   patientId String? @db.ObjectId
   patient   Patient? @relation(fields: [patientId], references: [id], onDelete: SetNull)
+
+  leadNotes LeadNote[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -409,6 +449,20 @@ model Lead {
   @@index([status])
   @@index([followUpAt])
   @@index([phone])
+  @@index([assignedToId])
+}
+
+/** One dated entry in a lead's history — what was said, what comes next. */
+model LeadNote {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  leadId     String   @db.ObjectId
+  content    String
+  authorName String?
+  createdAt  DateTime @default(now())
+
+  lead Lead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  @@index([leadId])
 }
 
 model Patient {
