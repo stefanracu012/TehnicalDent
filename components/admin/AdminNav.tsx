@@ -322,18 +322,54 @@ export default function AdminNav() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [permissions, setPermissions] = useState<string[] | null>(null);
+  const [menuFailed, setMenuFailed] = useState(false);
+  const [retry, setRetry] = useState(0);
 
+  // Asked again on every navigation, not once on mount. The nav lives in the
+  // layout, so it survives going from the login page to the dashboard: asked
+  // only on mount, it asked while signed out, got a 401, and sat on "Se
+  // încarcă meniul..." until the page was reloaded. A failed call is retried
+  // and, whatever happens, never throws away a list that was already on screen.
   useEffect(() => {
-    fetch("/api/auth/check")
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => {
+    if (pathname === "/admin/login") return;
+
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    const load = async (attempt: number) => {
+      try {
+        const res = await fetch("/api/auth/check", { cache: "no-store" });
+        if (cancelled) return;
+
+        if (res.status === 401) {
+          // Genuinely signed out; the middleware sends the page to the login.
+          setPermissions(null);
+          return;
+        }
+        if (!res.ok) throw new Error(`auth/check ${res.status}`);
+
+        const data = await res.json();
         // A session predating per-page permissions answers without the field;
         // treat that as "unknown" rather than "none", so the nav explains
         // itself instead of rendering an empty bar.
-        setPermissions(Array.isArray(data?.permissions) ? data.permissions : null);
-      })
-      .catch(() => setPermissions(null));
-  }, []);
+        if (Array.isArray(data?.permissions)) setPermissions(data.permissions);
+        setMenuFailed(false);
+      } catch {
+        if (cancelled) return;
+        if (attempt < 4) {
+          timer = setTimeout(() => load(attempt + 1), attempt * 1000);
+        } else {
+          setMenuFailed(true);
+        }
+      }
+    };
+
+    load(1);
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
+  }, [pathname, retry]);
 
   // Until permissions load, show nothing rather than flashing links the
   // user may not be allowed to open.
@@ -348,9 +384,27 @@ export default function AdminNav() {
   const emptyNavNotice =
     navLinks.length === 0 ? (
       <p className="px-3 py-2 text-xs leading-relaxed text-white/50">
-        {permissions === null
-          ? "Se încarcă meniul..."
-          : "Nicio pagină disponibilă pentru contul dumneavoastră. Deconectați-vă și autentificați-vă din nou, iar dacă problema persistă cereți permisiuni administratorului."}
+        {permissions === null ? (
+          menuFailed ? (
+            <>
+              Meniul nu s-a încărcat.{" "}
+              <button
+                type="button"
+                onClick={() => {
+                  setMenuFailed(false);
+                  setRetry((n) => n + 1);
+                }}
+                className="underline text-white/80 hover:text-white"
+              >
+                Reîncearcă
+              </button>
+            </>
+          ) : (
+            "Se încarcă meniul..."
+          )
+        ) : (
+          "Nicio pagină disponibilă pentru contul dumneavoastră. Deconectați-vă și autentificați-vă din nou, iar dacă problema persistă cereți permisiuni administratorului."
+        )}
       </p>
     ) : null;
 

@@ -6,8 +6,8 @@ import { LEAD_SOURCES, LEAD_STATUSES, getSource } from "@/lib/leads-config";
 import type { LeadItem, StaffMember } from "./lead-types";
 
 const input =
-  "w-full border border-border bg-background px-3 py-2 text-sm text-foreground focus:border-foreground focus:outline-none";
-const label = "block text-xs font-semibold text-muted-foreground mb-1";
+  "w-full border border-gray-300 rounded-lg bg-white px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none";
+const label = "block text-xs font-semibold text-gray-500 mb-1";
 
 /** The day part of a stored date, for <input type="date">. */
 const dayInput = (iso: string | null | undefined) => (iso ? iso.slice(0, 10) : "");
@@ -127,7 +127,7 @@ export default function LeadForm({
   return (
     <form onSubmit={submit} noValidate className="space-y-5">
       <section className="space-y-3">
-        <h2 className="text-sm font-semibold text-foreground">Persoana de contact</h2>
+        <h2 className="text-sm font-semibold text-gray-900">Persoana de contact</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label className={label}>Nume</label>
@@ -161,16 +161,16 @@ export default function LeadForm({
           </div>
         </div>
         {duplicate && (
-          <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 px-3 py-2">
+          <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
             {duplicate}
           </p>
         )}
       </section>
 
-      <section className="space-y-3 pt-4 border-t border-border">
-        <h2 className="text-sm font-semibold text-foreground">De unde a venit</h2>
+      <section className="space-y-3 pt-4 border-t border-gray-100">
+        <h2 className="text-sm font-semibold text-gray-900">De unde a venit</h2>
         {sourceLocked ? (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-gray-500">
             {source.emoji} {source.label} — leadul a venit singur din acest canal și
             rămâne legat de conversația lui.
           </p>
@@ -181,10 +181,10 @@ export default function LeadForm({
                 key={s.value}
                 type="button"
                 onClick={() => set("source", s.value)}
-                className={`px-3 py-1.5 text-xs font-semibold border transition-colors ${
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
                   form.source === s.value
-                    ? "bg-foreground text-white border-foreground"
-                    : "bg-background text-muted-foreground border-border hover:text-foreground"
+                    ? "bg-indigo-600 text-white border-indigo-400"
+                    : "bg-white text-gray-500 border-gray-200 hover:text-gray-900"
                 }`}
               >
                 {s.emoji} {s.label}
@@ -203,8 +203,8 @@ export default function LeadForm({
         </div>
       </section>
 
-      <section className="space-y-3 pt-4 border-t border-border">
-        <h2 className="text-sm font-semibold text-foreground">Stadiu</h2>
+      <section className="space-y-3 pt-4 border-t border-gray-100">
+        <h2 className="text-sm font-semibold text-gray-900">Stadiu</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label className={label}>Status</label>
@@ -267,21 +267,21 @@ export default function LeadForm({
       </section>
 
       {error && (
-        <p className="text-sm text-red-700 bg-red-50 border border-red-200 px-3 py-2">{error}</p>
+        <p className="text-sm text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">{error}</p>
       )}
 
       <div className="flex gap-3 pt-1">
         <button
           type="submit"
           disabled={saving}
-          className="bg-foreground text-white text-sm font-semibold px-5 py-2.5 hover:bg-foreground/90 transition-colors disabled:opacity-50"
+          className="bg-indigo-600 text-white text-sm font-semibold px-5 py-2.5 hover:bg-indigo-700 transition-colors disabled:opacity-50"
         >
           {saving ? "Se salvează…" : lead ? "Salvează" : "Adaugă lead"}
         </button>
         <button
           type="button"
           onClick={onCancel}
-          className="border border-border text-sm font-semibold px-5 py-2.5 text-muted-foreground hover:text-foreground transition-colors"
+          className="border border-gray-200 rounded-lg text-sm font-semibold px-5 py-2.5 text-gray-500 hover:text-gray-900 transition-colors"
         >
           Anulează
         </button>

@@ -29,7 +29,7 @@ const dayInput = (iso: string | null) => (iso ? iso.slice(0, 10) : "");
 const inDays = (n: number) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
 
 const selectClass =
-  "border border-border bg-background px-2 py-1.5 text-sm text-foreground focus:border-foreground focus:outline-none";
+  "border border-gray-300 rounded-lg bg-white px-2 py-1.5 text-sm text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none";
 
 export default function LeadDetailPage({
   params,
@@ -149,14 +149,14 @@ export default function LeadDetailPage({
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-muted p-8 text-sm text-muted-foreground">Se încarcă…</div>
+      <div className="min-h-full bg-gray-50 p-8 text-sm text-gray-500">Se încarcă…</div>
     );
   }
   if (!lead) {
     return (
-      <div className="min-h-screen bg-muted p-8">
+      <div className="min-h-full bg-gray-50 p-8">
         <p className="text-sm text-red-700 mb-4">{error || "Leadul nu există."}</p>
-        <Link href="/admin/leads" className="text-sm text-accent hover:underline">
+        <Link href="/admin/leads" className="text-sm text-indigo-600 hover:underline">
           ← Înapoi la leaduri
         </Link>
       </div>
@@ -169,18 +169,18 @@ export default function LeadDetailPage({
   const wa = whatsAppLink(lead.phone);
 
   return (
-    <div className="min-h-screen bg-muted">
-      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
-        <Link href="/admin/leads" className="text-sm text-muted-foreground hover:text-foreground">
+    <div className="min-h-full bg-gray-50">
+      <div className="max-w-6xl p-3 sm:p-4 lg:p-5">
+        <Link href="/admin/leads" className="text-sm text-gray-500 hover:text-gray-900">
           ← Leaduri
         </Link>
 
         <header className="flex flex-wrap items-start justify-between gap-4 mt-3 mb-6">
           <div className="min-w-0">
-            <h1 className="font-serif text-2xl sm:text-3xl font-medium text-foreground truncate">
+            <h1 className="text-xl font-bold text-gray-900 truncate">
               {lead.name || lead.phone || "Fără nume"}
             </h1>
-            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-500">
               <span className={`px-2 py-0.5 font-semibold ${source.className}`}>
                 {source.emoji} {source.label}
               </span>
@@ -197,13 +197,13 @@ export default function LeadDetailPage({
           <div className="flex gap-2">
             <button
               onClick={() => setEditing((v) => !v)}
-              className="border border-border bg-background text-sm font-semibold px-4 py-2 hover:border-foreground"
+              className="border border-gray-300 rounded-lg bg-white text-sm font-semibold px-4 py-2 hover:border-indigo-400"
             >
               {editing ? "Anulează" : "Editează"}
             </button>
             <button
               onClick={remove}
-              className="border border-red-200 text-red-600 text-sm font-semibold px-4 py-2 hover:bg-red-50"
+              className="rounded-lg border border-red-200 text-red-600 text-sm font-semibold px-4 py-2 hover:bg-red-50"
             >
               Șterge
             </button>
@@ -211,13 +211,13 @@ export default function LeadDetailPage({
         </header>
 
         {error && (
-          <div className="border border-red-200 bg-red-50 text-red-700 px-4 py-3 text-sm mb-4">
+          <div className="border border-red-200 bg-red-50 text-red-700 rounded-lg px-4 py-3 text-sm mb-4">
             {error}
           </div>
         )}
 
         {editing ? (
-          <div className="bg-background border border-border p-5 sm:p-8">
+          <div className="bg-white rounded-lg border border-gray-200 p-5 sm:p-8">
             <LeadForm
               lead={lead}
               staff={lead.staff}
@@ -231,13 +231,13 @@ export default function LeadDetailPage({
         ) : (
           <div className="grid lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
-              <section className="bg-background border border-border p-5">
-                <h2 className="font-semibold text-foreground mb-4">Date de contact</h2>
+              <section className="bg-white rounded-lg border border-gray-200 p-5">
+                <h2 className="font-semibold text-gray-900 mb-4">Date de contact</h2>
                 <div className="grid sm:grid-cols-2 gap-4 text-sm">
                   <Field label="Nume">{lead.name || "—"}</Field>
                   <Field label="Telefon">
                     {lead.phone ? (
-                      <a href={`tel:${lead.phone}`} className="text-accent hover:underline">
+                      <a href={`tel:${lead.phone}`} className="text-indigo-600 hover:underline">
                         {lead.phone}
                       </a>
                     ) : (
@@ -246,7 +246,7 @@ export default function LeadDetailPage({
                   </Field>
                   {lead.email && (
                     <Field label="Email">
-                      <a href={`mailto:${lead.email}`} className="text-accent hover:underline break-all">
+                      <a href={`mailto:${lead.email}`} className="text-indigo-600 hover:underline break-all">
                         {lead.email}
                       </a>
                     </Field>
@@ -260,21 +260,21 @@ export default function LeadDetailPage({
               </section>
 
               {lead.firstMessage && (
-                <section className="bg-background border border-border p-5">
-                  <h2 className="font-semibold text-foreground mb-3">Mesaj / context</h2>
-                  <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                <section className="bg-white rounded-lg border border-gray-200 p-5">
+                  <h2 className="font-semibold text-gray-900 mb-3">Mesaj / context</h2>
+                  <p className="text-sm text-gray-500 whitespace-pre-wrap leading-relaxed">
                     {lead.firstMessage}
                   </p>
                 </section>
               )}
 
-              <section className="bg-background border border-border p-5">
-                <h2 className="font-semibold text-foreground mb-3">Acțiuni rapide</h2>
+              <section className="bg-white rounded-lg border border-gray-200 p-5">
+                <h2 className="font-semibold text-gray-900 mb-3">Acțiuni rapide</h2>
                 <div className="flex flex-wrap gap-2 text-sm font-semibold">
                   {lead.phone && (
                     <a
                       href={`tel:${lead.phone}`}
-                      className="px-4 py-2 bg-foreground text-white hover:bg-foreground/90"
+                      className="px-4 py-2 bg-indigo-600 text-white hover:bg-indigo-700"
                     >
                       📞 Sună
                     </a>
@@ -284,7 +284,7 @@ export default function LeadDetailPage({
                       href={wa}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-4 py-2 border border-green-300 text-green-700 hover:bg-green-50"
+                      className="px-4 py-2 rounded-lg border border-green-300 text-green-700 hover:bg-green-50"
                     >
                       🟢 WhatsApp
                     </a>
@@ -292,7 +292,7 @@ export default function LeadDetailPage({
                   {lead.email && (
                     <a
                       href={`mailto:${lead.email}`}
-                      className="px-4 py-2 border border-border hover:border-foreground"
+                      className="px-4 py-2 border border-gray-200 rounded-lg hover:border-indigo-400"
                     >
                       ✉️ Email
                     </a>
@@ -300,7 +300,7 @@ export default function LeadDetailPage({
                   {lead.conversation && (
                     <Link
                       href={conversationHref(lead.conversation)}
-                      className="px-4 py-2 border border-border hover:border-foreground"
+                      className="px-4 py-2 border border-gray-200 rounded-lg hover:border-indigo-400"
                     >
                       💬 Vezi conversația
                     </Link>
@@ -308,7 +308,7 @@ export default function LeadDetailPage({
                   {lead.patient ? (
                     <Link
                       href="/admin/pacienti"
-                      className="px-4 py-2 border border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                      className="px-4 py-2 rounded-lg border border-emerald-300 text-emerald-700 hover:bg-emerald-50"
                     >
                       ✅ Pacient: {lead.patient.name}
                     </Link>
@@ -316,7 +316,7 @@ export default function LeadDetailPage({
                     <button
                       onClick={convert}
                       disabled={busy}
-                      className="px-4 py-2 border border-green-300 text-green-700 hover:bg-green-50 disabled:opacity-50"
+                      className="px-4 py-2 rounded-lg border border-green-300 text-green-700 hover:bg-green-50 disabled:opacity-50"
                     >
                       → Creează pacient
                     </button>
@@ -324,49 +324,49 @@ export default function LeadDetailPage({
                 </div>
               </section>
 
-              <section className="bg-background border border-border p-5">
-                <h2 className="font-semibold text-foreground mb-3">Istoric notițe</h2>
+              <section className="bg-white rounded-lg border border-gray-200 p-5">
+                <h2 className="font-semibold text-gray-900 mb-3">Istoric notițe</h2>
                 <textarea
                   value={noteText}
                   onChange={(e) => setNoteText(e.target.value)}
                   rows={3}
                   placeholder="Ce ați discutat? Ce urmează?"
-                  className="w-full border border-border bg-background px-3 py-2 text-sm resize-none focus:border-foreground focus:outline-none"
+                  className="w-full border border-gray-300 rounded-lg bg-white px-3 py-2 text-sm resize-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                 />
                 <button
                   onClick={addNote}
                   disabled={busy || !noteText.trim()}
-                  className="mt-2 bg-foreground text-white text-sm font-semibold px-4 py-2 disabled:opacity-50"
+                  className="mt-2 bg-indigo-600 text-white text-sm font-semibold px-4 py-2 disabled:opacity-50"
                 >
                   Adaugă notiță
                 </button>
 
                 <div className="mt-4 space-y-2">
                   {lead.note && (
-                    <div className="bg-muted p-3 text-sm flex items-start gap-2">
+                    <div className="bg-gray-50 p-3 text-sm flex items-start gap-2">
                       <p className="flex-1 whitespace-pre-wrap">{lead.note}</p>
                       <button
                         onClick={() => patch({ note: "" })}
                         aria-label="Șterge notița veche"
-                        className="text-muted-foreground hover:text-red-600"
+                        className="text-gray-500 hover:text-red-600"
                       >
                         ×
                       </button>
                     </div>
                   )}
                   {lead.leadNotes.map((n) => (
-                    <div key={n.id} className="bg-muted p-3 text-sm">
+                    <div key={n.id} className="bg-gray-50 p-3 text-sm">
                       <div className="flex items-start gap-2">
                         <p className="flex-1 whitespace-pre-wrap">{n.content}</p>
                         <button
                           onClick={() => deleteNote(n.id)}
                           aria-label="Șterge notița"
-                          className="text-muted-foreground hover:text-red-600"
+                          className="text-gray-500 hover:text-red-600"
                         >
                           ×
                         </button>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-2">
+                      <p className="text-xs text-gray-500 mt-2">
                         {n.authorName ? `${n.authorName} · ` : ""}
                         {new Date(n.createdAt).toLocaleString("ro-RO", {
                           day: "numeric",
@@ -379,7 +379,7 @@ export default function LeadDetailPage({
                     </div>
                   ))}
                   {!lead.note && lead.leadNotes.length === 0 && (
-                    <p className="text-sm text-muted-foreground text-center py-3">
+                    <p className="text-sm text-gray-500 text-center py-3">
                       Nicio notiță încă.
                     </p>
                   )}
@@ -388,13 +388,13 @@ export default function LeadDetailPage({
             </div>
 
             <aside className="space-y-6">
-              <section className="bg-background border border-border p-5">
-                <h2 className="font-semibold text-foreground mb-3">Status</h2>
+              <section className="bg-white rounded-lg border border-gray-200 p-5">
+                <h2 className="font-semibold text-gray-900 mb-3">Status</h2>
                 <select
                   value={lead.status}
                   disabled={busy}
                   onChange={(e) => patch({ status: e.target.value })}
-                  className={`w-full px-3 py-2.5 border-2 text-sm font-semibold ${status.className}`}
+                  className={`w-full px-3 py-2.5 rounded-lg border-2 text-sm font-semibold ${status.className}`}
                 >
                   {LEAD_STATUSES.map((s) => (
                     <option key={s.value} value={s.value}>
@@ -404,8 +404,8 @@ export default function LeadDetailPage({
                 </select>
               </section>
 
-              <section className="bg-background border border-border p-5">
-                <h2 className="font-semibold text-foreground mb-3">Responsabil</h2>
+              <section className="bg-white rounded-lg border border-gray-200 p-5">
+                <h2 className="font-semibold text-gray-900 mb-3">Responsabil</h2>
                 <select
                   value={lead.assignedToId ?? ""}
                   disabled={busy}
@@ -422,8 +422,8 @@ export default function LeadDetailPage({
               </section>
 
               {open && (
-                <section className="bg-background border border-border p-5">
-                  <h2 className="font-semibold text-foreground mb-3">Recontactare</h2>
+                <section className="bg-white rounded-lg border border-gray-200 p-5">
+                  <h2 className="font-semibold text-gray-900 mb-3">Recontactare</h2>
                   <input
                     type="date"
                     value={dayInput(lead.followUpAt)}
@@ -437,7 +437,7 @@ export default function LeadDetailPage({
                         key={d}
                         disabled={busy}
                         onClick={() => patch({ followUpAt: inDays(d) })}
-                        className="px-2 py-1 border border-border text-muted-foreground hover:text-foreground"
+                        className="px-2 py-1 border border-gray-200 rounded-lg text-gray-500 hover:text-gray-900"
                       >
                         +{d} zile
                       </button>
@@ -446,7 +446,7 @@ export default function LeadDetailPage({
                       <button
                         disabled={busy}
                         onClick={() => patch({ followUpAt: null })}
-                        className="px-2 py-1 text-muted-foreground hover:text-foreground"
+                        className="px-2 py-1 text-gray-500 hover:text-gray-900"
                       >
                         elimină
                       </button>
@@ -465,8 +465,8 @@ export default function LeadDetailPage({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="min-w-0">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="font-medium text-foreground break-words">{children}</p>
+      <p className="text-xs text-gray-500">{label}</p>
+      <p className="font-medium text-gray-900 break-words">{children}</p>
     </div>
   );
 }

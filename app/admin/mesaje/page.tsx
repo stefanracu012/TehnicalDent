@@ -102,7 +102,7 @@ function Avatar({ name, platform }: { name: string; platform: InboxPlatform }) {
       </div>
       <span
         title={PLATFORM_LABEL[platform]}
-        className="absolute -bottom-0.5 -right-0.5 h-[18px] w-[18px] rounded-full bg-background ring-2 ring-background flex items-center justify-center"
+        className="absolute -bottom-0.5 -right-0.5 h-[18px] w-[18px] rounded-full bg-white ring-2 ring-background flex items-center justify-center"
       >
         <PlatformIcon platform={platform} className="h-3 w-3" />
       </span>
@@ -353,14 +353,14 @@ function Inbox() {
   const unread = data?.stats.unread ?? 0;
 
   return (
-    <div className="min-h-screen bg-muted">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+    <div className="min-h-full bg-gray-50">
+      <div className="p-3 sm:p-4 lg:p-5">
         <div className="mb-5">
-          <h1 className="font-serif text-2xl sm:text-3xl font-medium text-foreground">Mesaje</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h1 className="text-xl font-bold text-gray-900">Mesaje</h1>
+          <p className="mt-1 text-sm text-gray-500">
             Messenger, Instagram și WhatsApp, într-un singur loc.
             {unread > 0 && (
-              <span className="ml-2 font-semibold text-foreground">
+              <span className="ml-2 font-semibold text-gray-900">
                 {unread} {unread === 1 ? "necitită" : "necitite"}
               </span>
             )}
@@ -369,17 +369,17 @@ function Inbox() {
 
         {error &&
           (data ? (
-            <p className="mb-3 text-xs text-amber-800 bg-amber-50 border border-amber-200 px-3 py-2">
+            <p className="mb-3 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
               Meta răspunde greu — vezi ultimele date cunoscute. Se reîncearcă singur.
             </p>
           ) : (
-            <div className="mb-4 border border-red-200 bg-red-50 text-red-700 px-4 py-3 text-sm">
+            <div className="mb-4 border border-red-200 bg-red-50 text-red-700 rounded-lg px-4 py-3 text-sm">
               {error}
             </div>
           ))}
 
         {data && data.errors.length > 0 && (
-          <p className="mb-3 text-xs text-amber-800 bg-amber-50 border border-amber-200 px-3 py-2">
+          <p className="mb-3 text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
             {data.errors.join(" · ")}
           </p>
         )}
@@ -387,23 +387,23 @@ function Inbox() {
         <div className="grid lg:grid-cols-[24rem_1fr] gap-4 items-start">
           {/* The list */}
           <div
-            className={`bg-background border border-border ${selected ? "hidden lg:block" : ""}`}
+            className={`bg-white rounded-xl border border-gray-200 overflow-hidden ${selected ? "hidden lg:block" : ""}`}
           >
             <div className="px-3 pt-3 space-y-3">
-              <div className="flex border-b border-border">
+              <div className="flex border-b border-gray-100">
                 {TABS.map((t) => (
                   <button
                     key={t.value}
                     onClick={() => setTab(t.value)}
                     className={`flex-1 lg:flex-none px-3 py-2 text-xs font-semibold border-b-2 -mb-px transition-colors ${
                       tab === t.value
-                        ? "border-foreground text-foreground"
-                        : "border-transparent text-muted-foreground hover:text-foreground"
+                        ? "border-indigo-400 text-gray-900"
+                        : "border-transparent text-gray-500 hover:text-gray-900"
                     }`}
                   >
                     {t.label}
                     {t.value === "unread" && unread > 0 && (
-                      <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-foreground text-white text-[10px]">
+                      <span className="ml-1.5 px-1.5 py-0.5 rounded-full bg-indigo-600 text-white text-[10px]">
                         {unread}
                       </span>
                     )}
@@ -418,8 +418,8 @@ function Inbox() {
                     onClick={() => setPlatform(p.value)}
                     className={`px-2.5 py-1 text-[11px] font-semibold rounded-full transition-colors ${
                       platform === p.value
-                        ? "bg-foreground text-white"
-                        : "border border-border text-muted-foreground hover:text-foreground"
+                        ? "bg-indigo-600 text-white"
+                        : "border border-gray-200 rounded-lg text-gray-500 hover:text-gray-900"
                     }`}
                   >
                     {p.label}
@@ -432,14 +432,14 @@ function Inbox() {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Caută după nume sau text…"
-                className="w-full border border-border bg-background px-3 py-2 text-sm focus:border-foreground focus:outline-none mb-3"
+                className="w-full border border-gray-300 rounded-lg bg-white px-3 py-2 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none mb-3"
               />
             </div>
 
             {loading && !data ? (
-              <p className="p-5 text-sm text-muted-foreground">Se încarcă…</p>
+              <p className="p-5 text-sm text-gray-500">Se încarcă…</p>
             ) : conversations.length === 0 ? (
-              <div className="p-5 text-sm text-muted-foreground text-center space-y-3">
+              <div className="p-5 text-sm text-gray-500 text-center space-y-3">
                 <p>
                   {query
                     ? "Nicio conversație care să se potrivească."
@@ -452,12 +452,12 @@ function Inbox() {
                     <button
                       onClick={runCheck}
                       disabled={checking}
-                      className="w-full border border-border px-3 py-2 text-xs font-semibold hover:border-foreground disabled:opacity-60"
+                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-xs font-semibold hover:border-indigo-400 disabled:opacity-60"
                     >
                       {checking ? "Se verifică…" : "🔎 Verifică conexiunea cu Meta"}
                     </button>
                     {diagnosis && (
-                      <div className="text-xs bg-muted border border-border p-3 space-y-1 text-foreground">
+                      <div className="text-xs bg-gray-50 border border-gray-200 rounded-lg p-3 space-y-1 text-gray-900">
                         <p>
                           <b>Pagina:</b> {diagnosis.page.name || diagnosis.page.error || "—"}
                         </p>
@@ -489,7 +489,7 @@ function Inbox() {
                 )}
               </div>
             ) : (
-              <ul className="divide-y divide-border max-h-[calc(100vh-18rem)] lg:max-h-[68vh] overflow-y-auto border-t border-border">
+              <ul className="divide-y divide-gray-100 max-h-[calc(100vh-18rem)] lg:max-h-[68vh] overflow-y-auto border-t border-gray-100">
                 {conversations.map((c) => {
                   const active = selected?.id === c.id;
                   const isUnread = c.unreadCount > 0;
@@ -498,7 +498,7 @@ function Inbox() {
                       <button
                         onClick={() => openThread(c)}
                         className={`w-full text-left px-3 py-3 flex gap-3 transition-colors ${
-                          active ? "bg-muted" : "hover:bg-muted/60"
+                          active ? "bg-indigo-50" : "hover:bg-gray-50"
                         }`}
                       >
                         <Avatar name={c.person.name} platform={c.platform} />
@@ -506,13 +506,13 @@ function Inbox() {
                           <div className="flex items-center justify-between gap-2">
                             <span
                               className={`text-sm truncate ${
-                                isUnread ? "font-bold text-foreground" : "font-medium text-foreground"
+                                isUnread ? "font-bold text-gray-900" : "font-medium text-gray-900"
                               }`}
                             >
                               {c.person.name}
                               {c.lead && (
                                 <span
-                                  className={`ml-1.5 px-1.5 py-0.5 border text-[9px] font-semibold align-middle ${getStatus(c.lead.status).className}`}
+                                  className={`ml-1.5 px-1.5 py-0.5 rounded border text-[9px] font-semibold align-middle ${getStatus(c.lead.status).className}`}
                                 >
                                   {getStatus(c.lead.status).label}
                                 </span>
@@ -520,7 +520,7 @@ function Inbox() {
                             </span>
                             <span
                               className={`text-[11px] whitespace-nowrap ${
-                                isUnread ? "text-foreground font-semibold" : "text-muted-foreground"
+                                isUnread ? "text-gray-900 font-semibold" : "text-gray-500"
                               }`}
                             >
                               {timeLabel(c.updatedTime)}
@@ -529,16 +529,16 @@ function Inbox() {
                           <div className="flex items-center justify-between gap-2 mt-0.5">
                             <p
                               className={`text-xs truncate ${
-                                isUnread ? "text-foreground font-medium" : "text-muted-foreground"
+                                isUnread ? "text-gray-900 font-medium" : "text-gray-500"
                               }`}
                             >
                               {c.lastFromPage && c.snippet && (
-                                <span className="text-muted-foreground">Tu: </span>
+                                <span className="text-gray-500">Tu: </span>
                               )}
                               {c.snippet || <span className="opacity-50">fără text</span>}
                             </p>
                             {isUnread && (
-                              <span className="shrink-0 px-1.5 h-[18px] rounded-full bg-foreground text-white text-[10px] font-semibold flex items-center">
+                              <span className="shrink-0 px-1.5 h-[18px] rounded-full bg-indigo-600 text-white text-[10px] font-semibold flex items-center">
                                 Nou
                               </span>
                             )}
@@ -554,28 +554,28 @@ function Inbox() {
 
           {/* The thread */}
           <div
-            className={`bg-background border border-border min-h-[26rem] flex-col ${
+            className={`bg-white rounded-xl border border-gray-200 min-h-[26rem] flex-col ${
               selected ? "flex" : "hidden lg:flex"
             }`}
           >
             {!selected ? (
-              <div className="flex-1 flex items-center justify-center text-center p-10 text-sm text-muted-foreground">
+              <div className="flex-1 flex items-center justify-center text-center p-10 text-sm text-gray-500">
                 Alege o conversație din stânga.
               </div>
             ) : (
               <>
-                <div className="px-4 py-3 border-b border-border flex flex-wrap items-center gap-3">
+                <div className="px-4 py-3 border-b border-gray-100 flex flex-wrap items-center gap-3">
                   <button
                     onClick={() => setSelected(null)}
-                    className="lg:hidden text-sm text-muted-foreground hover:text-foreground"
+                    className="lg:hidden text-sm text-gray-500 hover:text-gray-900"
                     aria-label="Înapoi la inbox"
                   >
                     ←
                   </button>
                   <Avatar name={selected.person.name} platform={selected.platform} />
                   <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-foreground truncate">{selected.person.name}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="font-semibold text-gray-900 truncate">{selected.person.name}</p>
+                    <p className="text-xs text-gray-500">
                       {PLATFORM_LABEL[selected.platform]}
                       {selected.person.username ? ` · @${selected.person.username}` : ""}
                       {selected.platform === "whatsapp" && selected.person.id
@@ -591,11 +591,11 @@ function Inbox() {
                 </div>
 
                 {threadLoading ? (
-                  <p className="flex-1 p-8 text-sm text-muted-foreground text-center">
+                  <p className="flex-1 p-8 text-sm text-gray-500 text-center">
                     Se încarcă…
                   </p>
                 ) : thread.length === 0 ? (
-                  <p className="flex-1 p-8 text-sm text-muted-foreground text-center">
+                  <p className="flex-1 p-8 text-sm text-gray-500 text-center">
                     Fără mesaje de afișat.
                   </p>
                 ) : (
@@ -603,8 +603,8 @@ function Inbox() {
                     {thread.map((m) => (
                       <div key={m.id} className={`flex ${m.fromPage ? "justify-end" : "justify-start"}`}>
                         <div
-                          className={`max-w-[85%] lg:max-w-[75%] px-3 py-2 text-sm ${
-                            m.fromPage ? "bg-foreground text-background" : "bg-muted text-foreground"
+                          className={`max-w-[85%] lg:max-w-[75%] rounded-2xl px-3 py-2 text-sm ${
+                            m.fromPage ? "bg-indigo-600 text-white rounded-br-sm" : "bg-gray-100 text-gray-900 rounded-bl-sm"
                           }`}
                         >
                           {m.text ? (
@@ -614,7 +614,7 @@ function Inbox() {
                           )}
                           <p
                             className={`text-[10px] mt-1 ${
-                              m.fromPage ? "text-background/60" : "text-muted-foreground"
+                              m.fromPage ? "text-indigo-100" : "text-gray-500"
                             }`}
                           >
                             {fullTime(m.createdTime)}
@@ -626,14 +626,14 @@ function Inbox() {
                   </div>
                 )}
 
-                <form onSubmit={send} className="border-t border-border p-3 space-y-2">
+                <form onSubmit={send} className="border-t border-gray-100 p-3 space-y-2">
                   {notice && (
-                    <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 px-3 py-2">
+                    <p className="text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
                       {notice}
                     </p>
                   )}
                   {sendError && (
-                    <p className="text-[11px] text-red-700 bg-red-50 border border-red-200 px-3 py-2">
+                    <p className="text-[11px] text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
                       {sendError}
                     </p>
                   )}
@@ -649,12 +649,12 @@ function Inbox() {
                       }}
                       rows={2}
                       placeholder="Scrie un mesaj… (Enter trimite)"
-                      className="flex-1 border border-border bg-background px-3 py-2 text-sm resize-none focus:border-foreground focus:outline-none"
+                      className="flex-1 border border-gray-300 rounded-lg bg-white px-3 py-2 text-sm resize-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none"
                     />
                     <button
                       type="submit"
                       disabled={sending || !draft.trim()}
-                      className="bg-foreground text-white text-sm font-semibold px-5 py-2.5 disabled:opacity-50"
+                      className="inline-flex items-center rounded-lg bg-indigo-600 text-white text-sm font-medium px-4 py-2 hover:bg-indigo-700 transition-colors disabled:opacity-50"
                     >
                       {sending ? "…" : "Trimite"}
                     </button>

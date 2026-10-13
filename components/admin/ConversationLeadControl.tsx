@@ -86,7 +86,7 @@ export default function ConversationLeadControl({
           type="button"
           onClick={createLead}
           disabled={saving || !conversation.person.id}
-          className="px-3 py-1.5 border border-dashed border-foreground/40 text-xs font-semibold hover:border-foreground disabled:opacity-60 whitespace-nowrap"
+          className="px-3 py-1.5 rounded-lg border border-dashed border-indigo-300 text-xs font-semibold hover:border-indigo-400 disabled:opacity-60 whitespace-nowrap"
         >
           {saving ? "…" : "+ Adaugă ca lead"}
         </button>
@@ -105,7 +105,7 @@ export default function ConversationLeadControl({
           onChange={(e) => changeStatus(e.target.value)}
           disabled={saving}
           title="Statusul leadului"
-          className={`px-2 py-1.5 border text-xs font-semibold disabled:opacity-60 ${status.className}`}
+          className={`px-2 py-1.5 rounded-lg border text-xs font-semibold disabled:opacity-60 ${status.className}`}
         >
           {LEAD_STATUSES.map((s) => (
             <option key={s.value} value={s.value}>
@@ -115,7 +115,7 @@ export default function ConversationLeadControl({
         </select>
         <Link
           href={`/admin/leads/${lead.id}`}
-          className="text-[11px] text-muted-foreground hover:text-foreground whitespace-nowrap"
+          className="text-[11px] text-gray-500 hover:text-gray-900 whitespace-nowrap"
           title="Deschide fișa leadului"
         >
           fișa ↗
