@@ -154,6 +154,12 @@ model TeamMember {
   image        String
   order        Int      @default(0)
   isActive     Boolean  @default(true)
+  /**
+   * Sees patients, so appears in the calendar and can be booked. False for the
+   * dental technician, who is on the team page but has no chair. Null on rows
+   * saved before the field existed — those are doctors.
+   */
+  isDoctor     Boolean?
   translations Json?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt

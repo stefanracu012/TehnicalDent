@@ -22,10 +22,13 @@ export function moldovaHour(date: Date): number {
   );
 }
 
+/** "{teamMemberId}|{YYYY-MM-DD}T{HH}" — one doctor, one hour of one day. */
+export function slotKeyFor(teamMemberId: string, date: string, hour: number): string {
+  return `${teamMemberId}|${date}T${String(hour).padStart(2, "0")}`;
+}
+
 export function buildSlotKey(teamMemberId: string, dateTime: Date): string {
-  return `${teamMemberId}|${getMoldovaDateStr(dateTime)}T${String(
-    moldovaHour(dateTime),
-  ).padStart(2, "0")}`;
+  return slotKeyFor(teamMemberId, getMoldovaDateStr(dateTime), moldovaHour(dateTime));
 }
 
 export class SlotTakenError extends Error {
@@ -77,6 +80,23 @@ export async function releaseSlotByAppointment(appointmentId: string): Promise<v
   await prisma.appointmentSlot.deleteMany({ where: { appointmentId } });
 }
 
+/**
+ * The team members who can be booked: active, and seeing patients. The dental
+ * technician is on the team but not in the calendar. Every place that looks
+ * for a free hour starts from this list, so they cannot disagree.
+ */
+export async function bookableDoctors() {
+  const members = await prisma.teamMember.findMany({
+    where: { isActive: true },
+    orderBy: { order: "asc" },
+    select: { id: true, name: true, role: true, isDoctor: true },
+  });
+  // Null on rows saved before the field existed: those are doctors.
+  return members
+    .filter((m) => m.isDoctor !== false)
+    .map((m) => ({ id: m.id, name: m.name, role: m.role }));
+}
+
 /** Hours a doctor still has free on a given Moldova date. */
 export async function freeHours(
   teamMemberId: string,
@@ -87,13 +107,18 @@ export async function freeHours(
   });
   if (!availability) return [];
 
+  // Asked for by exact key, one per open hour. This used to be a "starts with"
+  // on "{doctor}|{date}T" — but on MongoDB Prisma turns that into an unescaped
+  // regular expression, where "|" means "or". It matched every reservation the
+  // doctor had on any day, so an hour booked once on any date showed as taken
+  // on every date: a doctor who opened 15:00 today could not be booked at
+  // 15:00 because of a patient at 15:00 three weeks earlier.
+  const keys = availability.hours.map((h) => slotKeyFor(teamMemberId, date, h));
   const taken = await prisma.appointmentSlot.findMany({
-    where: { slotKey: { startsWith: `${teamMemberId}|${date}T` } },
+    where: { slotKey: { in: keys } },
     select: { slotKey: true },
   });
-  const takenHours = new Set(
-    taken.map((s) => Number(s.slotKey.split("T")[1])),
-  );
+  const takenKeys = new Set(taken.map((s) => s.slotKey));
 
-  return availability.hours.filter((h) => !takenHours.has(h));
+  return availability.hours.filter((h) => !takenKeys.has(slotKeyFor(teamMemberId, date, h)));
 }

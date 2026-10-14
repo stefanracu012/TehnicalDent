@@ -13,7 +13,7 @@
 // =============================================
 
 import prisma from "@/lib/prisma";
-import { freeHours, claimSlot } from "@/lib/slots";
+import { bookableDoctors, freeHours, claimSlot } from "@/lib/slots";
 import { normalizePhone, isValidPhone, parseMoldovaDateTime } from "@/lib/appointments";
 import { sendTelegramToTopic, TELEGRAM_TOPICS } from "@/lib/telegram";
 import {
@@ -711,11 +711,7 @@ const MAX_LOOKAHEAD_DAYS = 45;
 
 async function findSlots(days: number) {
   let span = Math.min(Math.max(days, 1), MAX_LOOKAHEAD_DAYS);
-  const doctors = await prisma.teamMember.findMany({
-    where: { isActive: true },
-    orderBy: { order: "asc" },
-    select: { id: true, name: true, role: true },
-  });
+  const doctors = await bookableDoctors();
 
   const out: {
     medicId: string;
@@ -908,10 +904,7 @@ async function book(
         break;
       }
 
-      const doctors = await prisma.teamMember.findMany({
-        where: { isActive: true },
-        select: { id: true },
-      });
+      const doctors = await bookableDoctors();
       for (const doctor of doctors) {
         if ((await freeHours(doctor.id, candidate)).includes(hour)) {
           resolvedDay = candidate;
@@ -975,11 +968,7 @@ async function book(
   }
 
   if (!medicId) {
-    const doctors = await prisma.teamMember.findMany({
-      where: { isActive: true },
-      orderBy: { order: "asc" },
-      select: { id: true },
-    });
+    const doctors = await bookableDoctors();
     for (const doctor of doctors) {
       if ((await freeHours(doctor.id, resolvedDay)).includes(hour)) {
         medicId = doctor.id;

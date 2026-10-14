@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sanitizeObject, validateNoInjection } from "@/lib/security";
 import { normalisePhone } from "@/lib/leads";
+import { literal } from "@/lib/text-search";
 import { notifyAssigned } from "@/lib/lead-telegram";
 import {
   CLOSED_STATUSES,
@@ -99,9 +100,11 @@ export async function GET(request: Request) {
     }
     if (Object.keys(created).length) where.createdAt = created;
 
-    const q = (params.get("q") ?? "").trim();
-    if (q) {
-      const digits = q.replace(/\D/g, "").replace(/^(373|0)/, "");
+    const typed = (params.get("q") ?? "").trim();
+    if (typed) {
+      // Escaped: Prisma passes these to MongoDB as patterns (lib/text-search.ts).
+      const q = literal(typed);
+      const digits = typed.replace(/\D/g, "").replace(/^(373|0)/, "");
       and.push({
         OR: [
           { name: { contains: q, mode: "insensitive" } },

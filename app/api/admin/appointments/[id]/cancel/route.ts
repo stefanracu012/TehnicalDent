@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { notifyCancelled } from "@/lib/notifications";
+import { releaseSlotByAppointment } from "@/lib/slots";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -17,6 +18,9 @@ export async function POST(request: Request, { params }: RouteParams) {
       data: { status: "cancelled" },
       include: { patient: true, service: true },
     });
+    // A cancelled hour is free again. Without this it stayed reserved for good
+    // and nobody else could be booked into it.
+    await releaseSlotByAppointment(id);
     notifyCancelled(appt, reason).catch((e) => console.error("notifyCancelled:", e));
     return NextResponse.json(appt);
   } catch (error) {

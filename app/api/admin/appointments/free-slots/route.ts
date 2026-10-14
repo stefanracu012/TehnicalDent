@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { freeHours } from "@/lib/slots";
+import { bookableDoctors, freeHours } from "@/lib/slots";
 
 /**
  * Doctors plus their free hours for one day, in a single request so the
@@ -24,11 +24,7 @@ export async function GET(request: Request) {
       );
     }
 
-    const doctors = await prisma.teamMember.findMany({
-      where: { isActive: true },
-      orderBy: { order: "asc" },
-      select: { id: true, name: true, role: true },
-    });
+    const doctors = await bookableDoctors();
 
     // When editing, the appointment's own hour must stay selectable.
     let ownHour: { teamMemberId: string; hour: number } | null = null;

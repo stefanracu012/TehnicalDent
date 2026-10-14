@@ -6,6 +6,7 @@
 
 import crypto from "crypto";
 import prisma from "@/lib/prisma";
+import { literal } from "@/lib/text-search";
 import type { AppointmentStatus, Prisma } from "@prisma/client";
 
 const TOKEN_SECRET =
@@ -43,11 +44,11 @@ export function isValidPhone(raw: string): boolean {
  * "return all patients", making name search look broken while phone worked.
  */
 export function patientSearchOr(query: string): Prisma.PatientWhereInput[] {
-  const q = query.trim();
-  const digits = normalizePhone(q);
+  const q = literal(query.trim());
+  const digits = normalizePhone(query.trim());
   return [
     { name: { contains: q, mode: "insensitive" } },
-    ...(digits ? [{ phone: { contains: digits } }] : []),
+    ...(digits ? [{ phone: { contains: literal(digits) } }] : []),
     { email: { contains: q, mode: "insensitive" } },
   ];
 }

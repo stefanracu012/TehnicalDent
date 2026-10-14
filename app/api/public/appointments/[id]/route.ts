@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyConfirmToken } from "@/lib/appointments";
 import { notifyConfirmed, notifyCancelled } from "@/lib/notifications";
+import { releaseSlotByAppointment } from "@/lib/slots";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -75,6 +76,9 @@ export async function POST(request: Request, { params }: RouteParams) {
     if (action === "confirm") {
       notifyConfirmed(updated).catch((e) => console.error(e));
     } else {
+      // The patient cancelled from the link: the hour goes back to the
+      // calendar, the same as a cancellation from the panel.
+      await releaseSlotByAppointment(id);
       notifyCancelled(updated, "Anulat de pacient").catch((e) => console.error(e));
     }
 

@@ -16,6 +16,8 @@ interface TeamMember {
   image: string;
   order: number;
   isActive: boolean;
+  /** Null on members saved before the field existed: doctors. */
+  isDoctor?: boolean | null;
   translations?: Translations | null;
 }
 
@@ -26,6 +28,7 @@ const emptyMember = {
   image: "",
   order: 0,
   isActive: true,
+  isDoctor: true,
 };
 
 export default function AdminTeamPage() {
@@ -91,6 +94,7 @@ export default function AdminTeamPage() {
       image: member.image,
       order: member.order,
       isActive: member.isActive,
+      isDoctor: member.isDoctor !== false,
     });
     setTranslations((member.translations as Translations) || {});
     setActiveLocale("ro");
@@ -320,6 +324,28 @@ export default function AdminTeamPage() {
                             className="w-4 h-4"
                           />
                           <span className="text-sm text-foreground">Activ</span>
+                        </label>
+                      </div>
+                      <div className="flex items-end pb-3">
+                        <label className="flex items-start gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={formData.isDoctor}
+                            onChange={(e) =>
+                              setFormData((p) => ({
+                                ...p,
+                                isDoctor: e.target.checked,
+                              }))
+                            }
+                            className="w-4 h-4 mt-0.5"
+                          />
+                          <span className="text-sm text-foreground">
+                            Medic — primește programări
+                            <span className="block text-xs text-muted-foreground">
+                              Debifat (ex. tehnician dentar): rămâne pe pagina Echipa, dar nu apare
+                              în calendar și nu poate fi programat.
+                            </span>
+                          </span>
                         </label>
                       </div>
                     </div>

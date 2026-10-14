@@ -46,6 +46,7 @@ export async function POST(request: Request) {
         image: body.image || "",
         order: body.order || 0,
         isActive: body.isActive ?? true,
+        isDoctor: body.isDoctor ?? true,
         translations: body.translations || null,
       },
     });

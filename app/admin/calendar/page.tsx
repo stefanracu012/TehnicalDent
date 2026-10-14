@@ -10,6 +10,7 @@ interface TeamMember {
   id: string;
   name: string;
   role: string;
+  isDoctor?: boolean | null;
 }
 
 interface Availability {
@@ -60,7 +61,10 @@ export default function AdminCalendarPage() {
         ]);
         const me = await meRes.json();
         const teamData = await teamRes.json();
-        const list: TeamMember[] = Array.isArray(teamData) ? teamData : [];
+        // Only people who see patients have a calendar — not the dental technician.
+        const list: TeamMember[] = (Array.isArray(teamData) ? teamData : []).filter(
+          (m: TeamMember) => m.isDoctor !== false,
+        );
         setTeam(list);
 
         if (me.doctorId) {
