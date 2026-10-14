@@ -17,6 +17,7 @@ import {
   sendTelegramToChat,
 } from "@/lib/telegram";
 import { CLOSED_STATUSES, getSource, getStatus } from "@/lib/leads-config";
+import { clinicDaysAgo, formatFollowUp } from "@/lib/chisinau-time";
 import type { Lead, LeadStatus } from "@prisma/client";
 
 const BASE = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.tehnicaldent.com").replace(/\/$/, "");
@@ -24,17 +25,6 @@ const BASE = (process.env.NEXT_PUBLIC_SITE_URL || "https://www.tehnicaldent.com"
 const escapeHtml = (s: unknown) =>
   String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-const formatDay = (d: Date) =>
-  new Intl.DateTimeFormat("ro-RO", {
-    weekday: "long",
-    day: "numeric",
-    month: "long",
-    timeZone: "UTC", // follow-up dates are stored as the chosen day at 00:00 UTC
-  }).format(d);
-
-/** "YYYY-MM-DD" in Chișinău. */
-const moldovaToday = (now: Date) =>
-  new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Chisinau" }).format(now);
 
 /** The chat a lead came from, as the inbox addresses it. */
 function conversationOf(lead: Pick<Lead, "source" | "sourceKey">) {
@@ -72,7 +62,7 @@ function cardLines(lead: Lead, assigneeName: string | null): string[] {
     "",
     `📊 Status: ${status.emoji} ${escapeHtml(status.label)}`,
     `🙋 Responsabil: ${assigneeName ? `<b>${escapeHtml(assigneeName)}</b>` : "<i>nimeni încă</i>"}`,
-    `🔔 Recontactare: ${lead.followUpAt ? `<b>${formatDay(lead.followUpAt)}</b>` : "<i>nesetată</i>"}`,
+    `🔔 Recontactare: ${lead.followUpAt ? `<b>${formatFollowUp(lead.followUpAt)}</b>` : "<i>nesetată</i>"}`,
   );
   if (lead.firstMessage) {
     const text = lead.firstMessage.length > 300 ? `${lead.firstMessage.slice(0, 300)}…` : lead.firstMessage;
@@ -203,20 +193,18 @@ export async function runLeadFollowUps(now = new Date()) {
   );
   if (pending.length === 0) return { notified: 0 };
 
-  const today = Date.parse(moldovaToday(now));
   const staff = await staffById(pending.map((l) => l.assignedToId));
   const items = pending.map((lead) => ({
     lead,
     owner: lead.assignedToId ? (staff.get(lead.assignedToId) ?? null) : null,
-    daysOverdue: Math.max(
-      0,
-      Math.round((today - Date.parse((lead.followUpAt as Date).toISOString().slice(0, 10))) / 86_400_000),
-    ),
+    // Days late by the Chișinău calendar: one due at 23:00 yesterday is a day late.
+    daysOverdue: Math.max(0, clinicDaysAgo(lead.followUpAt as Date, now)),
   }));
 
   const line = ({ lead, owner, daysOverdue }: (typeof items)[number]) => {
     const parts = [`<a href="${BASE}/admin/leads/${lead.id}">${escapeHtml(lead.name || "fără nume")}</a>`];
     if (lead.phone) parts.push(escapeHtml(lead.phone));
+    parts.push(`🕒 ${formatFollowUp(lead.followUpAt as Date, false)}`);
     parts.push(`${getStatus(lead.status).emoji} ${escapeHtml(getStatus(lead.status).label)}`);
     // Without Telegram connected the private reminder has nowhere to go —
     // shown here rather than looking like it was lost.

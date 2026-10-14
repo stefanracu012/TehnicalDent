@@ -12,6 +12,8 @@ import {
   whatsAppLink,
 } from "@/lib/leads-config";
 import LeadForm from "@/components/admin/LeadForm";
+import FollowUpPicker from "@/components/admin/FollowUpPicker";
+import { clinicInDays } from "@/lib/chisinau-time";
 import {
   conversationHref,
   type LeadItem,
@@ -25,8 +27,6 @@ interface LeadDetail extends LeadItem {
   staff: StaffMember[];
 }
 
-const dayInput = (iso: string | null) => (iso ? iso.slice(0, 10) : "");
-const inDays = (n: number) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
 
 const selectClass =
   "border border-gray-300 rounded-lg bg-white px-2 py-1.5 text-sm text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none";
@@ -424,33 +424,23 @@ export default function LeadDetailPage({
               {open && (
                 <section className="bg-white rounded-lg border border-gray-200 p-5">
                   <h2 className="font-semibold text-gray-900 mb-3">Recontactare</h2>
-                  <input
-                    type="date"
-                    value={dayInput(lead.followUpAt)}
+                  <FollowUpPicker
+                    value={lead.followUpAt}
                     disabled={busy}
-                    onChange={(e) => patch({ followUpAt: e.target.value || null })}
-                    className={`${selectClass} w-full`}
+                    onChange={(iso) => patch({ followUpAt: iso })}
                   />
                   <div className="flex gap-2 mt-2 text-xs">
                     {[1, 3, 7].map((d) => (
                       <button
                         key={d}
                         disabled={busy}
-                        onClick={() => patch({ followUpAt: inDays(d) })}
+                        title={`Peste ${d} ${d === 1 ? "zi" : "zile"}, la 10:00`}
+                        onClick={() => patch({ followUpAt: clinicInDays(d) })}
                         className="px-2 py-1 border border-gray-200 rounded-lg text-gray-500 hover:text-gray-900"
                       >
                         +{d} zile
                       </button>
                     ))}
-                    {lead.followUpAt && (
-                      <button
-                        disabled={busy}
-                        onClick={() => patch({ followUpAt: null })}
-                        className="px-2 py-1 text-gray-500 hover:text-gray-900"
-                      >
-                        elimină
-                      </button>
-                    )}
                   </div>
                 </section>
               )}

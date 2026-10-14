@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { sanitizeObject, validateNoInjection } from "@/lib/security";
 import { convertLeadToPatient, LeadError, normalisePhone } from "@/lib/leads";
 import { notifyAssigned } from "@/lib/lead-telegram";
+import { parseClinicDate } from "@/lib/chisinau-time";
 import { LEAD_SOURCES, LEAD_STATUS_VALUES } from "@/lib/leads-config";
 import type { LeadSource, LeadStatus } from "@prisma/client";
 
@@ -85,7 +86,8 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       data.status = body.status;
     }
     if ("followUpAt" in body) {
-      data.followUpAt = body.followUpAt ? new Date(body.followUpAt as string) : null;
+      // A moment from the picker; a bare date from an older client is Chișinău midnight.
+      data.followUpAt = parseClinicDate(body.followUpAt);
       // A new date puts the lead back in the queue of reminders to announce.
       data.followUpNotifiedAt = null;
     }

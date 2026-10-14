@@ -3,14 +3,13 @@
 import { useEffect, useState } from "react";
 import { secureFetch } from "@/lib/csrf-client";
 import { LEAD_SOURCES, LEAD_STATUSES, getSource } from "@/lib/leads-config";
+import FollowUpPicker from "./FollowUpPicker";
 import type { LeadItem, StaffMember } from "./lead-types";
 
 const input =
   "w-full border border-gray-300 rounded-lg bg-white px-3 py-2 text-sm text-gray-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500 focus:outline-none";
 const label = "block text-xs font-semibold text-gray-500 mb-1";
 
-/** The day part of a stored date, for <input type="date">. */
-const dayInput = (iso: string | null | undefined) => (iso ? iso.slice(0, 10) : "");
 
 /**
  * A lead's form: create (no `lead`) or edit (with one).
@@ -42,7 +41,7 @@ export default function LeadForm({
     interestedIn: lead?.interestedIn ?? "",
     status: lead?.status ?? "nou",
     assignedToId: lead?.assignedToId ?? "",
-    followUpAt: dayInput(lead?.followUpAt),
+    followUpAt: lead?.followUpAt ?? "",
     firstMessage: lead?.firstMessage ?? "",
   });
   const [saving, setSaving] = useState(false);
@@ -241,11 +240,10 @@ export default function LeadForm({
           </div>
           <div>
             <label className={label}>Recontactează pe</label>
-            <input
-              className={input}
-              type="date"
-              value={form.followUpAt}
-              onChange={(e) => set("followUpAt", e.target.value)}
+            <FollowUpPicker
+              value={form.followUpAt || null}
+              onChange={(iso) => set("followUpAt", iso ?? "")}
+              className="pt-0.5"
             />
           </div>
         </div>

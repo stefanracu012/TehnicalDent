@@ -185,6 +185,7 @@ ZILELE ȘI ORELE:
 - În "programeaza" trimiți "data" și "ora" — valorile brute din aceeași înregistrare. Pacientului îi spui "zi" și "oraText". Nu le amesteca.
 - Nu spui niciodată o zi a săptămânii care nu apare în "zi". Dacă pacientul zice "luni" și nicio înregistrare nu e luni, îi spui asta și îi dai zilele pe care chiar le ai.
 - Nu propui ore din trecut și nu inventezi zile între cele libere.
+- Când pacientul vrea o anumită perioadă ("săptămâna viitoare", "după 20", "la sfârșitul lunii"), chemi ore_libere cu "dela" = prima zi a perioadei. Dacă îți spune că în perioada aceea nu e nimic liber, îi spui exact asta și îi propui din "celeMaiApropiate", cu ziua lor reală. Nu muți NICIODATĂ o oră de pe o zi pe alta ca să se potrivească cu ce a cerut.
 - Dacă "ore_libere" îți întoarce o listă goală, medicii nu și-au completat încă programul — NU e treaba pacientului să știe asta. Nu spui "nu avem locuri" și nu întrebi dacă vrea altceva. Îi ceri numele și numărul și îi spui că sună cineva de la recepție în cursul zilei ca să stabiliți ora. Un pacient care vrea să vină nu pleacă cu mâna goală.
 
 CE SERVICIU VREA:
@@ -303,7 +304,12 @@ const TOOLS = [
           zile: {
             type: "integer",
             description:
-              "Câte zile în față să caute, între 1 și 45. Dacă nu găsește nimic în intervalul cerut, caută automat mai departe.",
+              "Câte zile să cuprindă, între 1 și 45. Fără 'dela', dacă nu găsește nimic în intervalul cerut, caută automat mai departe.",
+          },
+          dela: {
+            type: "string",
+            description:
+              "Opțional, AAAA-LL-ZZ: prima zi a perioadei pe care o vrea pacientul — de exemplu luni săptămâna viitoare, când cere \"săptămâna viitoare\" (atunci zile = 7). Fără ea, caută de mâine.",
           },
         },
       },
@@ -709,18 +715,59 @@ async function listServices() {
  */
 const MAX_LOOKAHEAD_DAYS = 45;
 
-async function findSlots(days: number) {
+interface Slot {
+  medicId: string;
+  medic: string;
+  data: string;
+  ora: number;
+  zi: string;
+  oraText: string;
+}
+
+/**
+ * Free hours for a period the patient named — "săptămâna viitoare" — rather
+ * than "from tomorrow". Asked only from tomorrow, the assistant once answered
+ * "next week" by moving Thursday's 08:00 onto Monday the 19th, a day nobody had
+ * opened. When the period has nothing, it says so in as many words, with the
+ * nearest real hours beside it.
+ */
+async function findSlotsFrom(from: string, days: number) {
+  const today = moldovaDate(0);
+  const first = Math.max(1, Math.round((Date.parse(from) - Date.parse(today)) / 86_400_000));
+  const last = Math.min(first + Math.min(Math.max(days, 1), 31) - 1, first + 60);
+  const doctors = await bookableDoctors();
+
+  const out: Slot[] = [];
+  for (let offset = first; offset <= last && out.length < 40; offset++) {
+    const date = moldovaDate(offset);
+    for (const doctor of doctors) {
+      for (const hour of await freeHours(doctor.id, date)) {
+        out.push({
+          medicId: doctor.id,
+          medic: doctor.name,
+          data: date,
+          ora: hour,
+          zi: dayLabel(date, offset),
+          oraText: `${String(hour).padStart(2, "0")}:00`,
+        });
+      }
+    }
+  }
+  if (out.length > 0) return out;
+
+  return {
+    perioadaCeruta: `${dayLabel(moldovaDate(first), first)} – ${dayLabel(moldovaDate(last), last)}`,
+    nimicLiber: true,
+    celeMaiApropiate: (await findSlots(MAX_LOOKAHEAD_DAYS)).slice(0, 8),
+    nota: "În perioada cerută nu e nicio oră liberă. Spune-i asta și propune din celeMaiApropiate, cu ziua lor. Nu muta orele pe alte zile.",
+  };
+}
+
+async function findSlots(days: number): Promise<Slot[]> {
   let span = Math.min(Math.max(days, 1), MAX_LOOKAHEAD_DAYS);
   const doctors = await bookableDoctors();
 
-  const out: {
-    medicId: string;
-    medic: string;
-    data: string;
-    ora: number;
-    zi: string;
-    oraText: string;
-  }[] = [];
+  const out: Slot[] = [];
 
   // Nothing inside the asked-for window does not mean nothing at all: doctors
   // often fill the calendar in bursts, weeks ahead. Rather than telling a
@@ -1127,8 +1174,12 @@ async function runTool(
     }
     case "servicii":
       return listServices();
-    case "ore_libere":
-      return findSlots(Number(args?.zile) || 7);
+    case "ore_libere": {
+      const from = String(args?.dela ?? "");
+      return /^\d{4}-\d{2}-\d{2}$/.test(from)
+        ? findSlotsFrom(from, Number(args?.zile) || 7)
+        : findSlots(Number(args?.zile) || 7);
+    }
     case "cauta_pacient":
       return findPatient(String(args?.telefon ?? ""));
     case "programarile_lui":
@@ -1147,6 +1198,91 @@ async function runTool(
     default:
       return { error: `Unealtă necunoscută: ${name}` };
   }
+}
+
+// ── Checking the hours in a reply ───────────────────────────────────────────
+//
+// The prompt says to propose only what ore_libere returned, and the model still
+// once offered "luni, 19 octombrie, la 08:00 sau 09:00" — a day no doctor had
+// opened. Like the booking rules at the top of this file, this is checked in
+// code: every day-and-hour in a reply is looked up in the calendar before the
+// patient sees it.
+
+const RU_MONTHS = [
+  "января", "февраля", "марта", "апреля", "мая", "июня",
+  "июля", "августа", "сентября", "октября", "ноября", "декабря",
+];
+
+const pad2 = (n: number) => String(n).padStart(2, "0");
+
+/**
+ * The day-and-hour pairs in a reply that are neither a free hour nor an
+ * existing appointment — that is, invented. Each time is read as belonging to
+ * the last date written before it ("mâine (joi, 15 octombrie) la 08:00 sau
+ * 09:00"); times with no date to belong to are left alone, as are dates in
+ * the past (a previous visit, mentioned in passing).
+ */
+export async function inventedTimes(text: string): Promise<string[]> {
+  const lower = text.toLowerCase();
+  const today = moldovaDate(0);
+  const [thisYear, thisMonth] = today.split("-").map(Number);
+  const marks: { index: number; date: string }[] = [];
+
+  const named = new RegExp(`(\\d{1,2})\\s+(${[...MONTHS, ...RU_MONTHS].join("|")})`, "g");
+  for (const m of lower.matchAll(named)) {
+    const month = (MONTHS.includes(m[2]) ? MONTHS.indexOf(m[2]) : RU_MONTHS.indexOf(m[2])) + 1;
+    // January named in December is next year's.
+    const year = month < thisMonth && thisMonth >= 11 && month <= 2 ? thisYear + 1 : thisYear;
+    marks.push({ index: m.index ?? 0, date: `${year}-${pad2(month)}-${pad2(Number(m[1]))}` });
+  }
+  for (const m of lower.matchAll(/(poimâine|mâine|послезавтра|завтра)/g)) {
+    const offset = m[1] === "poimâine" || m[1] === "послезавтра" ? 2 : 1;
+    marks.push({ index: m.index ?? 0, date: moldovaDate(offset) });
+  }
+  marks.sort((a, b) => a.index - b.index);
+  if (marks.length === 0) return [];
+
+  const freeOn = new Map<string, Set<number>>();
+  const doctors = await bookableDoctors();
+  const invented: string[] = [];
+
+  for (const t of lower.matchAll(/\b([01]?\d|2[0-3]):([0-5]\d)\b/g)) {
+    const owner = [...marks].reverse().find((m) => m.index < (t.index ?? 0)) ?? (marks.length === 1 ? marks[0] : null);
+    if (!owner || owner.date < today) continue;
+
+    const hour = Number(t[1]);
+    const minute = Number(t[2]);
+    if (!freeOn.has(owner.date)) {
+      const hours = new Set<number>();
+      for (const d of doctors) for (const h of await freeHours(d.id, owner.date)) hours.add(h);
+      freeOn.set(owner.date, hours);
+    }
+    if (minute === 0 && freeOn.get(owner.date)!.has(hour)) continue;
+
+    // A confirmation or "when is my appointment" names a taken hour — rightly.
+    const at = parseMoldovaDateTime(`${owner.date}T${pad2(hour)}:${pad2(minute)}`);
+    const booked = at
+      ? await prisma.appointment.findFirst({
+          where: { dateTime: at, status: { notIn: ["cancelled", "noshow"] } },
+          select: { id: true },
+        })
+      : null;
+    if (booked) continue;
+
+    invented.push(`${dayLabel(owner.date, 0)}, ${pad2(hour)}:${pad2(minute)}`);
+  }
+  return [...new Set(invented)];
+}
+
+/** When the model keeps getting it wrong: only what the calendar says. */
+async function calendarReply(): Promise<string> {
+  const slots = await findSlots(7);
+  const [a, b] = slots;
+  if (!a) return "O colegă de la recepție vă scrie în scurt timp ca să stabiliți ora.";
+  if (!b) return `Am liber ${a.zi} la ${a.oraText}. Vă convine?`;
+  return a.data === b.data
+    ? `Am liber ${a.zi} la ${a.oraText} sau ${b.oraText}. Care vă convine?`
+    : `Am liber ${a.zi} la ${a.oraText} sau ${b.zi} la ${b.oraText}. Care vă convine?`;
 }
 
 export interface AssistantTurn {
@@ -1342,7 +1478,11 @@ export async function assistantReply(
       content: `Azi este ${dayLabel(moldovaDate(0), 0)}, ora ${new Intl.DateTimeFormat(
         "ro-RO",
         { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Chisinau" },
-      ).format(new Date())}, la Chișinău. Programările încep de mâine.`,
+      ).format(new Date())}, la Chișinău. Programările încep de mâine. Săptămâna viitoare începe ${(() => {
+        const weekday = new Date(`${moldovaDate(0)}T12:00:00Z`).getUTCDay();
+        const offset = (8 - weekday) % 7 || 7;
+        return `${dayLabel(moldovaDate(offset), offset)} (${moldovaDate(offset)})`;
+      })()}.`,
     },
     {
       role: "system",
@@ -1356,7 +1496,8 @@ export async function assistantReply(
     ...historyMessages(history),
   ];
 
-  for (let round = 0; round < 6; round++) {
+  let corrections = 0;
+  for (let round = 0; round < 8; round++) {
     const res = await fetch(ENDPOINT, {
       method: "POST",
       headers: {
@@ -1388,9 +1529,29 @@ export async function assistantReply(
         });
         continue;
       }
+      // Every day-and-hour in the reply must exist in the calendar. If not, the
+      // draft goes back with what was wrong; twice wrong, the calendar speaks.
+      let reply = text;
+      const invented = text ? await inventedTimes(text) : [];
+      if (invented.length > 0) {
+        console.warn("Assistant proposed hours not in the calendar:", invented, "|", text);
+        if (corrections < 2 && round < 7) {
+          corrections++;
+          messages.push({ role: "assistant", content: text });
+          messages.push({
+            role: "system",
+            content:
+              `Răspunsul tău propune ${invented.join("; ")} — în calendar NU sunt libere. ` +
+              "Nu inventa și nu muta ore de pe o zi pe alta. Cere ore_libere (cu \"dela\" dacă pacientul vrea o anumită perioadă) " +
+              "și scrie din nou răspunsul, doar cu ce îți întoarce. Pacientul nu a văzut mesajul greșit.",
+          });
+          continue;
+        }
+        reply = await calendarReply();
+      }
       // Answered: a lead that was waiting for a first reply has had one.
-      if (text && context.conversation) await markLeadContacted(context.conversation);
-      return text || null;
+      if (reply && context.conversation) await markLeadContacted(context.conversation);
+      return reply || null;
     }
 
     messages.push(message);

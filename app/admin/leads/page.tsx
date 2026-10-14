@@ -13,6 +13,8 @@ import {
   whatsAppLink,
 } from "@/lib/leads-config";
 import LeadForm from "@/components/admin/LeadForm";
+import FollowUpPicker from "@/components/admin/FollowUpPicker";
+import { clinicDayStart, clinicInDays, formatFollowUp } from "@/lib/chisinau-time";
 import {
   conversationHref,
   type LeadItem,
@@ -55,8 +57,6 @@ interface Stats {
   byStatus: Record<string, number>;
 }
 
-const dayInput = (iso: string | null) => (iso ? iso.slice(0, 10) : "");
-const inDays = (n: number) => new Date(Date.now() + n * 86_400_000).toISOString().slice(0, 10);
 
 const selectClass =
   "px-2 py-1.5 text-xs text-gray-900 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 focus:outline-none";
@@ -291,7 +291,6 @@ export default function AdminLeadsPage() {
     return out;
   }, [page, totalPages]);
 
-  const today = new Date().toISOString().slice(0, 10);
 
   return (
     <div className="min-h-full bg-gray-50 p-3 sm:p-4 lg:p-5 space-y-2.5">
@@ -516,7 +515,6 @@ export default function AdminLeadsPage() {
               key={lead.id}
               lead={lead}
               staff={staff}
-              today={today}
               expanded={expandedId === lead.id}
               onToggle={() => setExpandedId(expandedId === lead.id ? null : lead.id)}
               onPatch={(data) => patch(lead, data)}
@@ -680,7 +678,6 @@ function Modal({
 function LeadRow({
   lead,
   staff,
-  today,
   expanded,
   onToggle,
   onPatch,
@@ -691,7 +688,6 @@ function LeadRow({
 }: {
   lead: LeadItem;
   staff: StaffMember[];
-  today: string;
   expanded: boolean;
   onToggle: () => void;
   onPatch: (data: Partial<LeadItem>) => void;
@@ -704,8 +700,11 @@ function LeadRow({
   const status = getStatus(lead.status);
   const source = getSource(lead.source);
   const open = !CLOSED_STATUSES.includes(lead.status as never);
-  const due = open && lead.followUpAt != null && dayInput(lead.followUpAt) <= today;
-  const isToday = open && lead.followUpAt != null && dayInput(lead.followUpAt) === today;
+  // By Chișinău day, as at Olla: before today is overdue, today is today.
+  const followUp = lead.followUpAt ? new Date(lead.followUpAt) : null;
+  const overdue = open && followUp != null && followUp < clinicDayStart(0);
+  const isToday = open && followUp != null && !overdue && followUp < clinicDayStart(1);
+  const due = overdue || isToday;
   const wa = whatsAppLink(lead.phone);
 
   const [notes, setNotes] = useState<LeadNoteItem[] | null>(null);
@@ -829,9 +828,9 @@ function LeadRow({
           <span className="ml-auto flex items-center gap-1.5 shrink-0 text-[11px] text-gray-400 whitespace-nowrap">
             {lead.followUpAt && open && (
               <span
-                title={`Follow-up: ${new Date(lead.followUpAt).toLocaleDateString("ro-RO")}`}
+                title={`Recontactare: ${formatFollowUp(lead.followUpAt)}`}
                 className={
-                  due && !isToday
+                  overdue
                     ? "text-red-600 font-semibold"
                     : isToday
                       ? "text-orange-600 font-semibold"
@@ -839,10 +838,7 @@ function LeadRow({
                 }
               >
                 🔔{" "}
-                {new Date(lead.followUpAt).toLocaleDateString("ro-RO", {
-                  day: "numeric",
-                  month: "short",
-                })}
+                {formatFollowUp(lead.followUpAt, false)}
               </span>
             )}
             {(lead.notesCount ?? 0) > 0 && (
@@ -950,29 +946,20 @@ function LeadRow({
 
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-[10px] uppercase tracking-wide text-gray-400">Recontactare</span>
-              <input
-                type="date"
-                value={dayInput(lead.followUpAt)}
-                onChange={(e) => onPatch({ followUpAt: e.target.value || null })}
-                className={selectClass}
+              <FollowUpPicker
+                value={lead.followUpAt}
+                onChange={(iso) => onPatch({ followUpAt: iso })}
               />
               {[1, 3, 7].map((d) => (
                 <button
                   key={d}
-                  onClick={() => onPatch({ followUpAt: inDays(d) })}
+                  title={`Peste ${d} ${d === 1 ? "zi" : "zile"}, la 10:00`}
+                  onClick={() => onPatch({ followUpAt: clinicInDays(d) })}
                   className="px-1.5 py-0.5 rounded border border-gray-200 text-[11px] text-gray-600 hover:border-indigo-400 hover:text-indigo-600"
                 >
                   +{d}z
                 </button>
               ))}
-              {lead.followUpAt && (
-                <button
-                  onClick={() => onPatch({ followUpAt: null })}
-                  className="px-1.5 py-0.5 text-[11px] text-gray-400 hover:text-gray-700"
-                >
-                  elimină
-                </button>
-              )}
             </div>
           </div>
 

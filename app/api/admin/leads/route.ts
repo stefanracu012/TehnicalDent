@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { sanitizeObject, validateNoInjection } from "@/lib/security";
 import { normalisePhone } from "@/lib/leads";
 import { literal } from "@/lib/text-search";
+import { clinicDayStart, clinicParts, clinicToIso, parseClinicDate } from "@/lib/chisinau-time";
 import { notifyAssigned } from "@/lib/lead-telegram";
 import {
   CLOSED_STATUSES,
@@ -12,12 +13,6 @@ import {
 import type { LeadSource, LeadStatus, Prisma } from "@prisma/client";
 
 const PAGE_SIZES = [25, 50, 100];
-
-const startOfDay = (d: Date) => {
-  const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  return x;
-};
 
 /** Comma-separated query values, kept only when the server knows them. */
 function csv<T extends string>(raw: string | null, allowed: readonly T[]): T[] {
@@ -62,9 +57,12 @@ export async function GET(request: Request) {
     if (assigned === "none") where.assignedToId = null;
     else if (assigned && /^[a-f0-9]{24}$/i.test(assigned)) where.assignedToId = assigned;
 
+    // Days are Chișinău days. The server runs on UTC, where "today" would start
+    // three hours late and a follow-up at 01:00 would land on the wrong day.
+    const today = clinicDayStart(0);
+    const tomorrow = clinicDayStart(1);
+
     // Follow-up, by day: "overdue" means before today, not before this minute.
-    const today = startOfDay(new Date());
-    const tomorrow = new Date(today.getTime() + 86_400_000);
     const followUp = params.get("followUp");
     if (followUp === "overdue") where.followUpAt = { lt: today };
     else if (followUp === "today") where.followUpAt = { gte: today, lt: tomorrow };
@@ -77,26 +75,27 @@ export async function GET(request: Request) {
     const from = params.get("from");
     const to = params.get("to");
     const created: Prisma.DateTimeFilter = {};
+    const todayStr = clinicParts(new Date()).date;
+    const monthStart = (ym: string) => new Date(clinicToIso(`${ym}-01`, 0, 0) as string);
     if (period === "today") created.gte = today;
     else if (period === "yesterday") {
-      created.gte = new Date(today.getTime() - 86_400_000);
+      created.gte = clinicDayStart(-1);
       created.lt = today;
     } else if (period === "week") {
-      const monday = new Date(today);
-      monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
-      created.gte = monday;
+      // The week starts on Monday, as in the calendar.
+      const weekday = new Date(`${todayStr}T12:00:00Z`).getUTCDay();
+      created.gte = clinicDayStart(-((weekday + 6) % 7));
     } else if (period === "month") {
-      created.gte = new Date(today.getFullYear(), today.getMonth(), 1);
+      created.gte = monthStart(todayStr.slice(0, 7));
     } else if (period === "prev-month") {
-      created.gte = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-      created.lt = new Date(today.getFullYear(), today.getMonth(), 1);
+      const [y, m] = todayStr.split("-").map(Number);
+      created.gte = monthStart(m === 1 ? `${y - 1}-12` : `${y}-${String(m - 1).padStart(2, "0")}`);
+      created.lt = monthStart(todayStr.slice(0, 7));
     } else if (period === "interval") {
-      if (from) created.gte = new Date(from);
-      if (to) {
-        const end = new Date(to);
-        end.setHours(23, 59, 59, 999);
-        created.lte = end;
-      }
+      const fromDay = parseClinicDate(from);
+      const toDay = parseClinicDate(to);
+      if (fromDay) created.gte = fromDay;
+      if (toDay) created.lt = clinicDayStart(1, toDay);
     }
     if (Object.keys(created).length) where.createdAt = created;
 
@@ -265,7 +264,7 @@ export async function POST(request: Request) {
         firstMessage: (body.firstMessage as string) || null,
         note: (body.note as string) || null,
         status: (body.status as LeadStatus) || (fromConversation ? "contactat" : "nou"),
-        followUpAt: body.followUpAt ? new Date(body.followUpAt as string) : null,
+        followUpAt: parseClinicDate(body.followUpAt),
         assignedToId: (body.assignedToId as string) || null,
       },
     });
