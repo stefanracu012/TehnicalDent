@@ -22,7 +22,8 @@ import {
   type StaffMember,
 } from "@/components/admin/lead-types";
 
-const PAGE_SIZES = [25, 50, 100];
+type PageSize = number | "all";
+const PAGE_SIZES: PageSize[] = [25, 50, 100, 200, 500, 1000, "all"];
 
 const FOLLOWUPS = [
   { value: "", label: "Follow-up: toate" },
@@ -115,7 +116,7 @@ export default function AdminLeadsPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(50);
+  const [pageSize, setPageSize] = useState<PageSize>(50);
   const [statuses, setStatuses] = useState<string[]>([]);
   const [source, setSource] = useState("");
   const [assigned, setAssigned] = useState("");
@@ -533,19 +534,21 @@ export default function AdminLeadsPage() {
           <div className="flex items-center gap-2 text-xs text-gray-500">
             <span>Pe pagină:</span>
             <select
-              value={pageSize}
-              onChange={(e) => setPageSize(Number(e.target.value))}
+              value={String(pageSize)}
+              onChange={(e) => setPageSize(e.target.value === "all" ? "all" : Number(e.target.value))}
               className={selectClass}
               aria-label="Leaduri pe pagină"
             >
               {PAGE_SIZES.map((n) => (
                 <option key={n} value={n}>
-                  {n}
+                  {n === "all" ? "Toate" : n}
                 </option>
               ))}
             </select>
             <span>
-              {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, totalCount)} din {totalCount}
+              {pageSize === "all"
+                ? `toate cele ${totalCount}`
+                : `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, totalCount)} din ${totalCount}`}
             </span>
           </div>
 

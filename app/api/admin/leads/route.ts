@@ -12,7 +12,7 @@ import {
 } from "@/lib/leads-config";
 import type { LeadSource, LeadStatus, Prisma } from "@prisma/client";
 
-const PAGE_SIZES = [25, 50, 100];
+const PAGE_SIZES = [25, 50, 100, 200, 500, 1000];
 
 /** Comma-separated query values, kept only when the server knows them. */
 function csv<T extends string>(raw: string | null, allowed: readonly T[]): T[] {
@@ -129,16 +129,17 @@ export async function GET(request: Request) {
             ? [{ name: "asc" }]
             : [{ createdAt: "desc" }];
 
+    // "all" returns everything that passes the filters, on one page.
+    const all = params.get("pageSize") === "all";
     const asked = Number(params.get("pageSize"));
-    const pageSize = PAGE_SIZES.includes(asked) ? asked : 50;
-    const page = Math.max(Number(params.get("page")) || 1, 1);
+    const pageSize = all ? null : PAGE_SIZES.includes(asked) ? asked : 50;
+    const page = all ? 1 : Math.max(Number(params.get("page")) || 1, 1);
 
     const [leads, totalCount, byStatusRaw, total, overdue, staff] = await Promise.all([
       prisma.lead.findMany({
         where,
         orderBy,
-        skip: (page - 1) * pageSize,
-        take: pageSize,
+        ...(pageSize ? { skip: (page - 1) * pageSize, take: pageSize } : {}),
         include: { _count: { select: { leadNotes: true } } },
       }),
       prisma.lead.count({ where }),
@@ -180,9 +181,9 @@ export async function GET(request: Request) {
         createdAt: l.createdAt.toISOString(),
       })),
       page,
-      pageSize,
+      pageSize: pageSize ?? totalCount,
       totalCount,
-      totalPages: Math.max(Math.ceil(totalCount / pageSize), 1),
+      totalPages: pageSize ? Math.max(Math.ceil(totalCount / pageSize), 1) : 1,
       stats: {
         total,
         overdue,

@@ -185,7 +185,9 @@ ZILELE ȘI ORELE:
 - În "programeaza" trimiți "data" și "ora" — valorile brute din aceeași înregistrare. Pacientului îi spui "zi" și "oraText". Nu le amesteca.
 - Nu spui niciodată o zi a săptămânii care nu apare în "zi". Dacă pacientul zice "luni" și nicio înregistrare nu e luni, îi spui asta și îi dai zilele pe care chiar le ai.
 - Nu propui ore din trecut și nu inventezi zile între cele libere.
-- Când pacientul vrea o anumită perioadă ("săptămâna viitoare", "după 20", "la sfârșitul lunii"), chemi ore_libere cu "dela" = prima zi a perioadei. Dacă îți spune că în perioada aceea nu e nimic liber, îi spui exact asta și îi propui din "celeMaiApropiate", cu ziua lor reală. Nu muți NICIODATĂ o oră de pe o zi pe alta ca să se potrivească cu ce a cerut.
+- Când pacientul vrea o anumită perioadă ("săptămâna viitoare", "după 20", "la sfârșitul lunii"), chemi ore_libere cu "dela" = prima zi a perioadei. Dacă îți spune că în perioada aceea nu e nimic liber, îi spui exact asta și îi arăți o singură dată toate orele din "celeMaiApropiate" (până la 8), grupate pe zile, cu ziua lor reală: "Săptămâna viitoare nu am ore libere. Cele mai apropiate sunt mâine, joi, 15 octombrie, la 08:00, 09:00, 10:00, 11:00 sau 12:00, și vineri, 16 octombrie, la 14:00, 15:00 sau 16:00." Nu muți NICIODATĂ o oră de pe o zi pe alta ca să se potrivească cu ce a cerut.
+- O propunere refuzată nu se repetă. Dacă pacientul spune nu orelor tale și ține la o perioadă în care nu e nimic liber, nu-i mai înșiri ore: îi spui că o colegă de la recepție îl contactează ca să găsiți o oră în perioada dorită, îi ceri numele și numărul dacă nu le ai și chemi marcheaza_lead cu "urgent", cu perioada dorită în motiv. Exemplu: "Înțeleg. O colegă de la recepție vă scrie ca să găsim o oră săptămâna viitoare. Pe ce nume vă notez și la ce număr vă putem suna?"
+- La o propunere obișnuită, două ore. Toate orele cele mai apropiate le arăți când perioada dorită nu are nimic liber (vezi mai sus) sau când cele două nu i-au convenit.
 - Dacă "ore_libere" îți întoarce o listă goală, medicii nu și-au completat încă programul — NU e treaba pacientului să știe asta. Nu spui "nu avem locuri" și nu întrebi dacă vrea altceva. Îi ceri numele și numărul și îi spui că sună cineva de la recepție în cursul zilei ca să stabiliți ora. Un pacient care vrea să vină nu pleacă cu mâna goală.
 
 CE SERVICIU VREA:
@@ -759,7 +761,10 @@ async function findSlotsFrom(from: string, days: number) {
     perioadaCeruta: `${dayLabel(moldovaDate(first), first)} – ${dayLabel(moldovaDate(last), last)}`,
     nimicLiber: true,
     celeMaiApropiate: (await findSlots(MAX_LOOKAHEAD_DAYS)).slice(0, 8),
-    nota: "În perioada cerută nu e nicio oră liberă. Spune-i asta și propune din celeMaiApropiate, cu ziua lor. Nu muta orele pe alte zile.",
+    nota:
+      "În perioada cerută nu e nicio oră liberă. Spune-i asta și arată-i O SINGURĂ DATĂ toate orele din celeMaiApropiate, grupate pe zile, într-o propoziție. " +
+      "Nu muta orele pe alte zile. Dacă le refuză sau insistă pe perioada cerută, nu i le mai propune: spune că o colegă de la " +
+      "recepție îl contactează ca să găsiți o oră atunci, cere numele și numărul dacă nu le ai, și marchează lead-ul \"urgent\".",
   };
 }
 
@@ -1144,6 +1149,8 @@ async function reportFailedBooking(
 interface TurnContext {
   conversation: ChatConversation | null;
   knownPatient: { name: string; phone: string } | null;
+  /** Set when the model itself flagged the chat urgent this turn. */
+  flaggedUrgent?: boolean;
 }
 
 async function runTool(
@@ -1158,6 +1165,7 @@ async function runTool(
       if (!CHAT_STATUSES.includes(status)) {
         return { ok: false, motiv: `Status necunoscut. Doar: ${CHAT_STATUSES.join(", ")}.` };
       }
+      if (status === "urgent") context.flaggedUrgent = true;
       // Without a conversation (a test, the Telegram tools) there is no lead.
       if (!context.conversation) return { ok: true };
       const result = await setLeadFromChat(
@@ -1216,13 +1224,12 @@ const RU_MONTHS = [
 const pad2 = (n: number) => String(n).padStart(2, "0");
 
 /**
- * The day-and-hour pairs in a reply that are neither a free hour nor an
- * existing appointment — that is, invented. Each time is read as belonging to
- * the last date written before it ("mâine (joi, 15 octombrie) la 08:00 sau
- * 09:00"); times with no date to belong to are left alone, as are dates in
- * the past (a previous visit, mentioned in passing).
+ * Every day-and-hour written in a text. Each time is read as belonging to the
+ * last date written before it ("mâine (joi, 15 octombrie) la 08:00 sau
+ * 09:00"); times with no date to belong to are left out, as are dates in the
+ * past (a previous visit, mentioned in passing).
  */
-export async function inventedTimes(text: string): Promise<string[]> {
+function timesIn(text: string): { date: string; hour: number; minute: number }[] {
   const lower = text.toLowerCase();
   const today = moldovaDate(0);
   const [thisYear, thisMonth] = today.split("-").map(Number);
@@ -1242,25 +1249,37 @@ export async function inventedTimes(text: string): Promise<string[]> {
   marks.sort((a, b) => a.index - b.index);
   if (marks.length === 0) return [];
 
+  const out: { date: string; hour: number; minute: number }[] = [];
+  for (const t of lower.matchAll(/\b([01]?\d|2[0-3]):([0-5]\d)\b/g)) {
+    const owner = [...marks].reverse().find((m) => m.index < (t.index ?? 0)) ?? (marks.length === 1 ? marks[0] : null);
+    if (!owner || owner.date < today) continue;
+    out.push({ date: owner.date, hour: Number(t[1]), minute: Number(t[2]) });
+  }
+  return out;
+}
+
+/**
+ * The day-and-hour pairs in a reply that are neither a free hour nor an
+ * existing appointment — that is, invented.
+ */
+export async function inventedTimes(text: string): Promise<string[]> {
+  const pairs = timesIn(text);
+  if (pairs.length === 0) return [];
+
   const freeOn = new Map<string, Set<number>>();
   const doctors = await bookableDoctors();
   const invented: string[] = [];
 
-  for (const t of lower.matchAll(/\b([01]?\d|2[0-3]):([0-5]\d)\b/g)) {
-    const owner = [...marks].reverse().find((m) => m.index < (t.index ?? 0)) ?? (marks.length === 1 ? marks[0] : null);
-    if (!owner || owner.date < today) continue;
-
-    const hour = Number(t[1]);
-    const minute = Number(t[2]);
-    if (!freeOn.has(owner.date)) {
+  for (const { date, hour, minute } of pairs) {
+    if (!freeOn.has(date)) {
       const hours = new Set<number>();
-      for (const d of doctors) for (const h of await freeHours(d.id, owner.date)) hours.add(h);
-      freeOn.set(owner.date, hours);
+      for (const d of doctors) for (const h of await freeHours(d.id, date)) hours.add(h);
+      freeOn.set(date, hours);
     }
-    if (minute === 0 && freeOn.get(owner.date)!.has(hour)) continue;
+    if (minute === 0 && freeOn.get(date)!.has(hour)) continue;
 
     // A confirmation or "when is my appointment" names a taken hour — rightly.
-    const at = parseMoldovaDateTime(`${owner.date}T${pad2(hour)}:${pad2(minute)}`);
+    const at = parseMoldovaDateTime(`${date}T${pad2(hour)}:${pad2(minute)}`);
     const booked = at
       ? await prisma.appointment.findFirst({
           where: { dateTime: at, status: { notIn: ["cancelled", "noshow"] } },
@@ -1269,9 +1288,42 @@ export async function inventedTimes(text: string): Promise<string[]> {
       : null;
     if (booked) continue;
 
-    invented.push(`${dayLabel(owner.date, 0)}, ${pad2(hour)}:${pad2(minute)}`);
+    invented.push(`${dayLabel(date, 0)}, ${pad2(hour)}:${pad2(minute)}`);
   }
   return [...new Set(invented)];
+}
+
+/**
+ * A reply that promises a person will get back: "o colegă de la recepție vă
+ * scrie", "vă sună cineva", "revin". Not "sunați la recepție" — that sends the
+ * patient to us, it promises nothing.
+ */
+const PROMISES_A_PERSON =
+  /(coleg[ăa]|cineva)[^.?!]{0,60}(contact|scri|sun|reven|reveni)|(contact|scri|sun)\S*\s+(cineva|o coleg)|\brevin\b|перезвон|свяжется|свяжутся|напишет вам|напишут вам/i;
+
+export function promisesAPerson(reply: string): boolean {
+  return PROMISES_A_PERSON.test(reply);
+}
+
+/** "nu", "nu pot", "altă zi", "totuși", "нет" — the patient turning an offer down. */
+const REFUSAL =
+  /^\s*(nu\b|нет)|nu pot|nu-mi|nu îmi|nu imi|nu mă |nu ma |alt[ăa] (zi|dat|săpt|sapt|perioad)|totu[șs]i|не могу|не подходит|друг/i;
+
+/**
+ * Whether the reply offers again hours the patient has just turned down: at
+ * least two of them were in the previous offer. A reconfirmation names a
+ * single hour, so it is not mistaken for this.
+ */
+export function repeatsRefusedOffer(
+  reply: string,
+  history: { role: string; content: string }[],
+): boolean {
+  const lastUser = [...history].reverse().find((t) => t.role === "user");
+  const lastOffer = [...history].reverse().find((t) => t.role === "assistant");
+  if (!lastUser || !lastOffer || !REFUSAL.test(lastUser.content)) return false;
+  const key = (p: { date: string; hour: number; minute: number }) => `${p.date}T${p.hour}:${p.minute}`;
+  const before = new Set(timesIn(lastOffer.content).map(key));
+  return new Set(timesIn(reply).map(key).filter((k) => before.has(k))).size >= 2;
 }
 
 /** When the model keeps getting it wrong: only what the calendar says. */
@@ -1548,9 +1600,36 @@ export async function assistantReply(
           continue;
         }
         reply = await calendarReply();
+      } else if (corrections < 2 && round < 7 && repeatsRefusedOffer(text, history)) {
+        // The patient said no to these hours; offering them again is how a
+        // chat goes round in circles. A person finds the hour instead.
+        corrections++;
+        console.warn("Assistant repeated a refused offer:", text);
+        messages.push({ role: "assistant", content: text });
+        messages.push({
+          role: "system",
+          content:
+            "Pacientul tocmai a refuzat exact aceste ore — nu i le mai propune. Dacă vrea o perioadă în care nu e nimic liber, " +
+            "spune-i că o colegă de la recepție îl contactează ca să găsiți o oră în perioada dorită, cere numele și numărul dacă nu le ai, " +
+            "și cheamă marcheaza_lead cu status \"urgent\" și perioada dorită în motiv. Scrie din nou răspunsul. Pacientul nu a văzut mesajul greșit.",
+        });
+        continue;
       }
       // Answered: a lead that was waiting for a first reply has had one.
       if (reply && context.conversation) await markLeadContacted(context.conversation);
+
+      // A promise that someone will get back is kept only if someone knows
+      // about it. The prompt asks the model to flag it; this makes sure — the
+      // model said "o colegă vă contactează" and flagged nothing.
+      if (reply && context.conversation && !context.flaggedUrgent && promisesAPerson(reply)) {
+        const lastUser = [...history].reverse().find((t) => t.role === "user")?.content ?? "";
+        await setLeadFromChat(
+          context.conversation,
+          "urgent",
+          `I s-a promis că revine cineva de la recepție. Ultimul lui mesaj: "${lastUser.slice(0, 200)}"`,
+          context.knownPatient,
+        );
+      }
       return reply || null;
     }
 
