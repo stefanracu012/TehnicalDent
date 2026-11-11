@@ -212,6 +212,8 @@ CE SERVICIU VREA:
 - Dacă unealta nu recunoaște cuvântul lui, deduci TU. Ceri lista cu "servicii" și citești câmpul "acopera" al fiecăruia — acolo scrie ce tratează. Alegi serviciul potrivit pentru ce a descris pacientul și programezi cu titlul acela. Pacienții descriu simptome, nu denumiri: "mi s-a rupt un dinte", "am o umflătură", "mi-a căzut plomba".
 
 CÂND TE ÎNTREABĂ DE PREȚ:
+- Răspunsul începe ÎNTOTDEAUNA cu prețul. Abia după el, dacă e cazul, propui o oră. O întrebare de preț ("cât costă", "cât e", "ce preț", "сколько стоит") nu primește niciodată ore libere în loc de preț.
+- Textele din "pretText" și numele serviciilor sunt scrise în română: le spui în limba pacientului ("5000 sau 6000 lei, în funcție de sistemul de implant" devine, pentru un pacient rus, "5000 или 6000 леев, в зависимости от системы импланта").
 - Ceri de fiecare dată lista cu unealta "servicii". Niciodată din memorie și niciodată aproximat.
 - Găsești serviciul exact despre care întreabă. Dacă nu ești sigur care e, întrebi înainte să spui vreo cifră.
 - Te uiți dacă are reducere. Dacă "areReducere" e adevărat, spui prețul redus și menționezi că e preț cu reducere. Dacă nu, spui prețul obișnuit.
@@ -284,11 +286,13 @@ CÂND TREBUIE SĂ RĂSPUNDĂ UN OM DE LA RECEPȚIE:
 
 CE ȘTII SIGUR DESPRE CLINICĂ (doar atât; restul nu-l inventezi):
 - Adresa: Chișinău, sectorul Botanica, Str. Sarmizegetusa 24/1. Telefon: 060 355 350.
+- Clinica oferă vouchere-cadou (de exemplu pentru igienizare). Prețul unui voucher e prețul serviciului, cel din "servicii" — pentru igienizare, prețul promoției — și îl spui dacă întreabă. Valabilitatea și cum se achită le dă recepția — tu nu le știi și nu le inventezi. Când cineva vrea un voucher sau un cadou: îi spui că da, avem (cu prețul, dacă l-a cerut), îi ceri numele și numărul de telefon și îi spui că o colegă de la recepție îl contactează cu detaliile; chemi marcheaza_lead cu "urgent" și în motiv "vrea voucher-cadou pentru <serviciu>". Nu-l programezi la oră — el nu vrea o programare acum — și nu-i propui ore decât dacă le cere.
 - Igienizarea profesională include ÎNTOTDEAUNA trei etape: detartraj cu ultrasunet, AirFlow și periaj profesional. AirFlow nu e "la nevoie" — e inclus mereu. O spui doar dacă te întreabă ce include.
 - Programul clinicii îl primești mai jos, într-un mesaj separat. Orele în care se poate programa cineva le dă doar ore_libere.
 - Dacă ore_libere îți dă o oră în afara programului afișat (de exemplu sâmbătă la 17:00), ora din calendar e cea valabilă — medicul a deschis-o. O propui ca pe oricare alta și nu comentezi diferența. Nu-ți ceri scuze "pentru confuzie": pacientul nu a văzut nicio confuzie.
 
 CE NU FACI:
+- Nu spui NICIODATĂ "nu oferim", "nu avem", "nu facem" sau "nu se poate" despre ceva ce nu e în lista de mai sus sau în unelte: vouchere, plata în rate, asigurări, pachete, reduceri pentru anumite grupuri, un serviciu pe care nu-l găsești. Nu știi că nu există — doar că nu-l știi tu. Un "nu" greșit pierde un pacient care voia să cumpere. Spui că întrebi la recepție, ceri numele și numărul și marchezi "urgent" cu ce a cerut: "Verific cu colegele de la recepție și vă contactăm. Pe ce nume vă notez și la ce număr vă putem suna?"
 - Nu dai sfaturi medicale și nu spui ce tratament îi trebuie. Pentru asta e consultația.
 - Nu promiți rezultate și nu estimezi durata vindecării.
 - Dacă întrebarea e medicală sau delicată, spui că îl întrebi pe medic și revii, sau îl inviți la consultație.
@@ -484,7 +488,9 @@ const SPOKEN_AS: { said: string[]; means: string }[] = [
   {
     said: [
       "curatire", "curatare", "curatat", "curatenie", "detartraj", "tartru",
-      "piatra", "igiena", "profilaxie", "airflow", "periaj",
+      // "igieniz" covers igienizare / igienizarea / igienizat — the clinic's own
+      // word, which was not in this list and so fell through to similarity.
+      "piatra", "igiena", "igieniz", "profilaxie", "airflow", "periaj",
       "чистка", "чистку", "чистки", "гигиена", "гигиену", "камень", "камни",
     ],
     means: "igienizare",
@@ -551,6 +557,17 @@ const SPOKEN_AS: { said: string[]; means: string }[] = [
   },
 ];
 
+/**
+ * Words that sit in several service titles ("Estetică Dentară", "Protetică
+ * Dentară", "Promoție … IGIENIZAREA DENTARĂ"). Matching a patient's phrase on
+ * one of them picks whichever title comes first: "igienizarea dentară" was
+ * booked as "Estetică Dentară", with full confidence.
+ */
+const GENERIC_WORDS = new Set([
+  "dentara", "dentare", "dentar", "dentului", "stomatolog", "medicului",
+  "stomatologie", "tratament", "promotie", "toamna", "pentru",
+]);
+
 /** Rewrites a patient's own words into the clinic's, when it recognises them. */
 function spokenToService(query: string): string | null {
   const text = normalise(query);
@@ -562,6 +579,21 @@ function spokenToService(query: string): string | null {
       // "чистку зубов" all carry the term inside a longer phrase. A word that
       // carries its own spaces is the exception, and matches whole.
       if (padded.includes(word)) return entry.means;
+    }
+  }
+
+  // A slip of the finger inside the everyday word: "plmoba", "igieniazrea",
+  // "consuulltatie". One edit on a word of five letters or more, two from
+  // eight — close enough to be that word and not another.
+  const tokens = text.split(" ").filter((t) => t.length >= 5);
+  for (const token of tokens) {
+    const allowed = token.length >= 8 ? 2 : 1;
+    for (const entry of SPOKEN_AS) {
+      for (const word of entry.said) {
+        if (word.length < 5 || word.includes(" ") || /[Ѐ-ӿ]/.test(word)) continue;
+        if (Math.abs(word.length - token.length) > allowed) continue;
+        if (editDistance(token, word) <= allowed) return entry.means;
+      }
     }
   }
   return null;
@@ -618,7 +650,7 @@ export async function resolveService(query: string): Promise<{
     // an unrelated service that happened to be spelled more similarly.
     const words = whole
       .flatMap((c) => c.split(" "))
-      .filter((w) => w.length >= 4);
+      .filter((w) => w.length >= 4 && !GENERIC_WORDS.has(w));
 
     for (const candidate of [...whole, ...words]) {
       // An exact hit, or one name contained in the other ("terapie" inside
@@ -1469,7 +1501,7 @@ export async function inventedTimes(text: string): Promise<string[]> {
  * patient to us, it promises nothing.
  */
 const PROMISES_A_PERSON =
-  /(coleg[ăa]|cineva)[^.?!]{0,60}(contact|scri|sun|reven|reveni)|(contact|scri|sun)\S*\s+(cineva|o coleg)|\brevin\b|перезвон|свяжется|свяжутся|напишет вам|напишут вам/i;
+  /(coleg|cineva|recep[țt]i)[^.?!]{0,60}(contact|scri|sun|reven|r[ăa]spund)|(contact|scri|sun)\S*\s+(cineva|o coleg)|v[ăa] (contact|sun|scri|r[ăa]spund|anun[țt])\S*|\brevin\b|\brevenim\b|verific cu (coleg|recep[țt])|перезвон|свяжется|свяжутся|напишет вам|напишут вам|уточню у|уточним/i;
 
 export function promisesAPerson(reply: string): boolean {
   return PROMISES_A_PERSON.test(reply);
@@ -1554,6 +1586,135 @@ async function calendarReply(): Promise<string> {
     ? `Am liber ${a.zi} la ${a.oraText} sau ${b.oraText}. Care vă convine?`
     : `Am liber ${a.zi} la ${a.oraText} sau ${b.zi} la ${b.oraText}. Care vă convine?`;
 }
+
+// ── What a reply may say about prices, language and who answers ─────────────
+//
+// Found by running a thousand simulated patients through the assistant. The
+// prompt asks for all of this, and a model still gets it wrong one time in
+// ten: "Preț un implant" answered with free hours, a patient writing in Russian
+// answered in Romanian more often than not, "cancel my appointment" answered
+// with a question and no hand-off, a patient's "-20%" turned into 560 lei. Each
+// is now checked in code, like the hours.
+
+/** The patient is asking what something costs. */
+export const ASKS_PRICE =
+  /c[âa]t (cost[ăa]|e\b|este|face|ar costa|vine)|ce pre[țt]|pre[țt]|tarif|\bcost\b|сколько (стоит|будет)|цен[ауы]|стоимост/i;
+/** A figure with a currency: "700 lei", "5000 или 6000 леев". */
+const GIVES_PRICE = /\d[\d\s.]*\s*(?:de\s+)?(?:lei|леев|лей|mdl)(?![\p{L}])/iu;
+
+/** What only a person at reception can settle. */
+export const NEEDS_A_PERSON =
+  /anul(ez|are|at|eaz)|reprogram|(mut(a|ă|are|am|at)|schimb)[^.?!]{0,30}programar|programar[^.?!]{0,30}(alt[ăa] zi|alt[ăa] dat[ăa])|nu pot (ajunge|veni)|am[âa]n[ăa]|nemul[țt]umit|reclama[țt]|cer banii|banii [îi]napoi|scandal|(vreau|aș vrea|doresc) (s[ăa] )?(vorbesc|discut) cu|administrator|director|отмен|перенест|перенос|не смогу|недовол|жалоб|верните деньги|вернуть деньги|администратор|директор/i;
+
+/** The prices the clinic really has — the site's, plus the signed price list. */
+let priceCache: { at: number; set: Set<number> } | null = null;
+async function knownPrices(): Promise<Set<number>> {
+  if (priceCache && Date.now() - priceCache.at < 5 * 60_000) return priceCache.set;
+  const rows = await prisma.service.findMany({
+    where: { isActive: true },
+    select: { price: true, discountPrice: true, priceNote: true, shortDesc: true, description: true },
+  });
+  const set = new Set<number>();
+  for (const s of rows) {
+    for (const v of [s.price, s.discountPrice]) if (v != null) set.add(v);
+    for (const text of [s.priceNote ?? "", s.shortDesc, s.description]) {
+      if (!/lei|MDL|pre[țt]/i.test(text)) continue;
+      for (const m of text.matchAll(/\d{3,5}/g)) set.add(Number(m[0]));
+    }
+  }
+  priceCache = { at: Date.now(), set };
+  return set;
+}
+
+/**
+ * Prices in a reply that the clinic does not have, and percentages. A price the
+ * patient wrote is not a price: "igienizarea cu 500 lei" was answered "dar
+ * acum e promoție, 500 lei", and "-20%" became "560 lei". The only figures that
+ * may appear are the ones in the list, unchanged.
+ */
+export async function pricesNotInList(reply: string): Promise<string[]> {
+  const known = await knownPrices();
+  const bad: string[] = [];
+  // "între 700 și 800 lei", "700-800 lei", "5000 sau 6000 lei" — every figure of a range.
+  const re = /(\d[\d .]{2,6}?)(?:\s*(?:și|sau|или|-|–|până la|до)\s*(\d[\d .]{2,6}?))?\s*(?:de\s+)?(?:lei|леев|лей|mdl)(?![\p{L}])/giu;
+  for (const m of reply.matchAll(re)) {
+    for (const part of [m[1], m[2]]) {
+      if (!part) continue;
+      const n = Number(part.replace(/[ .]/g, ""));
+      if (Number.isFinite(n) && !known.has(n)) bad.push(`${n} lei`);
+    }
+  }
+  if (/\d\s?%/.test(reply)) bad.push("un procent");
+  return [...new Set(bad)];
+}
+
+/**
+ * A figure the patient wrote while quoting an offer, repeated back to them.
+ * "Am văzut igienizarea cu 500 lei" got "dar acum e promoție, 500 lei" — 500
+ * is a real price, of another procedure, so the list check cannot tell. The
+ * patient's number is never the clinic's to confirm.
+ */
+export function echoedFigures(reply: string, patientText: string): string[] {
+  if (!/am v[ăa]zut|vazut|mai e valabil|mai este valabil|ofert|reducer|promo[țt]|reclam|видел|акци|скидк/i.test(patientText)) return [];
+  const figures = new Set<string>();
+  for (const m of patientText.matchAll(/(\d[\d .]{1,6}?)\s*(?:de\s+)?(?:lei|леев|лей|mdl)(?![\p{L}])/giu)) figures.add(m[1].replace(/[ .]/g, ""));
+  for (const m of patientText.matchAll(/(\d{1,2})\s?%/g)) figures.add(`${m[1]}%`);
+  const echoed: string[] = [];
+  for (const f of figures) {
+    const re = f.endsWith("%")
+      ? new RegExp(`${f.slice(0, -1)}\\s?%`)
+      : new RegExp(`(?<![\\d])${f.replace(/(\d)(?=(\d{3})+$)/g, "$1[ .]?")}\\s*(?:de\\s+)?(?:lei|леев|лей|mdl)`, "iu");
+    if (re.test(reply)) echoed.push(f);
+  }
+  return echoed;
+}
+
+/** "ru" when the patient's last real message is Cyrillic, "ro" when it is Latin. */
+function patientLanguage(history: { role: string; content: string }[]): "ru" | "ro" | null {
+  for (let i = history.length - 1; i >= 0; i--) {
+    if (history[i].role !== "user") continue;
+    const letters = history[i].content.match(/\p{L}/gu) ?? [];
+    if (letters.length < 4) continue; // "da", "ok", "?" say nothing about language
+    const cyrillic = letters.filter((c) => /[Ѐ-ӿ]/.test(c)).length;
+    return cyrillic / letters.length >= 0.5 ? "ru" : "ro";
+  }
+  return null;
+}
+
+const cyrillicShare = (text: string) => {
+  const letters = text.match(/\p{L}/gu) ?? [];
+  return letters.length ? letters.filter((c) => /[Ѐ-ӿ]/.test(c)).length / letters.length : 0;
+};
+
+/** The reply is in a language the patient did not write in. */
+export function wrongLanguage(reply: string, history: { role: string; content: string }[]): "ru" | "ro" | null {
+  const want = patientLanguage(history);
+  if (!want) return null;
+  const share = cyrillicShare(reply);
+  if (want === "ru" && share < 0.4) return "ru";
+  if (want === "ro" && share > 0.25) return "ro";
+  return null;
+}
+
+/** Stock phrases the prompt bans, and a greeting repeated mid-conversation — removed, not asked about. */
+export function tidyReply(reply: string, history: { role: string; content: string }[]): string {
+  const STOCK =
+    /nu ezita|cu (mare )?pl[ăa]cere|sunt aici|v[ăa] pot ajuta cu alt|dac[ăa] ave[țt]i alte [îi]ntreb[ăa]ri|o zi (frumoas|bun)[ăa]|la dispozi[țt]ia|не стесняйтесь|обращайтесь, если/i;
+  const sentences = reply.split(/(?<=[.!?])\s+/);
+  const kept = sentences.filter((s) => !STOCK.test(s));
+  let out = (kept.length > 0 ? kept : sentences).join(" ").trim();
+  if (history.some((t) => t.role === "assistant")) {
+    const stripped = out.replace(/^\s*(bun[ăa] (ziua|seara|diminea[țt]a)|salut|здравствуйте|добрый (день|вечер))[!,.]?\s+/i, "");
+    if (stripped.length > 8) out = stripped.charAt(0).toUpperCase() + stripped.slice(1);
+  }
+  return out;
+}
+
+/** Said in the patient's language, when nothing better is available. */
+const HANDOFF: Record<"ro" | "ru", string> = {
+  ro: "O colegă de la recepție vă contactează în scurt timp ca să rezolve asta. Pe ce nume vă notez și la ce număr vă putem suna?",
+  ru: "Коллега с ресепшена свяжется с вами в ближайшее время. На какое имя вас записать и на какой номер можно позвонить?",
+};
 
 export interface AssistantTurn {
   role: "user" | "assistant";
@@ -1808,14 +1969,89 @@ export async function assistantReply(
       }
       // Every day-and-hour in the reply must exist in the calendar. If not, the
       // draft goes back with what was wrong; twice wrong, the calendar speaks.
-      let reply = text;
+      let reply = text ? tidyReply(text, history) : text;
       const invented = text ? await inventedTimes(text) : [];
       const claimed =
         text && invented.length === 0
           ? await unbackedConfirmation(text, !!context.booked, contact?.phone ?? typedPhone)
           : null;
       const dayClaims = text && invented.length === 0 && !claimed ? await wrongDayClaims(text) : [];
-      if (invented.length > 0) {
+      const lastUserText = [...history].reverse().find((t) => t.role === "user")?.content ?? "";
+      const clean = !!text && invented.length === 0 && !claimed && dayClaims.length === 0;
+      const badPrices = clean
+        ? [...(await pricesNotInList(text)), ...echoedFigures(text, lastUserText).map((f) => `${f} (cifra scrisă de pacient)`)]
+        : [];
+      const langWrong = clean && badPrices.length === 0 ? wrongLanguage(text, history) : null;
+      const needsPerson =
+        clean && badPrices.length === 0 && !langWrong && !context.flaggedUrgent && NEEDS_A_PERSON.test(lastUserText) && !promisesAPerson(text);
+      const noPrice =
+        clean && badPrices.length === 0 && !langWrong && !needsPerson && ASKS_PRICE.test(lastUserText) && !GIVES_PRICE.test(text) && !promisesAPerson(text);
+      if (badPrices.length > 0) {
+        console.warn("Assistant quoted a price that is not in the list:", badPrices, "|", text);
+        if (corrections < 2 && round < 7) {
+          corrections++;
+          messages.push({ role: "assistant", content: text });
+          messages.push({
+            role: "system",
+            content:
+              `Răspunsul tău conține ${badPrices.join("; ")} — nu există în lista clinicii. Spui doar prețuri luate exact din "servicii", fără calcule, ` +
+              "fără reduceri și fără procente. Un preț sau o reducere scrisă de pacient nu o confirmi și nu o folosești: spui prețul din listă, " +
+              "ca și cum ar fi întrebat simplu cât costă. Scrie din nou răspunsul. Pacientul nu a văzut mesajul greșit.",
+          });
+          continue;
+        }
+        reply = HANDOFF[patientLanguage(history) ?? "ro"];
+        if (context.conversation) {
+          context.flaggedUrgent = true;
+          await setLeadFromChat(context.conversation, "urgent", `Întreabă de un preț pe care asistentul nu l-a putut spune corect. Mesajul lui: "${lastUserText.slice(0, 160)}"`, context.knownPatient);
+        }
+      } else if (langWrong) {
+        console.warn("Assistant answered in the wrong language:", langWrong, "|", text);
+        if (corrections < 2 && round < 7) {
+          corrections++;
+          messages.push({ role: "assistant", content: text });
+          messages.push({
+            role: "system",
+            content:
+              langWrong === "ru"
+                ? "Pacientul scrie în RUSĂ. Rescrie răspunsul COMPLET în rusă, inclusiv zilele, numele serviciilor și textele de preț (care sunt în română în unelte). Pacientul nu a văzut mesajul greșit."
+                : "Pacientul scrie în ROMÂNĂ. Rescrie răspunsul COMPLET în română. Pacientul nu a văzut mesajul greșit.",
+          });
+          continue;
+        }
+      } else if (needsPerson) {
+        console.warn("Assistant did not hand a request to a person:", lastUserText.slice(0, 80));
+        if (corrections < 2 && round < 7) {
+          corrections++;
+          messages.push({ role: "assistant", content: text });
+          messages.push({
+            role: "system",
+            content:
+              "Ce cere pacientul (anulare sau mutare de programare, reclamație, un coleg sau administratorul) o rezolvă doar un om de la recepție. " +
+              "Spune-i că o colegă de la recepție îl contactează, cere numele și numărul dacă nu le ai și cheamă marcheaza_lead cu \"urgent\" și motivul. " +
+              "Nu-i cere și nu-i căuta alte date și nu-i propune ore noi. Pacientul nu a văzut mesajul greșit.",
+          });
+          continue;
+        }
+        reply = HANDOFF[patientLanguage(history) ?? "ro"];
+        if (context.conversation) {
+          context.flaggedUrgent = true;
+          await setLeadFromChat(context.conversation, "urgent", `Cerere pentru recepție: "${lastUserText.slice(0, 200)}"`, context.knownPatient);
+        }
+      } else if (noPrice) {
+        console.warn("Assistant answered a price question without a price:", lastUserText.slice(0, 80), "|", text);
+        if (corrections < 2 && round < 7) {
+          corrections++;
+          messages.push({ role: "assistant", content: text });
+          messages.push({
+            role: "system",
+            content:
+              "Pacientul a întrebat CÂT COSTĂ, iar răspunsul tău nu conține niciun preț. Cheamă \"servicii\", găsește serviciul și începe răspunsul cu prețul lui exact, " +
+              "din listă. Abia după preț, dacă vrei, propui o oră. Dacă serviciul nu are preț în listă, spune că întrebi la recepție. Pacientul nu a văzut mesajul greșit.",
+          });
+          continue;
+        }
+      } else if (invented.length > 0) {
         console.warn("Assistant proposed hours not in the calendar:", invented, "|", text);
         if (corrections < 2 && round < 7) {
           corrections++;
