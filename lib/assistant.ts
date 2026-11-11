@@ -26,6 +26,7 @@ import {
   type ChatStatus,
 } from "@/lib/leads";
 import { getStatus } from "@/lib/leads-config";
+import siteMessages from "@/messages/ro.json";
 import type { AssistantMode } from "@prisma/client";
 
 const API_KEY = process.env.OPENAI_API_KEY || "";
@@ -147,7 +148,7 @@ CUM VORBEȘTI:
 - Saluți o singură dată, la începutul conversației. Nu la fiecare mesaj.
 - Nu repeți întrebarea pacientului înainte să răspunzi.
 - Nu spui niciodată "Vă pot ajuta cu altceva?", "Cu plăcere!", "Desigur!", "Sunt aici să vă ajut", "O zi frumoasă!", "nu ezitați". ("Cu ce vă pot ajuta?" la primul mesaj e în regulă — doar acolo.)
-- Nici: "pot să vă ajut", "sunt aici pentru dumneavoastră", "dacă aveți nevoie de informații suplimentare", "pentru a finaliza programarea", "am notat", "am înregistrat", "am transmis". Sunt formule de program, nu de om.
+- Nici: "pot să vă ajut", "vă pot ajuta cu plăcere", "îmi pare rău pentru confuzie", "sunt aici pentru dumneavoastră", "dacă aveți nevoie de informații suplimentare", "pentru a finaliza programarea", "am notat", "am înregistrat", "am transmis". Sunt formule de program, nu de om.
 - Te adresezi cu "dumneavoastră" (vă, aveți, vă convine). Niciodată cu "tu" (ai, îți, poți), nici dacă pacientul îți scrie cu "tu".
 - Când pacientul îți mulțumește, răspunzi scurt și omenesc — "Cu drag, vă așteptăm" — și te oprești. Nu mai oferi ajutor și nu mai închei cu urări.
 - NICIODATĂ liste cu liniuțe sau puncte, nici măcar când propui mai multe ore. Le spui în propoziție: "Am liber miercuri la 9 sau 10, iar joi la 13 sau 14." Dacă ai patru ore de propus, tot într-o frază intră.
@@ -185,6 +186,8 @@ ZILELE ȘI ORELE:
 - În "programeaza" trimiți "data" și "ora" — valorile brute din aceeași înregistrare. Pacientului îi spui "zi" și "oraText". Nu le amesteca.
 - Nu spui niciodată o zi a săptămânii care nu apare în "zi". Dacă pacientul zice "luni" și nicio înregistrare nu e luni, îi spui asta și îi dai zilele pe care chiar le ai.
 - Nu propui ore din trecut și nu inventezi zile între cele libere.
+- Nu spui NICIODATĂ că într-o zi "nu avem program", "nu lucrăm", "e închis" sau "în weekend nu lucrăm". Clinica lucrează și sâmbăta (programul e mai jos). Dacă într-o zi anume sunt ore libere afli doar cu ore_libere, cu "dela" = ziua aceea și zile = 1. Când pacientul întreabă de o zi anume ("sâmbătă", "pe 24"), chemi asta și răspunzi cu ce îți dă: "Sâmbătă, 24 octombrie, am liber la 11:00." sau, dacă nu e nimic: "Sâmbătă nu mai am ore libere; cele mai apropiate sunt…".
+- Dacă spune că în timpul săptămânii nu poate, îi cauți sâmbăta (ore_libere cu "dela" = sâmbăta următoare) și propui ce găsești. Dacă nici atunci nu e nimic, îi spui că o colegă de la recepție îl contactează ca să găsiți o oră și marchezi "urgent". Nu închei cu "ne puteți scrie oricând" cât timp el vrea să vină.
 - Când pacientul vrea o anumită perioadă ("săptămâna viitoare", "după 20", "la sfârșitul lunii"), chemi ore_libere cu "dela" = prima zi a perioadei. Dacă îți spune că în perioada aceea nu e nimic liber, îi spui exact asta și îi arăți o singură dată toate orele din "celeMaiApropiate" (până la 8), grupate pe zile, cu ziua lor reală: "Săptămâna viitoare nu am ore libere. Cele mai apropiate sunt mâine, joi, 15 octombrie, la 08:00, 09:00, 10:00, 11:00 sau 12:00, și vineri, 16 octombrie, la 14:00, 15:00 sau 16:00." Nu muți NICIODATĂ o oră de pe o zi pe alta ca să se potrivească cu ce a cerut.
 - O propunere refuzată nu se repetă. Dacă pacientul spune nu orelor tale și ține la o perioadă în care nu e nimic liber, nu-i mai înșiri ore: îi spui că o colegă de la recepție îl contactează ca să găsiți o oră în perioada dorită, îi ceri numele și numărul dacă nu le ai și chemi marcheaza_lead cu "urgent", cu perioada dorită în motiv. Exemplu: "Înțeleg. O colegă de la recepție vă scrie ca să găsim o oră săptămâna viitoare. Pe ce nume vă notez și la ce număr vă putem suna?"
 - La o propunere obișnuită, două ore. Toate orele cele mai apropiate le arăți când perioada dorită nu are nimic liber (vezi mai sus) sau când cele două nu i-au convenit.
@@ -197,7 +200,7 @@ CE SERVICIU VREA:
 - Serviciul ales nu i-l explici și nu i-l justifici. El a zis "carii", tu programezi la terapie și îi vorbești despre "carii". Denumirea noastră o vede medicul în fișă, nu pacientul în chat.
 - Câmpul "acopera" din unealtă e pentru înțelegerea TA, ca să alegi serviciul potrivit. NU îl citi pacientului, nu îl rezuma, nu explica ce include un serviciu. E notă internă, nu răspuns.
 - "Pot veni la igienizare?" NU e o întrebare despre ce include igienizarea. E o cerere de programare. Răspunzi cu cea mai apropiată oră liberă.
-  GREȘIT: "Igienizarea include detartrajul, periajul profesional și, la nevoie, air-flow."
+  GREȘIT: o descriere a procedurii.
   CORECT: "Da, avem liber mâine la 10:00 sau 11:00. Care vă convine?"
 - Explici ce presupune un serviciu doar dacă întreabă exact asta: "ce include?", "cum decurge?", "cât durează?". Altfel scopul e unul singur: ziua, ora, numele și numărul, cât mai repede și cu cât mai puține mesaje.
 - Când chemi "programeaza", pui în câmpul "motiv" exact ce a spus pacientul: "am 2 carii", "mă doare o măsea jos". Ajunge în fișă, la medic. Pacientului nu i-l repeți.
@@ -213,11 +216,16 @@ CÂND TE ÎNTREABĂ DE PREȚ:
 - Găsești serviciul exact despre care întreabă. Dacă nu ești sigur care e, întrebi înainte să spui vreo cifră.
 - Te uiți dacă are reducere. Dacă "areReducere" e adevărat, spui prețul redus și menționezi că e preț cu reducere. Dacă nu, spui prețul obișnuit.
 - Dacă serviciul nu e în listă, sau nu are preț ("pret" lipsește), NU inventezi și nu dai un interval. Spui că întrebi la recepție și revii cu prețul. Nu pomenești de "sistem", "listă" sau "bază de date" — pacientul n-are treabă cu ele.
-- Dacă serviciul are "pretText" (de exemplu "1000-1200 lei"), spui exact intervalul acela. Nu alegi un capăt și nu faci media.
+- Dacă serviciul are "pretText" (de exemplu "X-Y lei"), spui exact intervalul acela. Nu alegi un capăt și nu faci media.
 - Unele intrări au "sePoatePrograma: false" — sunt etape dintr-un tratament: anestezia, amprentarea, o obturație provizorie. Le poți spune prețul, dar nu programezi la ele. Pentru programare alegi serviciul principal.
-- Dacă întrebarea se potrivește cu mai multe servicii din listă (de exemplu "implant", unde sunt mai multe variante), NU le înșiri. Spui într-o propoziție de la cât pornește — cel mai mic preț din listă pentru acel tip — și propui consultația, unde medicul spune exact: "Implantul cu coroană pornește de la 3800 lei, exact vă spune medicul la consultație. Am liber mâine la 17:00, vă convine?"
-- Dacă ai un preț exact, îl spui și te oprești. NU adăuga "suma finală se stabilește la consultație" — ai cifra, nu o submina. "Igienizarea costă 800 de lei." Punct.
-- Adaugi precizarea aceea DOAR când chiar nu știi suma: când prețul e un interval ("pretText"), sau când depinde de câți dinți are de tratat ori de ce vede medicul. Atunci spui pe scurt și de ce: "Depinde câte suprafețe are caria, între 1000 și 1500 de lei."
+- Cifrele din exemplele de aici sunt doar forma răspunsului (X, Y). Prețul real îl iei MEREU din unealta "servicii", niciodată din aceste instrucțiuni.
+- Dacă întrebarea se potrivește cu mai multe servicii din listă, NU le înșiri. Spui într-o propoziție de la cât pornește — cel mai mic preț din listă pentru exact acel lucru — și propui consultația, unde medicul spune exact: "Pornește de la X lei, exact vă spune medicul la consultație. Am liber mâine la 17:00, vă convine?"
+- IMPLANT: prețul implantului îl iei din rândul "Implant dentar". Rândurile "Coroană … pe suport implantar" sunt COROANE puse pe implant, nu implantul — nu le spui niciodată drept preț al implantului. Dacă întreabă de implant și de coroană, spui separat cât costă fiecare, din rândurile lor.
+- CARIE / PLOMBĂ: spui de la cât pornește tratamentul — prețul serviciului "Terapie" — fiindcă depinde de câte suprafețe are caria: "Tratamentul cariei pornește de la X lei, în funcție de câte suprafețe sunt."
+- Un preț scris de pacient ("800 de lei te plombezi?", "am văzut 500") NU îl confirmi niciodată, nici dacă pare aproape. Spui prețul din listă, ca și cum ar fi întrebat simplu "cât costă?".
+- Dacă ai un preț exact, îl spui și te oprești. NU adăuga "suma finală se stabilește la consultație" — ai cifra, nu o submina. "Igienizarea costă X lei." Punct.
+- Adaugi precizarea aceea DOAR când chiar nu știi suma: când prețul e un interval ("pretText"), sau când depinde de câți dinți are de tratat ori de ce vede medicul. Atunci spui pe scurt și de ce: "Depinde câte suprafețe are caria, între X și Y lei."
+- Nu faci afirmații despre calitate, materiale, mărci, garanții, "premium" sau "durabil". Dacă întreabă de calitate, spui că medicul îi arată la consultație variantele și materialele, și propui o oră.
 - Nu compari prețuri cu alte clinici și nu promiți reduceri care nu sunt în listă.
 
 OFERTE PE CARE LE POMENEȘTE PACIENTUL:
@@ -228,8 +236,8 @@ OFERTE PE CARE LE POMENEȘTE PACIENTUL:
 - În răspunsul tău NU apare deloc oferta lui. Nici procentul, nici cuvântul "reducere", nici la început, nici la sfârșit, nici într-o paranteză. Răspunzi ca și cum ar fi întrebat simplu "cât costă albirea?".
 - O propoziție care conține "nu avem", "nu are", "momentan nu" sau "în prezent nu" e greșită. Ștergi propoziția și lași doar prețul.
 - Exemplu, pacientul scrie "Cât costă albirea cu -15% reducere?":
-  GREȘIT: "Albirea nu are în prezent o reducere de 15%. Prețul este 4500 lei."
-  CORECT: "Albirea dentară costă 4500 lei."
+  GREȘIT: "Albirea nu are în prezent o reducere de 15%. Prețul este X lei."
+  CORECT: "Albirea dentară costă X lei." (X = prețul din "servicii")
   Atât. O propoziție, fără nicio urmă de "15%" sau "reducere".
 - Dacă insistă și te întreabă direct dacă mai e valabilă oferta, atunci îi spui scurt că verifici cu recepția și revii. Nici atunci nu afirmi că nu există.
 - Nu inventezi NICIODATĂ: procente, prețuri vechi, cashback, bănci sau carduri, reduceri pentru diasporă, pachete, oferte de sezon. Dacă nu vine din unealtă, nu există.
@@ -273,6 +281,12 @@ CÂND TREBUIE SĂ RĂSPUNDĂ UN OM DE LA RECEPȚIE:
 - "se_gandeste" când spune că se mai gândește, că vorbește acasă sau că revine el. "mai_tarziu" când vrea, dar mai încolo: după concediu, luna viitoare, când vine în țară. Le notezi o singură dată și îi răspunzi scurt, fără să insiști cu ore și fără să oferi "informații suplimentare": "Sigur. Când vă hotărâți, scrieți-ne aici și găsim o oră."
 - Nu marchezi nimic doar pentru că a pus o întrebare la care ai răspuns.
 - Nu-i spui niciodată pacientului că ai marcat, notat sau anunțat ceva "în sistem". Pentru el există doar "vă scrie o colegă de la recepție" sau "vă sună cineva de la recepție".
+
+CE ȘTII SIGUR DESPRE CLINICĂ (doar atât; restul nu-l inventezi):
+- Adresa: Chișinău, sectorul Botanica, Str. Sarmizegetusa 24/1. Telefon: 060 355 350.
+- Igienizarea profesională include ÎNTOTDEAUNA trei etape: detartraj cu ultrasunet, AirFlow și periaj profesional. AirFlow nu e "la nevoie" — e inclus mereu. O spui doar dacă te întreabă ce include.
+- Programul clinicii îl primești mai jos, într-un mesaj separat. Orele în care se poate programa cineva le dă doar ore_libere.
+- Dacă ore_libere îți dă o oră în afara programului afișat (de exemplu sâmbătă la 17:00), ora din calendar e cea valabilă — medicul a deschis-o. O propui ca pe oricare alta și nu comentezi diferența. Nu-ți ceri scuze "pentru confuzie": pacientul nu a văzut nicio confuzie.
 
 CE NU FACI:
 - Nu dai sfaturi medicale și nu spui ce tratament îi trebuie. Pentru asta e consultația.
@@ -522,17 +536,32 @@ const SPOKEN_AS: { said: string[]; means: string }[] = [
     ],
     means: "parodontologie",
   },
+  // Last on purpose: a tooth to be repaired is therapy, but only when nothing
+  // more specific ("repar coroana", "dinte rupt la implant") matched above.
+  // Words wrapped in spaces must match as whole words ("rupt" is inside
+  // "intrerupt"). "reparatia unui dinte" once matched nothing and was offered
+  // to the patient as "Protetică Dentară".
+  {
+    said: [
+      "repar", "restaur", "reface", "stricat", " rupt ", " spart ", " crapat ",
+      " ciobit ", " fixa ", " cazut ", "tratament dinte", "tratat dinte",
+      "ремонт", "починить", "починк", "восстанов", "сломал", "скол", "выпал", "треснул",
+    ],
+    means: "terapie",
+  },
 ];
 
 /** Rewrites a patient's own words into the clinic's, when it recognises them. */
 function spokenToService(query: string): string | null {
   const text = normalise(query);
   if (!text) return null;
+  const padded = ` ${text} `;
   for (const entry of SPOKEN_AS) {
     for (const word of entry.said) {
       // Substring, not whole word: "curatire dentara", "ma doare o masea" and
-      // "чистку зубов" all carry the term inside a longer phrase.
-      if (text.includes(word)) return entry.means;
+      // "чистку зубов" all carry the term inside a longer phrase. A word that
+      // carries its own spaces is the exception, and matches whole.
+      if (padded.includes(word)) return entry.means;
     }
   }
   return null;
@@ -805,6 +834,26 @@ async function findSlots(days: number): Promise<Slot[]> {
 }
 
 /**
+ * A phone, as a Prisma filter that finds the same person however the number was
+ * written. Patients are stored as "068425081" by reception and "+37368425081"
+ * by the chat, so an exact match missed them and the assistant made a second
+ * patient beside the first. The last eight digits are the subscriber number
+ * either way; digits only, so safe inside Prisma's regex-based `contains`.
+ */
+function phoneFilter(phone: string): string | { contains: string } {
+  const tail = phone.replace(/\D/g, "").slice(-8);
+  return tail.length === 8 ? { contains: tail } : phone;
+}
+
+/** The patient on this number, however it is written. Prefers the exact spelling. */
+async function patientByPhone(phone: string) {
+  return (
+    (await prisma.patient.findFirst({ where: { phone } })) ??
+    (await prisma.patient.findFirst({ where: { phone: phoneFilter(phone) } }))
+  );
+}
+
+/**
  * What this patient is already booked for.
  *
  * Without it, "pentru ce m-am programat?" has no answer and the model makes
@@ -815,7 +864,7 @@ async function patientAppointments(phoneRaw: string) {
   const phone = normalizePhone(phoneRaw);
   if (!isValidPhone(phone)) return { gasit: false, motiv: "Număr invalid" };
 
-  const patient = await prisma.patient.findFirst({ where: { phone } });
+  const patient = await patientByPhone(phone);
   if (!patient) return { gasit: false };
 
   const rows = await prisma.appointment.findMany({
@@ -855,7 +904,7 @@ async function patientAppointments(phoneRaw: string) {
 async function findPatient(phoneRaw: string) {
   const phone = normalizePhone(phoneRaw);
   if (!isValidPhone(phone)) return { gasit: false, motiv: "Număr invalid" };
-  const patient = await prisma.patient.findFirst({ where: { phone } });
+  const patient = await patientByPhone(phone);
   return patient
     ? { gasit: true, nume: patient.name, telefon: patient.phone }
     : { gasit: false };
@@ -907,7 +956,11 @@ async function book(
     return {
       ok: false,
       confirmareServiciu: match.suggestion,
-      motiv: `Cred că e "${match.suggestion}", dar nu sunt sigur. Întreabă scurt pacientul dacă asta a vrut, apoi cheamă din nou programeaza. Nu îi spune că serviciul nu există.`,
+      motiv:
+        `Cred că e "${match.suggestion}", dar nu sunt sigur. Dacă pacientul a descris o problemă și nu a cerut un serviciu pe nume ` +
+        `(un dinte stricat, rupt sau de reparat, o durere, o plombă = Terapie; doar o verificare = Consultația), alege tu serviciul potrivit din "servicii" ` +
+        `(câmpul "acopera") și cheamă din nou programeaza cu titlul lui — nu îl întreba pe pacient de denumirile noastre. ` +
+        `Doar dacă chiar nu poți deduce, întrebi o singură dată, în cuvintele lui. Nu îi spune că serviciul nu există și nu scrie că programarea e făcută.`,
     };
   }
   const service = match.service;
@@ -945,7 +998,7 @@ async function book(
       // alarming to read.
       const already = await prisma.appointment.findFirst({
         where: {
-          patient: { phone },
+          patient: { phone: phoneFilter(phone) },
           dateTime: at,
           status: { notIn: ["cancelled", "noshow"] },
         },
@@ -984,7 +1037,7 @@ async function book(
   // earlier. Saying yes to what already exists is both true and harmless.
   const alreadyBooked = await prisma.appointment.findFirst({
     where: {
-      patient: { phone },
+      patient: { phone: phoneFilter(phone) },
       dateTime: when,
       status: { notIn: ["cancelled", "noshow"] },
     },
@@ -1037,8 +1090,7 @@ async function book(
   }
 
   const patient =
-    (await prisma.patient.findFirst({ where: { phone } })) ??
-    (await prisma.patient.create({ data: { name, phone } }));
+    (await patientByPhone(phone)) ?? (await prisma.patient.create({ data: { name, phone } }));
 
   const appointment = await prisma.appointment.create({
     data: {
@@ -1151,6 +1203,8 @@ interface TurnContext {
   knownPatient: { name: string; phone: string } | null;
   /** Set when the model itself flagged the chat urgent this turn. */
   flaggedUrgent?: boolean;
+  /** Set when programeaza really created (or found) the appointment this turn. */
+  booked?: boolean;
 }
 
 async function runTool(
@@ -1194,6 +1248,8 @@ async function runTool(
       return patientAppointments(String(args?.telefon ?? ""));
     case "programeaza": {
       const result = await book(args ?? {}, context.conversation);
+      // The one fact the reply is checked against: did a booking really happen?
+      if (result.ok) context.booked = true;
       if (!result.ok) {
         console.warn("Assistant booking refused:", JSON.stringify({ args, result }));
         // A refused booking is a patient who wanted an hour and did not get
@@ -1229,8 +1285,37 @@ const pad2 = (n: number) => String(n).padStart(2, "0");
  * 09:00"); times with no date to belong to are left out, as are dates in the
  * past (a previous visit, mentioned in passing).
  */
-function timesIn(text: string): { date: string; hour: number; minute: number }[] {
-  const lower = text.toLowerCase();
+/**
+ * Weekday names, Romanian (with and without diacritics) and Russian stems,
+ * against getUTCDay(). "weekend" stands for the Saturday — the day the clinic
+ * actually opens. "luni" is also "months", so "6 luni" is not read as Monday.
+ */
+// Whole words by Unicode letters: JavaScript's \b only knows ASCII, so it never
+// matched the end of "sâmbătă" or "duminică" and those days went unread.
+const word = (pattern: string) => new RegExp(`(?<![\\p{L}\\d])(?:${pattern})(?![\\p{L}])`, "gu");
+const WEEKDAY_WORDS: [RegExp, number][] = [
+  [new RegExp(`(?<!\\d\\s?)(?<![\\p{L}])luni(?![\\p{L}])`, "gu"), 1],
+  [word("mar[țt]i"), 2],
+  [word("miercuri"), 3],
+  [word("joi"), 4],
+  [word("vineri"), 5],
+  [word("s[âa]mb[ăa]t[ăa]|weekend"), 6],
+  [word("duminic[ăa]"), 0],
+  [/понедельник/g, 1],
+  [/вторник/g, 2],
+  [/сред[уа]/g, 3],
+  [/четверг/g, 4],
+  [/пятниц/g, 5],
+  [/суббот|выходн/g, 6],
+  [/воскресень/g, 0],
+];
+
+/**
+ * Every day a text names, and where: "15 octombrie", "mâine", "sâmbătă",
+ * "в субботу". A weekday is its next occurrence from tomorrow — bookings start
+ * tomorrow, so that is the one a patient or the assistant means.
+ */
+function dateMarks(lower: string): { index: number; date: string }[] {
   const today = moldovaDate(0);
   const [thisYear, thisMonth] = today.split("-").map(Number);
   const marks: { index: number; date: string }[] = [];
@@ -1246,7 +1331,33 @@ function timesIn(text: string): { date: string; hour: number; minute: number }[]
     const offset = m[1] === "poimâine" || m[1] === "послезавтра" ? 2 : 1;
     marks.push({ index: m.index ?? 0, date: moldovaDate(offset) });
   }
-  marks.sort((a, b) => a.index - b.index);
+  const explicit = [...marks];
+  const weekdayToday = new Date(`${today}T12:00:00Z`).getUTCDay();
+  for (const [re, weekday] of WEEKDAY_WORDS) {
+    for (const m of lower.matchAll(re)) {
+      const index = m.index ?? 0;
+      // Written next to an explicit date ("joi, 15 octombrie", "29 octombrie,
+      // joi") the date wins — the weekday only describes it. A weekday alone
+      // is all there is to go on.
+      if (explicit.some((e) => Math.abs(e.index - index) <= 25)) continue;
+      const offset = ((weekday - weekdayToday + 7) % 7) || 7;
+      marks.push({ index, date: moldovaDate(offset) });
+    }
+  }
+  return marks.sort((a, b) => a.index - b.index);
+}
+
+function timesIn(text: string): { date: string; hour: number; minute: number }[] {
+  // A range — "între 09:00 și 14:00", "09:00 – 14:00" — is opening hours, not
+  // an offer. Blanked out (same length, so positions hold) before reading times.
+  const lower = text
+    .toLowerCase()
+    .replace(
+      /(între|de la|с|от)?\s*\d{1,2}:\d{2}\s*(și|până la|la|-|–|—|до|по)\s*\d{1,2}:\d{2}/g,
+      (range) => " ".repeat(range.length),
+    );
+  const today = moldovaDate(0);
+  const marks = dateMarks(lower);
   if (marks.length === 0) return [];
 
   const out: { date: string; hour: number; minute: number }[] = [];
@@ -1256,6 +1367,65 @@ function timesIn(text: string): { date: string; hour: number; minute: number }[]
     out.push({ date: owner.date, hour: Number(t[1]), minute: Number(t[2]) });
   }
   return out;
+}
+
+/** "nu lucrăm", "nu avem program", "e închis", "в субботу не работаем". */
+const SAYS_CLINIC_CLOSED =
+  /nu (avem|este|e) (program|deschis)|nu lucr[ăa]m|[îi]nchis[ăa]?\b|не работаем|выходной день|закрыт/i;
+/** "nu mai am ore libere", "nu avem locuri", "нет свободных". */
+const SAYS_NO_HOURS =
+  /nu (mai )?(am|avem|sunt|e|este) (ore|locuri|loc|liber)|нет (свободн|мест|времени)/i;
+/** "avem liber", "am un loc", "sunt ore libere", "есть время" — without an hour. */
+const SAYS_FREE =
+  /\b(avem|am)\s+(liber|locuri|un loc|ore libere)|sunt (ore|locuri) (libere|disponibile)|есть (свободн|место|время)/i;
+
+/**
+ * What a reply says about a whole day that the calendar contradicts.
+ *
+ * Patients were told "în weekend nu avem program" — the clinic works
+ * Saturdays, and that Saturday had a free hour — and, elsewhere, that a day
+ * was free when no doctor had opened it. The hours a reply names are checked
+ * by inventedTimes; this checks what it says about the day itself.
+ */
+export async function wrongDayClaims(reply: string): Promise<string[]> {
+  const today = moldovaDate(0);
+  const doctors = await bookableDoctors();
+  const freeOn = new Map<string, number[]>();
+  const hoursOn = async (date: string) => {
+    if (!freeOn.has(date)) {
+      const all = new Set<number>();
+      for (const d of doctors) for (const h of await freeHours(d.id, date)) all.add(h);
+      freeOn.set(date, [...all].sort((a, b) => a - b));
+    }
+    return freeOn.get(date)!;
+  };
+  const hoursText = (hours: number[]) => hours.map((h) => `${pad2(h)}:00`).join(", ");
+
+  const problems: string[] = [];
+  for (const sentence of reply.split(/[.!?;\n]+/)) {
+    const lower = sentence.toLowerCase();
+    const closed = SAYS_CLINIC_CLOSED.test(lower);
+    const noHours = !closed && SAYS_NO_HOURS.test(lower);
+    const free = !closed && !noHours && SAYS_FREE.test(lower) && !/\b([01]?\d|2[0-3]):[0-5]\d\b/.test(lower);
+    if (!closed && !noHours && !free) continue;
+
+    const dates = [...new Set(dateMarks(lower).map((m) => m.date))].filter((d) => d > today);
+    for (const date of dates) {
+      const hours = await hoursOn(date);
+      const sunday = new Date(`${date}T12:00:00Z`).getUTCDay() === 0;
+      if (closed && !sunday) {
+        problems.push(
+          `ai scris că ${dayLabel(date, 0)} clinica nu lucrează — clinica lucrează în ziua aceea` +
+            (hours.length ? ` și are ore libere: ${hoursText(hours)}` : ", doar că nu mai sunt ore libere"),
+        );
+      } else if (noHours && hours.length) {
+        problems.push(`ai scris că ${dayLabel(date, 0)} nu sunt ore libere, dar sunt: ${hoursText(hours)}`);
+      } else if (free && hours.length === 0) {
+        problems.push(`ai scris că ${dayLabel(date, 0)} e liber, dar în ziua aceea nu e nicio oră liberă`);
+      }
+    }
+  }
+  return [...new Set(problems)];
 }
 
 /**
@@ -1303,6 +1473,54 @@ const PROMISES_A_PERSON =
 
 export function promisesAPerson(reply: string): boolean {
   return PROMISES_A_PERSON.test(reply);
+}
+
+/**
+ * A reply that tells the patient the appointment is made, or that they are
+ * expected: "vă așteptăm", "programarea este confirmată", "v-am programat".
+ */
+const CLAIMS_BOOKED =
+  /v[ăa] a[șs]tept[ăa]m|v-am programat|am programat|a fost programat|programarea (dvs\.? |dumneavoastr[ăa] )?(este |a fost )?(confirmat|[îi]nregistrat|f[ăa]cut|notat)|sunte[țt]i programat|ждём вас|ждем вас|вы записаны|записал|запись подтвержд/i;
+
+/**
+ * The day-and-hour, if the reply confirms an appointment that does not exist.
+ *
+ * Booking is a tool call; saying so is only text. In production the model once
+ * wrote "deci mâine la 12:00 vă așteptăm" to a patient after the booking tool
+ * had refused — no appointment, and a patient who would have come to a closed
+ * door. Like the hours themselves, this is checked in code: a confirmation that
+ * names a time needs either a booking made this turn or one already in the
+ * diary for this person at that time.
+ */
+export async function unbackedConfirmation(
+  reply: string,
+  booked: boolean,
+  phone: string | null,
+): Promise<string | null> {
+  if (booked || !CLAIMS_BOOKED.test(reply)) return null;
+  const pairs = timesIn(reply);
+  if (pairs.length === 0) return null;
+
+  // Patients are stored as "068425081" and as "+37368425081": the last eight
+  // digits are the same either way.
+  const tail = (phone ?? "").replace(/\D/g, "").slice(-8);
+  for (const { date, hour, minute } of pairs) {
+    const at = parseMoldovaDateTime(`${date}T${pad2(hour)}:${pad2(minute)}`);
+    if (!at) continue;
+    const existing =
+      tail.length === 8
+        ? await prisma.appointment.findFirst({
+            where: {
+              dateTime: at,
+              status: { notIn: ["cancelled", "noshow"] },
+              patient: { phone: { contains: tail } },
+            },
+            select: { id: true },
+          })
+        : null;
+    if (!existing) return `${dayLabel(date, 0)}, ${pad2(hour)}:${pad2(minute)}`;
+  }
+  return null;
 }
 
 /** "nu", "nu pot", "altă zi", "totuși", "нет" — the patient turning an offer down. */
@@ -1430,7 +1648,7 @@ async function personMemory(
     const patient = lead?.patientId
       ? await prisma.patient.findUnique({ where: { id: lead.patientId } })
       : knownPatient || lead?.phone
-        ? await prisma.patient.findFirst({ where: { phone: knownPatient?.phone ?? lead?.phone ?? "" } })
+        ? await patientByPhone(knownPatient?.phone ?? lead?.phone ?? "")
         : null;
 
     const name = patient?.name ?? knownPatient?.name ?? lead?.name ?? null;
@@ -1537,6 +1755,13 @@ export async function assistantReply(
       })()}.`,
     },
     {
+      // The hours the site shows, from the same text the footer reads. Without
+      // them the model filled the gap itself and told patients "în weekend nu
+      // avem program" — the clinic works Saturdays.
+      role: "system",
+      content: `Programul clinicii, ca pe site: ${siteMessages.Footer.programLuniVineri}; ${siteMessages.Footer.programSambata}; duminică închis. Asta e programul clinicii — dacă într-o zi mai sunt ore libere afli doar cu ore_libere.`,
+    },
+    {
       role: "system",
       content: contact
         ? `Ai deja numele și numărul lui: ${contact.name}, ${contact.phone}. Nu i le mai ceri — la programare le folosești pe acestea, iar dacă vrea alt număr ți-l spune el.`
@@ -1585,6 +1810,11 @@ export async function assistantReply(
       // draft goes back with what was wrong; twice wrong, the calendar speaks.
       let reply = text;
       const invented = text ? await inventedTimes(text) : [];
+      const claimed =
+        text && invented.length === 0
+          ? await unbackedConfirmation(text, !!context.booked, contact?.phone ?? typedPhone)
+          : null;
+      const dayClaims = text && invented.length === 0 && !claimed ? await wrongDayClaims(text) : [];
       if (invented.length > 0) {
         console.warn("Assistant proposed hours not in the calendar:", invented, "|", text);
         if (corrections < 2 && round < 7) {
@@ -1596,6 +1826,50 @@ export async function assistantReply(
               `Răspunsul tău propune ${invented.join("; ")} — în calendar NU sunt libere. ` +
               "Nu inventa și nu muta ore de pe o zi pe alta. Cere ore_libere (cu \"dela\" dacă pacientul vrea o anumită perioadă) " +
               "și scrie din nou răspunsul, doar cu ce îți întoarce. Pacientul nu a văzut mesajul greșit.",
+          });
+          continue;
+        }
+        reply = await calendarReply();
+      } else if (claimed) {
+        console.warn("Assistant confirmed a booking that does not exist:", claimed, "|", text);
+        if (corrections < 2 && round < 7) {
+          corrections++;
+          messages.push({ role: "assistant", content: text });
+          messages.push({
+            role: "system",
+            content:
+              `Răspunsul tău spune că programarea e făcută (${claimed}), dar NU ai programat nimic: programeaza nu a fost chemată sau a fost refuzată. ` +
+              "NU spune că e programat și NU scrie \"vă așteptăm\". Dacă ai nume, telefon, serviciu, zi și oră: alege tu serviciul potrivit " +
+              "(un dinte stricat, rupt sau de reparat = Terapie), ia data și ora exacte din ore_libere și cheamă programeaza ACUM. " +
+              "Dacă iar nu reușește, spune doar că o colegă de la recepție îl contactează pentru confirmare și marchează lead-ul \"urgent\". " +
+              "Pacientul nu a văzut mesajul greșit.",
+          });
+          continue;
+        }
+        // Still not booked after two tries: say what is true, and make sure
+        // reception has everything to book it by hand.
+        reply = "O colegă de la recepție vă confirmă programarea în scurt timp.";
+        if (context.conversation) {
+          const lastUser = [...history].reverse().find((t) => t.role === "user")?.content ?? "";
+          context.flaggedUrgent = true;
+          await setLeadFromChat(
+            context.conversation,
+            "urgent",
+            `Pacientul a ales ${claimed}, dar programarea nu s-a putut face din chat — de programat și confirmat de recepție. Ultimul lui mesaj: "${lastUser.slice(0, 160)}"`,
+            context.knownPatient,
+          );
+        }
+      } else if (dayClaims.length > 0) {
+        console.warn("Assistant misstated a day against the calendar:", dayClaims, "|", text);
+        if (corrections < 2 && round < 7) {
+          corrections++;
+          messages.push({ role: "assistant", content: text });
+          messages.push({
+            role: "system",
+            content:
+              `Răspunsul tău e greșit: ${dayClaims.join("; ")}. Nu spune niciodată că o zi "nu avem program" sau "nu lucrăm" ` +
+              "(clinica lucrează luni–sâmbătă). Ce e liber într-o zi afli doar cu ore_libere, cu \"dela\" = ziua aceea și zile = 1. " +
+              "Scrie din nou răspunsul, doar cu ce îți întoarce. Pacientul nu a văzut mesajul greșit.",
           });
           continue;
         }

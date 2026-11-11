@@ -24,6 +24,7 @@ import {
   patientSearchOr,
 } from "@/lib/appointments";
 import { notifyCreated } from "@/lib/notifications";
+import { markLeadBookedByStaff } from "@/lib/leads";
 import { TELEGRAM_TOPICS, answerCallbackQuery, sendTelegramMessage, pinTelegramMessage } from "@/lib/telegram";
 import { refreshDayDigest, type DigestKey } from "@/lib/telegram-digest";
 import {
@@ -299,6 +300,7 @@ async function cmdProgramareNoua(rest: string): Promise<string> {
 
   // Fire notifications (Telegram echo + WhatsApp/email to patient if configured)
   notifyCreated(created).catch((e) => console.error("notifyCreated:", e));
+  await markLeadBookedByStaff(created);
 
   return (
     `✅ <b>Programare creată</b>\n` +

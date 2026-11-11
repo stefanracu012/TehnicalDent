@@ -7,6 +7,7 @@ import {
   parseDateTime,
 } from "@/lib/appointments";
 import { notifyCreated } from "@/lib/notifications";
+import { markLeadBookedByStaff } from "@/lib/leads";
 import { claimSlot, SlotTakenError } from "@/lib/slots";
 import type { AppointmentStatus } from "@prisma/client";
 
@@ -158,6 +159,8 @@ export async function POST(request: Request) {
     notifyCreated(created).catch((err) =>
       console.error("notifyCreated failed:", err),
     );
+    // The patient may be a lead: it is booked now, and linked to them.
+    await markLeadBookedByStaff(created);
 
     return NextResponse.json(created, { status: 201 });
   } catch (error) {

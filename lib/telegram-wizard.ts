@@ -22,6 +22,7 @@ import {
   patientSearchOr,
 } from "@/lib/appointments";
 import { notifyCreated } from "@/lib/notifications";
+import { markLeadBookedByStaff } from "@/lib/leads";
 import { sendTelegramMessage, deleteTelegramMessage, TELEGRAM_TOPICS } from "@/lib/telegram";
 import { refreshDayDigest } from "@/lib/telegram-digest";
 
@@ -678,6 +679,7 @@ async function confirmProgramareNoua(
   });
 
   notifyCreated(created).catch((e) => console.error("notifyCreated:", e));
+  await markLeadBookedByStaff(created);
 
   await sendTelegramMessage(
     `✅ <b>Programare creată</b>\n👤 ${created.patient.name}\n🦷 ${created.service.title}\n📅 ${formatDateTimeRo(dt)}`,

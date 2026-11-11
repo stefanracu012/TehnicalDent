@@ -64,6 +64,10 @@ export const PRICE_LIST: PriceListItem[] = [
   { slug: "pl-coroana-zirconiu", title: "Coroană de înveliș din dioxid de zirconiu (integral)", category: "Protetică dentară", price: 3200 },
   { slug: "pl-coroana-zirconiu-ceramica", title: "Coroană de înveliș din dioxid de zirconiu stratificat cu ceramică", category: "Protetică dentară", price: 4200 },
   { slug: "pl-amprentare", title: "Amprentare", category: "Protetică dentară", price: 500 },
+  // The implant itself. Without this row the assistant quoted the cheapest
+  // crown on an implant (3800) as "the implant", which the clinic does not
+  // sell at that price. The rows below are crowns that go on top of one.
+  { slug: "pl-implant", title: "Implant dentar", category: "Implantologie", price: 5000, priceNote: "5000 sau 6000 lei, în funcție de sistemul de implant" },
   { slug: "pl-pmma-anyone", title: "Coroană provizorie din PMMA pe suport implantar AnyOne", category: "Protetică dentară", price: 2500 },
   { slug: "pl-pmma-anyridge", title: "Coroană provizorie din PMMA pe suport implantar AnyRidge", category: "Protetică dentară", price: 3000 },
   { slug: "pl-mc-anyone", title: "Coroană din metalo-ceramică pe suport implantar AnyOne", category: "Protetică dentară", price: 3800 },

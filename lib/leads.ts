@@ -9,7 +9,8 @@
 import prisma from "@/lib/prisma";
 import { notifyLead } from "@/lib/lead-telegram";
 import { EARLY_STATUSES, getStatus } from "@/lib/leads-config";
-import type { Lead, LeadSource, LeadStatus } from "@prisma/client";
+import { formatDateTimeRo } from "@/lib/appointments";
+import type { Lead, LeadSource, LeadStatus, Prisma } from "@prisma/client";
 
 /**
  * Moldovan numbers, as people actually type them.
@@ -280,12 +281,17 @@ export async function markLeadContacted(conversation: ChatConversation): Promise
 }
 
 /**
- * A booking made from the chat moves its lead to "Programat consultație" and
- * links it to the patient the booking created — whichever lead it is: the one
- * behind this conversation, or one opened earlier on the same number.
+ * A booking moves its lead to "Programat consultație" and links it to the
+ * patient — whoever made it. Called for every new appointment (the assistant's,
+ * the admin form's, the Telegram bot's), so a lead does not sit on "Contactat"
+ * because reception booked it by hand.
  *
- * Only leads still at the start move; one that was already further along, or
- * flagged urgent for a person to look at, keeps what it had.
+ * The lead is found by conversation, and by phone: leads hold "+37368425081"
+ * and patients "068425081", so the last eight digits are compared. Only leads
+ * still at the start move. One flagged urgent also moves when reception made
+ * the booking — that is the person it was waiting for; the assistant's own
+ * booking leaves it for a human to look at. Does nothing, and writes no note,
+ * when there is nothing to change — it can be called twice for one booking.
  */
 export async function markLeadBooked(args: {
   conversation?: ChatConversation | null;
@@ -293,27 +299,45 @@ export async function markLeadBooked(args: {
   name: string;
   patientId: string;
   summary: string;
+  /** Who made the booking. */
+  by?: "chat" | "recepție";
 }): Promise<void> {
   try {
+    const by = args.by ?? "chat";
+    // Digits only, so the value is safe inside Prisma's regex-based filters.
+    const tail = args.phone.replace(/\D/g, "").slice(-8);
     const keys = args.conversation ? [conversationKey(args.conversation)] : [];
-    const leads = await prisma.lead.findMany({
-      where: { OR: [{ phone: args.phone }, ...(keys.length ? [{ sourceKey: { in: keys } }] : [])] },
-    });
+    const found = [
+      ...(tail.length === 8 ? [{ phone: { contains: tail } }] : []),
+      ...(keys.length ? [{ sourceKey: { in: keys } }] : []),
+    ];
+    if (found.length === 0) return;
+
+    const leads = await prisma.lead.findMany({ where: { OR: found } });
 
     for (const lead of leads) {
-      const moves = EARLY_STATUSES.includes(lead.status as never);
-      await prisma.lead.update({
-        where: { id: lead.id },
-        data: {
-          patientId: lead.patientId ?? args.patientId,
-          // A Messenger lead rarely has a number; the booking just supplied one.
-          ...(lead.phone ? {} : { phone: args.phone }),
-          ...(lead.name ? {} : { name: args.name }),
-          ...(moves ? { status: "programat" as LeadStatus, followUpAt: null } : {}),
-        },
-      });
+      const moves =
+        EARLY_STATUSES.includes(lead.status as never) ||
+        (by === "recepție" && lead.status === "urgent");
+
+      const data: Prisma.LeadUncheckedUpdateInput = {};
+      if (!lead.patientId) data.patientId = args.patientId;
+      // A Messenger lead rarely has a number; the booking just supplied one.
+      if (!lead.phone) data.phone = args.phone;
+      if (!lead.name) data.name = args.name;
+      if (moves && lead.status !== "programat") {
+        data.status = "programat" as LeadStatus;
+        data.followUpAt = null;
+      }
+      if (Object.keys(data).length === 0) continue;
+
+      await prisma.lead.update({ where: { id: lead.id }, data });
       await prisma.leadNote.create({
-        data: { leadId: lead.id, content: `📅 Programat prin chat: ${args.summary}`, authorName: ASSISTANT },
+        data: {
+          leadId: lead.id,
+          content: `📅 Programat${by === "chat" ? " prin chat" : " de recepție"}: ${args.summary}`,
+          authorName: by === "chat" ? ASSISTANT : "Recepție",
+        },
       });
     }
   } catch (error) {
@@ -329,4 +353,24 @@ export async function clearUrgent(conversation: ChatConversation): Promise<void>
       data: { status: "contactat" },
     })
     .catch((error) => console.error("clearUrgent failed:", error));
+}
+
+/**
+ * Reception booked a patient by hand — in the admin form or from Telegram.
+ * Whatever lead that person has moves to "Programat" and is linked to them,
+ * the same as when the assistant books.
+ */
+export async function markLeadBookedByStaff(a: {
+  patientId: string;
+  dateTime: Date;
+  patient: { name: string; phone: string };
+  service: { title: string };
+}): Promise<void> {
+  await markLeadBooked({
+    phone: a.patient.phone,
+    name: a.patient.name,
+    patientId: a.patientId,
+    summary: `${formatDateTimeRo(a.dateTime)}, ${a.service.title}`,
+    by: "recepție",
+  });
 }
