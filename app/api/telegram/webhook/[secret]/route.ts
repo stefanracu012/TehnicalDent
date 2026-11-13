@@ -471,6 +471,22 @@ export async function POST(request: Request, { params }: RouteParams) {
 
       try {
         const typedStatus = newStatus as AppointmentStatus;
+
+        // Confirming again after a cancellation takes the hour back — or says
+        // who has it now, and changes nothing.
+        const before = await prisma.appointment.findUnique({ where: { id: apptId } });
+        if (!before) throw new Error("Appointment not found");
+        const { reclaimSlotOnReactivate, SlotTakenError } = await import("@/lib/slots");
+        try {
+          await reclaimSlotOnReactivate(before, newStatus);
+        } catch (err) {
+          if (err instanceof SlotTakenError) {
+            await tgAnswerCallback(cq.id, `⚠️ ${err.message}`);
+            return NextResponse.json({ ok: true });
+          }
+          throw err;
+        }
+
         await prisma.appointment.update({
           where: { id: apptId },
           data: { status: typedStatus },

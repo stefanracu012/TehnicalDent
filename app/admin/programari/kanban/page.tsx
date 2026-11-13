@@ -198,12 +198,22 @@ export default function KanbanPage() {
     setAppts((prev) =>
       prev.map((a) => (a.id === id ? { ...a, status: newStatus } : a)),
     );
-    // Persist to server
+    // Persist to server. A refusal — the hour is someone else's now — is
+    // said out loud and the card goes back where it was.
     secureFetch(`/api/admin/appointments/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: newStatus }),
-    }).catch((e) => console.error("changeStatus:", e));
+    })
+      .then(async (r) => {
+        if (r.ok) return;
+        const d = await r.json().catch(() => ({}));
+        setAppts((prev) =>
+          prev.map((a) => (a.id === id ? { ...a, status: currentStatus } : a)),
+        );
+        alert(d.error || "Modificarea nu a fost salvată.");
+      })
+      .catch((e) => console.error("changeStatus:", e));
   }, []);
 
   const handleDrop = useCallback(

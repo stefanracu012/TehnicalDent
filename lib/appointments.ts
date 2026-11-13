@@ -111,7 +111,15 @@ export async function findOverlappingAppointment({
       status: { in: ACTIVE_STATUSES },
       ...(excludeId ? { NOT: { id: excludeId } } : {}),
     },
-    select: { id: true, dateTime: true, duration: true, patientId: true, serviceId: true },
+    select: {
+      id: true,
+      dateTime: true,
+      duration: true,
+      status: true,
+      patientId: true,
+      serviceId: true,
+      patient: { select: { name: true } },
+    },
   });
 
   for (const c of candidates) {
@@ -121,6 +129,28 @@ export async function findOverlappingAppointment({
     if (cStart < end && cEnd > start) return c;
   }
   return null;
+}
+
+/**
+ * What reception reads when a booking is refused for overlapping: who has the
+ * hour, and when. "There is already an appointment" alone sent them looking
+ * for one the calendar was drawing underneath another — and when it is the
+ * same patient, there is nothing to create at all.
+ */
+export function overlapMessage(
+  conflict: NonNullable<Awaited<ReturnType<typeof findOverlappingAppointment>>>,
+  patientId?: string,
+): string {
+  const time = conflict.dateTime.toLocaleTimeString("ro-RO", {
+    hour: "2-digit",
+    minute: "2-digit",
+    timeZone: "Europe/Chisinau",
+  });
+  const state = conflict.status === "confirmed" ? "confirmată" : "în așteptare";
+  if (patientId && conflict.patientId === patientId) {
+    return `${conflict.patient.name} are deja programare la ${time} (${state}). Nu e nevoie de una nouă.`;
+  }
+  return `Ora se suprapune cu programarea lui ${conflict.patient.name} de la ${time} (${state}).`;
 }
 
 // ---- Signed token for public confirm/cancel links ----

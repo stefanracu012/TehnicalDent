@@ -32,8 +32,8 @@ export function buildSlotKey(teamMemberId: string, dateTime: Date): string {
 }
 
 export class SlotTakenError extends Error {
-  constructor() {
-    super("Acest interval tocmai a fost rezervat de altcineva. Alegeți altă oră.");
+  constructor(message = "Acest interval tocmai a fost rezervat de altcineva. Alegeți altă oră.") {
+    super(message);
     this.name = "SlotTakenError";
   }
 }
@@ -78,6 +78,61 @@ export async function claimSlot(
 
 export async function releaseSlotByAppointment(appointmentId: string): Promise<void> {
   await prisma.appointmentSlot.deleteMany({ where: { appointmentId } });
+}
+
+/** The statuses whose hour goes back to the calendar. */
+const RELEASES_HOUR = new Set(["cancelled", "noshow"]);
+/** The statuses an appointment is set to when it is going ahead. */
+const HOLDS_HOUR = new Set(["pending", "confirmed"]);
+
+/**
+ * Makes sure an appointment being set to pending or confirmed holds its hour.
+ *
+ * Cancelling releases the reservation, and confirming again used to leave it
+ * released: the hour showed as free to the assistant and in the booking form,
+ * and on 13 November the assistant booked a second patient on top of one
+ * reception had just confirmed again. Appointments confirmed again before this
+ * fix are mended the next time someone confirms them.
+ *
+ * Call it before changing the status. It throws SlotTakenError, naming who
+ * holds the hour now, so the caller refuses instead of double-booking.
+ */
+export async function reclaimSlotOnReactivate(
+  appointment: { id: string; teamMemberId: string | null; dateTime: Date },
+  nextStatus: string,
+): Promise<void> {
+  if (!appointment.teamMemberId || !HOLDS_HOUR.has(nextStatus)) return;
+
+  const slotKey = buildSlotKey(appointment.teamMemberId, appointment.dateTime);
+  // A reservation under another hour would block this one: appointmentId is unique.
+  await prisma.appointmentSlot.deleteMany({
+    where: { appointmentId: appointment.id, NOT: { slotKey } },
+  });
+
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const holder = await prisma.appointmentSlot.findUnique({ where: { slotKey } });
+    if (holder?.appointmentId === appointment.id) return;
+    if (holder) {
+      const other = await prisma.appointment.findUnique({
+        where: { id: holder.appointmentId },
+        select: { status: true, patient: { select: { name: true } } },
+      });
+      if (other && !RELEASES_HOUR.has(other.status)) {
+        throw new SlotTakenError(
+          `Ora este ocupată acum de ${other.patient.name}. Mutați una dintre programări la altă oră.`,
+        );
+      }
+      // Left behind by an appointment that no longer holds the hour.
+      await prisma.appointmentSlot.deleteMany({ where: { id: holder.id } });
+    }
+    try {
+      await prisma.appointmentSlot.create({ data: { slotKey, appointmentId: appointment.id } });
+      return;
+    } catch {
+      // Taken between the read and the write: look at who has it.
+    }
+  }
+  throw new SlotTakenError();
 }
 
 /**

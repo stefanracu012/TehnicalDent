@@ -92,6 +92,51 @@ function toLocalInput(d: Date) {
 const HOURS = Array.from({ length: 13 }, (_, i) => 8 + i); // 08:00..20:00
 const HOUR_PX = 60;
 
+/**
+ * Tells reception why a status change was refused — "the hour is someone
+ * else's now" — instead of the card silently snapping back on the next load.
+ */
+async function alertIfRefused(r: Response) {
+  if (r.ok) return;
+  const d = await r.json().catch(() => ({}));
+  alert(d.error || "Modificarea nu a fost salvată.");
+}
+
+/**
+ * Appointments that overlap share the column side by side instead of being
+ * drawn on top of each other. A cancelled booking drawn over a confirmed one
+ * at the same hour hid the confirmed one, and the hour looked free.
+ * Active ones take the left lanes, cancelled ones go to the right.
+ */
+function lanesForDay(list: Appointment[]): Map<string, { lane: number; lanes: number }> {
+  const start = (a: Appointment) => new Date(a.dateTime).getTime();
+  const end = (a: Appointment) => start(a) + (a.duration || 30) * 60_000;
+  const inactive = (a: Appointment) => (a.status === "cancelled" || a.status === "noshow" ? 1 : 0);
+  const sorted = [...list].sort((x, y) => start(x) - start(y) || inactive(x) - inactive(y));
+
+  const out = new Map<string, { lane: number; lanes: number }>();
+  let group: string[] = [];
+  let groupEnd = 0;
+  let laneEnds: number[] = [];
+  const close = () => {
+    for (const id of group) out.get(id)!.lanes = laneEnds.length;
+    group = [];
+    groupEnd = 0;
+    laneEnds = [];
+  };
+  for (const a of sorted) {
+    if (group.length && start(a) >= groupEnd) close();
+    let lane = laneEnds.findIndex((e) => e <= start(a));
+    if (lane === -1) lane = laneEnds.push(end(a)) - 1;
+    else laneEnds[lane] = end(a);
+    out.set(a.id, { lane, lanes: 1 });
+    group.push(a.id);
+    groupEnd = Math.max(groupEnd, end(a));
+  }
+  close();
+  return out;
+}
+
 export default function AdminAppointmentsPage() {
   const [view, setView] = useState<"day" | "week" | "list">("week");
   const [anchor, setAnchor] = useState<Date>(startOfDay(new Date()));
@@ -193,7 +238,8 @@ export default function AdminAppointmentsPage() {
     setAppts((prev) => prev.map((a) => (a.id === id ? { ...a, status: "confirmed" } : a)));
     closeIfEditing(id);
     try {
-      await secureFetch(`/api/admin/appointments/${id}/confirm`, { method: "POST" });
+      const r = await secureFetch(`/api/admin/appointments/${id}/confirm`, { method: "POST" });
+      await alertIfRefused(r);
     } catch (e) {
       console.error(e);
     }
@@ -229,11 +275,12 @@ export default function AdminAppointmentsPage() {
     setAppts((prev) => prev.map((a) => (a.id === id ? { ...a, status } : a)));
     closeIfEditing(id);
     try {
-      await secureFetch(`/api/admin/appointments/${id}`, {
+      const r = await secureFetch(`/api/admin/appointments/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status }),
       });
+      await alertIfRefused(r);
     } catch (e) {
       console.error(e);
     }
@@ -443,6 +490,7 @@ export default function AdminAppointmentsPage() {
             <div />
             {days.map((d) => {
               const list = apptsByDay.get(d.toISOString()) || [];
+              const lanes = lanesForDay(list);
               return (
                 <div
                   key={`overlay-${d.toISOString()}`}
@@ -463,6 +511,8 @@ export default function AdminAppointmentsPage() {
                       28,
                       (a.duration / 60) * HOUR_PX - 2,
                     );
+                    const { lane, lanes: laneCount } = lanes.get(a.id) ?? { lane: 0, lanes: 1 };
+                    const width = 100 / laneCount;
                     return (
                       <button
                         key={a.id}
@@ -470,8 +520,8 @@ export default function AdminAppointmentsPage() {
                         style={{
                           top,
                           height,
-                          left: 4,
-                          right: 4,
+                          left: `calc(${lane * width}% + 4px)`,
+                          width: `calc(${width}% - 8px)`,
                           position: "absolute",
                           pointerEvents: "auto",
                         }}

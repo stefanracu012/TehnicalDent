@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { verifyConfirmToken } from "@/lib/appointments";
 import { notifyConfirmed, notifyCancelled } from "@/lib/notifications";
-import { releaseSlotByAppointment } from "@/lib/slots";
+import { reclaimSlotOnReactivate, releaseSlotByAppointment, SlotTakenError } from "@/lib/slots";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -65,6 +65,22 @@ export async function POST(request: Request, { params }: RouteParams) {
         { error: "Programarea nu mai poate fi modificată." },
         { status: 400 },
       );
+    }
+
+    if (action === "confirm") {
+      // A cancelled appointment confirmed from the link takes its hour back —
+      // unless someone else has been booked into it meanwhile.
+      try {
+        await reclaimSlotOnReactivate(current, "confirmed");
+      } catch (err) {
+        if (err instanceof SlotTakenError) {
+          return NextResponse.json(
+            { error: "Ora nu mai este disponibilă. Vă rugăm să ne contactați pentru o altă oră." },
+            { status: 409 },
+          );
+        }
+        throw err;
+      }
     }
 
     const updated = await prisma.appointment.update({

@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { sanitizeObject, validateNoInjection } from "@/lib/security";
 import {
   findOverlappingAppointment,
+  overlapMessage,
   generateConfirmToken,
   parseDateTime,
 } from "@/lib/appointments";
@@ -108,10 +109,7 @@ export async function POST(request: Request) {
     const overlap = await findOverlappingAppointment({ dateTime, duration });
     if (overlap) {
       return NextResponse.json(
-        {
-          error: "Există deja o programare care se suprapune cu acest interval.",
-          conflictId: overlap.id,
-        },
+        { error: overlapMessage(overlap, patientId), conflictId: overlap.id },
         { status: 409 },
       );
     }

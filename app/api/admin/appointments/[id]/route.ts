@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { sanitizeObject, validateNoInjection } from "@/lib/security";
 import {
   findOverlappingAppointment,
+  overlapMessage,
   parseDateTime,
 } from "@/lib/appointments";
 import {
@@ -12,7 +13,12 @@ import {
   notifyNoshow,
   notifyPending,
 } from "@/lib/notifications";
-import { claimSlot, releaseSlotByAppointment, SlotTakenError } from "@/lib/slots";
+import {
+  claimSlot,
+  reclaimSlotOnReactivate,
+  releaseSlotByAppointment,
+  SlotTakenError,
+} from "@/lib/slots";
 import { refreshDigestIfRelevant } from "@/lib/telegram-digest";
 import type { AppointmentStatus } from "@prisma/client";
 
@@ -106,6 +112,24 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       data.teamMemberId = body.teamMemberId ? String(body.teamMemberId) : null;
     }
 
+    // Overlap first, before any reservation moves: a refused edit used to
+    // leave the new hour claimed and the old one released.
+    if (data.dateTime || data.duration || data.serviceId) {
+      const dt = (data.dateTime as Date) || current.dateTime;
+      const dur = (data.duration as number) || current.duration;
+      const overlap = await findOverlappingAppointment({
+        dateTime: dt,
+        duration: dur,
+        excludeId: id,
+      });
+      if (overlap) {
+        return NextResponse.json(
+          { error: overlapMessage(overlap, current.patientId), conflictId: overlap.id },
+          { status: 409 },
+        );
+      }
+    }
+
     // Moving the appointment to a different doctor or hour means the old
     // reservation must be released and the new one claimed — otherwise the
     // vacated hour stays blocked and the new one stays bookable by others.
@@ -114,13 +138,16 @@ export async function PATCH(request: Request, { params }: RouteParams) {
         ? (data.teamMemberId as string | null)
         : current.teamMemberId;
     const nextDateTime = (data.dateTime as Date) || current.dateTime;
+    const nextStatus = (data.status as AppointmentStatus | undefined) ?? current.status;
+    // A cancelled or no-show appointment holds no hour, wherever it is moved.
+    const holdsHour = nextStatus !== "cancelled" && nextStatus !== "noshow";
     const slotChanged =
       nextDoctor !== current.teamMemberId ||
       nextDateTime.getTime() !== current.dateTime.getTime();
 
     if (slotChanged) {
       await releaseSlotByAppointment(id);
-      if (nextDoctor) {
+      if (nextDoctor && holdsHour) {
         try {
           await claimSlot(nextDoctor, nextDateTime, id);
         } catch (err) {
@@ -135,25 +162,17 @@ export async function PATCH(request: Request, { params }: RouteParams) {
           );
         }
       }
-    }
-
-    // overlap check if dateTime/duration/serviceId changed
-    if (data.dateTime || data.duration || data.serviceId) {
-      const dt = (data.dateTime as Date) || current.dateTime;
-      const dur = (data.duration as number) || current.duration;
-      const overlap = await findOverlappingAppointment({
-        dateTime: dt,
-        duration: dur,
-        excludeId: id,
-      });
-      if (overlap) {
-        return NextResponse.json(
-          {
-            error: "Există deja o programare care se suprapune cu acest interval.",
-            conflictId: overlap.id,
-          },
-          { status: 409 },
-        );
+    } else if (data.status !== undefined) {
+      // Confirmed again after a cancellation: the hour has to be taken back,
+      // or it shows as free and someone else is booked on top. Only when the
+      // status is being set — editing notes must not fail over the hour.
+      try {
+        await reclaimSlotOnReactivate(current, nextStatus);
+      } catch (err) {
+        if (err instanceof SlotTakenError) {
+          return NextResponse.json({ error: err.message }, { status: 409 });
+        }
+        throw err;
       }
     }
 
