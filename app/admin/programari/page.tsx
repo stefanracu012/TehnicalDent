@@ -246,15 +246,12 @@ export default function AdminAppointmentsPage() {
     fetchAppts();
   };
   const onCancel = async (id: string) => {
-    if (!confirm("Anulați programarea?")) return;
+    if (!confirm("Anulați programarea? Pacientul primește imediat mesaj pe WhatsApp că a fost anulată.")) return;
     setAppts((prev) => prev.map((a) => (a.id === id ? { ...a, status: "cancelled" } : a)));
     closeIfEditing(id);
     try {
-      await secureFetch(`/api/admin/appointments/${id}/cancel`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reason: "Anulat din admin" }),
-      });
+      // The server writes down who cancelled; nothing to send.
+      await secureFetch(`/api/admin/appointments/${id}/cancel`, { method: "POST" });
     } catch (e) {
       console.error(e);
     }
@@ -725,6 +722,25 @@ function AppointmentForm({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Who changed the status, and from where — so "it cancelled by itself"
+  // has an answer.
+  const [history, setHistory] = useState<
+    { status: Status; by: string; via: string; createdAt: string }[]
+  >([]);
+  useEffect(() => {
+    if (!editing) return;
+    let alive = true;
+    fetch(`/api/admin/appointments/${editing.id}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (alive && Array.isArray(d?.history)) setHistory(d.history);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [editing]);
+
   // Auto-update duration when service changes
   useEffect(() => {
     if (!editing) {
@@ -807,12 +823,21 @@ function AppointmentForm({
         teamMemberId: teamMemberId || null,
         notes,
       };
-      const r = await secureFetch(url, {
-        method,
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const d = await r.json();
+      const save = (acknowledged: boolean) =>
+        secureFetch(url, {
+          method,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...body, acknowledged }),
+        });
+      let r = await save(false);
+      let d = await r.json();
+      // Another doctor's patient at the same time, or an hour the doctor has
+      // not opened, is allowed — but only once whoever books has read it.
+      if (r.status === 409 && d.needsConfirm) {
+        if (!confirm(`${d.error}\n\nSalvați oricum?`)) return;
+        r = await save(true);
+        d = await r.json();
+      }
       if (!r.ok) throw new Error(d.error || "Eroare salvare");
       onSaved();
     } catch (err) {
@@ -1029,9 +1054,10 @@ function AppointmentForm({
             </div>
           </div>
 
-          {/* Hour — whole hours only, and from the doctor's calendar when
-              there is one, so reception cannot book an hour the doctor never
-              opened. Without a doctor the whole working day is offered. */}
+          {/* Hour — the doctor's free hours as quick buttons, and any time to
+              the minute (11:15, 16:40) in the field below. A time the doctor
+              has not opened, or another doctor's patient at the same time, is
+              asked about on saving rather than refused. */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-1">
               Ora *
@@ -1040,8 +1066,8 @@ function AppointmentForm({
               <p className="text-sm text-muted-foreground">Se încarcă...</p>
             ) : teamMemberId && (freeSlots[teamMemberId]?.length ?? 0) === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Doctorul nu a bifat nicio oră liberă în această zi. Alegeți altă
-                zi sau alt doctor, ori completați calendarul.
+                Doctorul nu a bifat nicio oră liberă în această zi. Puteți scrie
+                totuși o oră mai jos.
               </p>
             ) : (
               <div className="flex flex-wrap gap-1.5">
@@ -1049,7 +1075,7 @@ function AppointmentForm({
                   ? freeSlots[teamMemberId]
                   : Array.from({ length: 16 }, (_, i) => i + 8)
                 ).map((h) => {
-                  const active = Number(dateTime.slice(11, 13)) === h;
+                  const active = dateTime.slice(11, 16) === `${String(h).padStart(2, "0")}:00`;
                   return (
                     <button
                       key={h}
@@ -1071,10 +1097,26 @@ function AppointmentForm({
                 })}
               </div>
             )}
+            <div className="flex items-center gap-2 mt-2">
+              <label htmlFor="custom-time" className="text-xs text-muted-foreground">
+                Altă oră:
+              </label>
+              <input
+                id="custom-time"
+                type="time"
+                step={60}
+                required
+                value={dateTime.slice(11, 16)}
+                onChange={(e) => {
+                  if (e.target.value) setDateTime(`${dateTime.slice(0, 11)}${e.target.value}`);
+                }}
+                className="px-2 py-1 border border-border bg-background text-sm tabular-nums"
+              />
+            </div>
             <p className="text-[11px] text-muted-foreground mt-1">
               {teamMemberId
-                ? "Doar orele bifate de doctor în calendar."
-                : "Alegeți un doctor mai sus ca să vedeți doar orele lui libere."}
+                ? "Butoanele sunt orele libere bifate de doctor. Pentru altă oră (ex. 11:15), scrieți-o în câmp."
+                : "Alegeți un doctor mai sus ca să vedeți orele lui libere, sau scrieți ora în câmp."}
             </p>
           </div>
 
@@ -1119,7 +1161,7 @@ function AppointmentForm({
                     onClick={() => onCancel(editing.id)}
                     className="text-xs px-3 py-1.5 border border-red-200 text-red-700 hover:bg-red-50"
                   >
-                    Anulează
+                    Anulează programarea
                   </button>
                 )}
                 <button
@@ -1149,13 +1191,40 @@ function AppointmentForm({
             </div>
           )}
 
+          {editing && history.length > 0 && (
+            <div className="border-t border-border pt-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">
+                Istoric status
+              </p>
+              <ul className="space-y-1 text-xs">
+                {history.map((h, i) => (
+                  <li key={i} className="flex items-center gap-2">
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${STATUS_DOT[h.status] ?? "bg-gray-400"}`} />
+                    <span className="text-muted-foreground tabular-nums">
+                      {new Date(h.createdAt).toLocaleString("ro-RO", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </span>
+                    <span className="font-medium">{STATUS_LABELS[h.status] ?? h.status}</span>
+                    <span className="text-muted-foreground truncate">
+                      — {h.by}, {h.via === "link" ? "din linkul primit" : `din ${h.via === "kanban" ? "Kanban" : h.via === "telegram" ? "Telegram" : "panou"}`}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="flex gap-2 justify-end pt-2">
             <button
               type="button"
               onClick={onClose}
               className="px-4 py-2 text-sm border border-border hover:bg-muted"
             >
-              Anulează
+              Închide
             </button>
             <button
               type="submit"

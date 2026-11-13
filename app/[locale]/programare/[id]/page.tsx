@@ -12,6 +12,24 @@ interface ApptInfo {
   service: { title: string };
 }
 
+const STATUS_RO: Record<ApptInfo["status"], string> = {
+  pending: "Așteaptă confirmarea dvs.",
+  confirmed: "Confirmată",
+  cancelled: "Anulată",
+  completed: "Finalizată",
+  noshow: "Neprezentat",
+};
+
+/**
+ * The page behind the link in the WhatsApp and email messages.
+ *
+ * Cancelling takes two presses. It used to take one, with "Anulează" the only
+ * button that still worked on a confirmed appointment, and patients whose
+ * appointments were cancelled said they had not opened anything. Opening the
+ * page never cancels: an email button can still confirm on its own, but its
+ * cancel button only opens the question — a mail scanner following links must
+ * not cancel anyone.
+ */
 export default function PublicAppointmentPage({
   params,
 }: {
@@ -27,6 +45,7 @@ export default function PublicAppointmentPage({
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<"confirmed" | "cancelled" | null>(null);
+  const [askingCancel, setAskingCancel] = useState(false);
 
   const submit = async (action: "confirm" | "cancel") => {
     setSubmitting(true);
@@ -40,6 +59,7 @@ export default function PublicAppointmentPage({
       const data = await r.json();
       if (!r.ok) throw new Error(data.error || "Eroare");
       setDone(action === "confirm" ? "confirmed" : "cancelled");
+      setAskingCancel(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Eroare");
     } finally {
@@ -53,16 +73,10 @@ export default function PublicAppointmentPage({
         const data = await r.json();
         if (!r.ok) throw new Error(data.error || "Eroare");
         setAppt(data);
-        // Auto-execute action when coming from an email button.
-        if (urlAction === "confirm" || urlAction === "cancel") {
-          if (data.status === "confirmed" && urlAction === "confirm") {
-            setDone("confirmed");
-          } else if (data.status === "cancelled" && urlAction === "cancel") {
-            setDone("cancelled");
-          } else if (data.status !== "completed" && data.status !== "noshow") {
-            submit(urlAction);
-          }
-        }
+        const open = data.status === "pending" || data.status === "confirmed";
+        if (urlAction === "confirm" && data.status === "pending") submit("confirm");
+        // Asks; never cancels by itself.
+        if (urlAction === "cancel" && open) setAskingCancel(true);
       })
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
@@ -74,11 +88,13 @@ export default function PublicAppointmentPage({
       weekday: "long",
       day: "numeric",
       month: "long",
-      year: "numeric",
       hour: "2-digit",
       minute: "2-digit",
       timeZone: "Europe/Chisinau",
     });
+
+  const status = done ?? appt?.status;
+  const open = status === "pending" || status === "confirmed";
 
   return (
     <div className="min-h-[70vh] flex items-center justify-center px-4 py-16 bg-muted">
@@ -91,71 +107,90 @@ export default function PublicAppointmentPage({
         {loading && <p className="text-muted-foreground">Se încarcă...</p>}
 
         {error && (
-          <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div className="mb-4 rounded border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
           </div>
         )}
 
-        {appt && !done && (
+        {appt && status && (
           <>
             <dl className="space-y-3 text-sm mb-6">
               <div>
                 <dt className="text-muted-foreground">Pacient</dt>
-                <dd className="font-medium text-foreground">
-                  {appt.patient.name}
-                </dd>
+                <dd className="font-medium text-foreground">{appt.patient.name}</dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">Serviciu</dt>
-                <dd className="font-medium text-foreground">
-                  {appt.service.title}
-                </dd>
+                <dd className="font-medium text-foreground">{appt.service.title}</dd>
               </div>
               <div>
                 <dt className="text-muted-foreground">Data și ora</dt>
-                <dd className="font-medium text-foreground">
+                <dd className="font-medium text-foreground first-letter:uppercase">
                   {formatDate(appt.dateTime)}
                 </dd>
               </div>
               <div>
-                <dt className="text-muted-foreground">Status curent</dt>
-                <dd className="font-medium text-foreground capitalize">
-                  {appt.status}
-                </dd>
+                <dt className="text-muted-foreground">Status</dt>
+                <dd className="font-medium text-foreground">{STATUS_RO[status]}</dd>
               </div>
             </dl>
 
-            {(appt.status === "pending" || appt.status === "confirmed") && (
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  disabled={submitting || appt.status === "confirmed"}
-                  onClick={() => submit("confirm")}
-                  className="bg-foreground text-white px-4 py-3 text-sm font-medium hover:bg-foreground/90 disabled:opacity-50"
-                >
-                  {appt.status === "confirmed" ? "Confirmată" : "Confirmă"}
-                </button>
-                <button
-                  disabled={submitting}
-                  onClick={() => submit("cancel")}
-                  className="border border-border bg-background text-foreground px-4 py-3 text-sm font-medium hover:bg-muted disabled:opacity-50"
-                >
-                  Anulează
-                </button>
+            {status === "confirmed" && !askingCancel && (
+              <div className="rounded border border-green-200 bg-green-50 px-4 py-4 text-sm text-green-800">
+                ✓ Programarea este confirmată. Vă așteptăm!
+              </div>
+            )}
+
+            {status === "pending" && !askingCancel && (
+              <button
+                disabled={submitting}
+                onClick={() => submit("confirm")}
+                className="w-full bg-foreground text-white px-4 py-3 text-sm font-medium hover:bg-foreground/90 disabled:opacity-50"
+              >
+                {submitting ? "Se confirmă..." : "Confirm programarea"}
+              </button>
+            )}
+
+            {open && !askingCancel && (
+              <button
+                onClick={() => setAskingCancel(true)}
+                className="mt-5 block mx-auto text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
+              >
+                Nu mai pot veni — vreau să anulez
+              </button>
+            )}
+
+            {open && askingCancel && (
+              <div className="rounded border border-amber-200 bg-amber-50 px-4 py-4">
+                <p className="text-sm text-amber-900 mb-4">
+                  Sigur anulați programarea din{" "}
+                  <span className="font-medium">{formatDate(appt.dateTime)}</span>?
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <button
+                    disabled={submitting}
+                    onClick={() => setAskingCancel(false)}
+                    className="bg-foreground text-white px-4 py-3 text-sm font-medium hover:bg-foreground/90 disabled:opacity-50"
+                  >
+                    Nu, păstrez
+                  </button>
+                  <button
+                    disabled={submitting}
+                    onClick={() => submit("cancel")}
+                    className="border border-red-300 bg-background text-red-700 px-4 py-3 text-sm font-medium hover:bg-red-50 disabled:opacity-50"
+                  >
+                    {submitting ? "Se anulează..." : "Da, anulez"}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {status === "cancelled" && (
+              <div className="rounded border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800">
+                Programarea a fost anulată. Pentru o altă oră, ne puteți suna sau scrie.
               </div>
             )}
           </>
-        )}
-
-        {done === "confirmed" && (
-          <div className="rounded border border-green-200 bg-green-50 px-4 py-4 text-sm text-green-800">
-            Mulțumim! Programarea dvs. a fost confirmată.
-          </div>
-        )}
-        {done === "cancelled" && (
-          <div className="rounded border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-800">
-            Programarea dvs. a fost anulată. Pentru reprogramare, ne puteți
-            contacta.
-          </div>
         )}
       </div>
     </div>

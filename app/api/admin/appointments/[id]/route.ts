@@ -1,11 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sanitizeObject, validateNoInjection } from "@/lib/security";
-import {
-  findOverlappingAppointment,
-  overlapMessage,
-  parseDateTime,
-} from "@/lib/appointments";
+import { checkOverlap, parseDateTime } from "@/lib/appointments";
 import {
   notifyCancelled,
   notifyConfirmed,
@@ -15,11 +11,19 @@ import {
 } from "@/lib/notifications";
 import {
   claimSlot,
+  outsideOpenHours,
   reclaimSlotOnReactivate,
   releaseSlotByAppointment,
   SlotTakenError,
 } from "@/lib/slots";
 import { refreshDigestIfRelevant } from "@/lib/telegram-digest";
+import {
+  cancelReason,
+  logStatusChange,
+  panelActor,
+  statusHistory,
+  type ChangeVia,
+} from "@/lib/appointment-log";
 import type { AppointmentStatus } from "@prisma/client";
 
 interface RouteParams {
@@ -40,7 +44,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
     if (!appt) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
-    return NextResponse.json(appt);
+    return NextResponse.json({ ...appt, history: await statusHistory(id) });
   } catch (error) {
     console.error("Error fetching appointment:", error);
     return NextResponse.json({ error: "Failed" }, { status: 500 });
@@ -112,19 +116,49 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       data.teamMemberId = body.teamMemberId ? String(body.teamMemberId) : null;
     }
 
+    const nextDoctor =
+      body.teamMemberId !== undefined
+        ? (data.teamMemberId as string | null)
+        : current.teamMemberId;
+    const nextDateTime = (data.dateTime as Date) || current.dateTime;
+    const nextDuration = (data.duration as number) || current.duration;
+    const nextStatus = (data.status as AppointmentStatus | undefined) ?? current.status;
+    // A cancelled or no-show appointment holds no hour, wherever it is moved.
+    const holdsHour = nextStatus !== "cancelled" && nextStatus !== "noshow";
+
     // Overlap first, before any reservation moves: a refused edit used to
-    // leave the new hour claimed and the old one released.
-    if (data.dateTime || data.duration || data.serviceId) {
-      const dt = (data.dateTime as Date) || current.dateTime;
-      const dur = (data.duration as number) || current.duration;
-      const overlap = await findOverlappingAppointment({
-        dateTime: dt,
-        duration: dur,
+    // leave the new hour claimed and the old one released. Only when the
+    // time, length or doctor really changes — the form sends all three on
+    // every save, and editing a note must not ask about a parallel patient.
+    const moved =
+      nextDateTime.getTime() !== current.dateTime.getTime() ||
+      nextDuration !== current.duration ||
+      nextDoctor !== current.teamMemberId;
+    if (moved && holdsHour) {
+      const overlap = await checkOverlap({
+        dateTime: nextDateTime,
+        duration: nextDuration,
         excludeId: id,
+        patientId: current.patientId,
+        teamMemberId: nextDoctor,
       });
-      if (overlap) {
+      if (overlap.verdict === "blocked") {
         return NextResponse.json(
-          { error: overlapMessage(overlap, current.patientId), conflictId: overlap.id },
+          { error: overlap.message, conflictId: overlap.conflictId },
+          { status: 409 },
+        );
+      }
+      // Another doctor's patient at the same time, or an hour the doctor has
+      // not opened: allowed once whoever moves it has read it and said yes.
+      const timeChanged =
+        nextDateTime.getTime() !== current.dateTime.getTime() || nextDoctor !== current.teamMemberId;
+      const warnings = [
+        overlap.verdict === "parallel" ? overlap.message : null,
+        nextDoctor && timeChanged ? await outsideOpenHours(nextDoctor, nextDateTime) : null,
+      ].filter((w): w is string => Boolean(w));
+      if (warnings.length > 0 && body.acknowledged !== true) {
+        return NextResponse.json(
+          { error: warnings.join("\n"), needsConfirm: true },
           { status: 409 },
         );
       }
@@ -133,14 +167,6 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     // Moving the appointment to a different doctor or hour means the old
     // reservation must be released and the new one claimed — otherwise the
     // vacated hour stays blocked and the new one stays bookable by others.
-    const nextDoctor =
-      body.teamMemberId !== undefined
-        ? (data.teamMemberId as string | null)
-        : current.teamMemberId;
-    const nextDateTime = (data.dateTime as Date) || current.dateTime;
-    const nextStatus = (data.status as AppointmentStatus | undefined) ?? current.status;
-    // A cancelled or no-show appointment holds no hour, wherever it is moved.
-    const holdsHour = nextStatus !== "cancelled" && nextStatus !== "noshow";
     const slotChanged =
       nextDoctor !== current.teamMemberId ||
       nextDateTime.getTime() !== current.dateTime.getTime();
@@ -149,12 +175,12 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       await releaseSlotByAppointment(id);
       if (nextDoctor && holdsHour) {
         try {
-          await claimSlot(nextDoctor, nextDateTime, id);
+          await claimSlot(nextDoctor, nextDateTime, id, { requireOpenHour: false });
         } catch (err) {
           // Put the original reservation back so a failed edit doesn't
           // silently free the slot the patient already had.
           if (current.teamMemberId) {
-            await claimSlot(current.teamMemberId, current.dateTime, id).catch(() => {});
+            await claimSlot(current.teamMemberId, current.dateTime, id, { requireOpenHour: false }).catch(() => {});
           }
           return NextResponse.json(
             { error: err instanceof Error ? err.message : "Slot indisponibil." },
@@ -192,10 +218,15 @@ export async function PATCH(request: Request, { params }: RouteParams) {
 
     // Status-change notifications
     if (data.status && data.status !== current.status) {
+      // Kanban says so in the body; everything else here is the calendar.
+      const via: ChangeVia = body.source === "kanban" ? "kanban" : "panou";
+      const by = await panelActor();
+      await logStatusChange(id, String(data.status), by, via);
+
       if (data.status === "confirmed") {
         notifyConfirmed(updated).catch((e) => console.error("notifyConfirmed:", e));
       } else if (data.status === "cancelled") {
-        notifyCancelled(updated, "Anulat din admin").catch((e) =>
+        notifyCancelled(updated, cancelReason(by, via)).catch((e) =>
           console.error("notifyCancelled:", e),
         );
       } else if (data.status === "completed") {

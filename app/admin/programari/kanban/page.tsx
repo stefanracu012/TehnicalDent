@@ -194,6 +194,14 @@ export default function KanbanPage() {
     // Guard: skip if status hasn't actually changed (prevents spurious API calls)
     const currentStatus = apptStatusRef.current.get(id);
     if (!currentStatus || currentStatus === newStatus) return;
+    // A drag that ends one column too far, or a slip in the menu, must not
+    // cancel — the patient is told on WhatsApp the moment it happens.
+    if (
+      newStatus === "cancelled" &&
+      !confirm("Anulați programarea? Pacientul primește imediat mesaj pe WhatsApp că a fost anulată.")
+    ) {
+      return;
+    }
     // Optimistic UI update
     setAppts((prev) =>
       prev.map((a) => (a.id === id ? { ...a, status: newStatus } : a)),
@@ -203,7 +211,7 @@ export default function KanbanPage() {
     secureFetch(`/api/admin/appointments/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status: newStatus }),
+      body: JSON.stringify({ status: newStatus, source: "kanban" }),
     })
       .then(async (r) => {
         if (r.ok) return;

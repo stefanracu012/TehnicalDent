@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { notifyConfirmed } from "@/lib/notifications";
 import { reclaimSlotOnReactivate, SlotTakenError } from "@/lib/slots";
+import { logStatusChange, panelActor } from "@/lib/appointment-log";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -21,6 +22,9 @@ export async function POST(_request: Request, { params }: RouteParams) {
       data: { status: "confirmed" },
       include: { patient: true, service: true },
     });
+    if (current.status !== "confirmed") {
+      await logStatusChange(id, "confirmed", await panelActor(), "panou");
+    }
     notifyConfirmed(appt).catch((e) => console.error("notifyConfirmed:", e));
     return NextResponse.json(appt);
   } catch (error) {

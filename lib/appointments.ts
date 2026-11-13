@@ -88,14 +88,9 @@ interface OverlapCheckParams {
 const ACTIVE_STATUSES: AppointmentStatus[] = ["pending", "confirmed"];
 
 /**
- * Returns the first overlapping appointment, if any.
- * Two appointments overlap when [start, end) intervals intersect.
+ * Every active appointment whose [start, end) intersects the given interval.
  */
-export async function findOverlappingAppointment({
-  dateTime,
-  duration,
-  excludeId,
-}: OverlapCheckParams) {
+export async function findOverlaps({ dateTime, duration, excludeId }: OverlapCheckParams) {
   const start = dateTime;
   const end = new Date(start.getTime() + duration * 60_000);
 
@@ -111,46 +106,92 @@ export async function findOverlappingAppointment({
       status: { in: ACTIVE_STATUSES },
       ...(excludeId ? { NOT: { id: excludeId } } : {}),
     },
+    orderBy: { dateTime: "asc" },
     select: {
       id: true,
       dateTime: true,
       duration: true,
       status: true,
       patientId: true,
-      serviceId: true,
+      teamMemberId: true,
       patient: { select: { name: true } },
+      teamMember: { select: { name: true } },
     },
   });
 
-  for (const c of candidates) {
-    const cStart = c.dateTime;
-    const cEnd = new Date(cStart.getTime() + (c.duration || 30) * 60_000);
-    // overlap if cStart < end AND cEnd > start
-    if (cStart < end && cEnd > start) return c;
-  }
-  return null;
+  return candidates.filter((c) => {
+    const cEnd = new Date(c.dateTime.getTime() + (c.duration || 30) * 60_000);
+    return c.dateTime < end && cEnd > start;
+  });
 }
 
+export type OverlapCheck =
+  | { verdict: "free" }
+  | { verdict: "blocked"; message: string; conflictId: string }
+  | { verdict: "parallel"; message: string; conflictIds: string[] };
+
+const moldovaClock = (d: Date) =>
+  d.toLocaleTimeString("ro-RO", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Chisinau" });
+
 /**
- * What reception reads when a booking is refused for overlapping: who has the
- * hour, and when. "There is already an appointment" alone sent them looking
- * for one the calendar was drawing underneath another — and when it is the
- * same patient, there is nothing to create at all.
+ * Whether an appointment may go at this time.
+ *
+ * The doctors work in parallel, so another doctor's patient at the same hour
+ * is allowed — but whoever books is told who else is there, and has to say
+ * yes. Refused outright: the same doctor twice at once, and the same patient
+ * twice at once (that one usually means the appointment already exists, hidden
+ * in the calendar under another).
+ *
+ * An appointment with no doctor on either side cannot be told apart, so it
+ * only warns.
  */
-export function overlapMessage(
-  conflict: NonNullable<Awaited<ReturnType<typeof findOverlappingAppointment>>>,
-  patientId?: string,
-): string {
-  const time = conflict.dateTime.toLocaleTimeString("ro-RO", {
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "Europe/Chisinau",
-  });
-  const state = conflict.status === "confirmed" ? "confirmată" : "în așteptare";
-  if (patientId && conflict.patientId === patientId) {
-    return `${conflict.patient.name} are deja programare la ${time} (${state}). Nu e nevoie de una nouă.`;
+export async function checkOverlap(params: {
+  dateTime: Date;
+  duration: number;
+  excludeId?: string;
+  patientId?: string;
+  teamMemberId?: string | null;
+}): Promise<OverlapCheck> {
+  const overlaps = await findOverlaps(params);
+  if (overlaps.length === 0) return { verdict: "free" };
+
+  const state = (s: string) => (s === "confirmed" ? "confirmată" : "în așteptare");
+
+  const samePatient = params.patientId
+    ? overlaps.find((o) => o.patientId === params.patientId)
+    : undefined;
+  if (samePatient) {
+    return {
+      verdict: "blocked",
+      conflictId: samePatient.id,
+      message: `${samePatient.patient.name} are deja programare la ${moldovaClock(samePatient.dateTime)} (${state(samePatient.status)}). Nu e nevoie de una nouă.`,
+    };
   }
-  return `Ora se suprapune cu programarea lui ${conflict.patient.name} de la ${time} (${state}).`;
+
+  const sameDoctor = params.teamMemberId
+    ? overlaps.find((o) => o.teamMemberId === params.teamMemberId)
+    : undefined;
+  if (sameDoctor) {
+    return {
+      verdict: "blocked",
+      conflictId: sameDoctor.id,
+      message: `Dr. ${sameDoctor.teamMember?.name ?? ""} are deja pacient la ${moldovaClock(sameDoctor.dateTime)}: ${sameDoctor.patient.name} (${state(sameDoctor.status)}).`,
+    };
+  }
+
+  const who = overlaps
+    .slice(0, 3)
+    .map(
+      (o) =>
+        `${o.patient.name} la ${moldovaClock(o.dateTime)} (${o.teamMember ? `dr. ${o.teamMember.name}` : "fără medic"})`,
+    )
+    .join(", ");
+  const more = overlaps.length > 3 ? ` și încă ${overlaps.length - 3}` : "";
+  return {
+    verdict: "parallel",
+    conflictIds: overlaps.map((o) => o.id),
+    message: `În același interval mai are programare: ${who}${more}.`,
+  };
 }
 
 // ---- Signed token for public confirm/cancel links ----

@@ -9,7 +9,7 @@
 // =============================================
 
 import prisma from "@/lib/prisma";
-import { getMoldovaDateStr } from "@/lib/appointments";
+import { getMoldovaDateStr, parseMoldovaDateTime } from "@/lib/appointments";
 
 /** Hour of a Date as seen in Moldova, 0–23. */
 export function moldovaHour(date: Date): number {
@@ -22,13 +22,27 @@ export function moldovaHour(date: Date): number {
   );
 }
 
+/** Minute of a Date, 0–59 — the same everywhere, Moldova's offset is whole hours. */
+function minuteOf(date: Date): number {
+  return date.getUTCMinutes();
+}
+
 /** "{teamMemberId}|{YYYY-MM-DD}T{HH}" — one doctor, one hour of one day. */
 export function slotKeyFor(teamMemberId: string, date: string, hour: number): string {
   return `${teamMemberId}|${date}T${String(hour).padStart(2, "0")}`;
 }
 
+/**
+ * The reservation key of an appointment: the hour's key on the hour, the
+ * exact minute otherwise ("…T11:15"). Reception can book any minute, and an
+ * 11:30 next to an 11:00 must not collide on the hour's key. What keeps the
+ * assistant off a part-booked hour is freeHours, which reads the
+ * appointments themselves.
+ */
 export function buildSlotKey(teamMemberId: string, dateTime: Date): string {
-  return slotKeyFor(teamMemberId, getMoldovaDateStr(dateTime), moldovaHour(dateTime));
+  const key = slotKeyFor(teamMemberId, getMoldovaDateStr(dateTime), moldovaHour(dateTime));
+  const minute = minuteOf(dateTime);
+  return minute === 0 ? key : `${key}:${String(minute).padStart(2, "0")}`;
 }
 
 export class SlotTakenError extends Error {
@@ -46,23 +60,25 @@ export class DoctorUnavailableError extends Error {
 }
 
 /**
- * Claims the slot for a doctor, throwing if it's taken or outside their
- * declared availability. Returns the reservation id so the caller can
- * release it if creating the appointment then fails.
+ * Claims the slot for a doctor, throwing if it's taken or — for the assistant
+ * — outside their declared availability. Reception may book any time
+ * (`requireOpenHour: false`); it is warned before, not refused here.
+ * Returns the reservation id so the caller can release it if creating the
+ * appointment then fails.
  */
 export async function claimSlot(
   teamMemberId: string,
   dateTime: Date,
   appointmentId: string,
+  { requireOpenHour = true }: { requireOpenHour?: boolean } = {},
 ): Promise<string> {
-  const date = getMoldovaDateStr(dateTime);
-  const hour = moldovaHour(dateTime);
-
-  const availability = await prisma.doctorAvailability.findUnique({
-    where: { teamMemberId_date: { teamMemberId, date } },
-  });
-  if (!availability?.hours.includes(hour)) {
-    throw new DoctorUnavailableError();
+  if (requireOpenHour) {
+    const availability = await prisma.doctorAvailability.findUnique({
+      where: { teamMemberId_date: { teamMemberId, date: getMoldovaDateStr(dateTime) } },
+    });
+    if (!availability?.hours.includes(moldovaHour(dateTime))) {
+      throw new DoctorUnavailableError();
+    }
   }
 
   try {
@@ -152,10 +168,19 @@ export async function bookableDoctors() {
     .map((m) => ({ id: m.id, name: m.name, role: m.role }));
 }
 
-/** Hours a doctor still has free on a given Moldova date. */
+/**
+ * Hours a doctor still has free on a given Moldova date.
+ *
+ * An hour is taken when its reservation exists, or when any of the doctor's
+ * appointments runs into it at all: reception books 11:15 or 11:45, and that
+ * hour — and 12:00, when it runs past — must not be offered by the assistant.
+ * `excludeAppointmentId` leaves one appointment out, for when it is being
+ * edited and its own time must stay selectable.
+ */
 export async function freeHours(
   teamMemberId: string,
   date: string,
+  excludeAppointmentId?: string,
 ): Promise<number[]> {
   const availability = await prisma.doctorAvailability.findUnique({
     where: { teamMemberId_date: { teamMemberId, date } },
@@ -171,9 +196,51 @@ export async function freeHours(
   const keys = availability.hours.map((h) => slotKeyFor(teamMemberId, date, h));
   const taken = await prisma.appointmentSlot.findMany({
     where: { slotKey: { in: keys } },
-    select: { slotKey: true },
+    select: { slotKey: true, appointmentId: true },
   });
-  const takenKeys = new Set(taken.map((s) => s.slotKey));
+  const takenKeys = new Set(
+    taken.filter((s) => s.appointmentId !== excludeAppointmentId).map((s) => s.slotKey),
+  );
 
-  return availability.hours.filter((h) => !takenKeys.has(slotKeyFor(teamMemberId, date, h)));
+  const dayStart = parseMoldovaDateTime(`${date}T00:00`);
+  const busy = dayStart
+    ? await prisma.appointment.findMany({
+        where: {
+          teamMemberId,
+          status: { in: ["pending", "confirmed"] },
+          // From the evening before: a long one could run past midnight.
+          dateTime: { gte: new Date(dayStart.getTime() - 12 * 3_600_000), lt: new Date(dayStart.getTime() + 24 * 3_600_000) },
+          ...(excludeAppointmentId ? { NOT: { id: excludeAppointmentId } } : {}),
+        },
+        select: { dateTime: true, duration: true },
+      })
+    : [];
+
+  return availability.hours.filter((h) => {
+    if (takenKeys.has(slotKeyFor(teamMemberId, date, h))) return false;
+    const from = parseMoldovaDateTime(`${date}T${String(h).padStart(2, "0")}:00`);
+    if (!from) return true;
+    const to = from.getTime() + 3_600_000;
+    return !busy.some((a) => {
+      const start = a.dateTime.getTime();
+      return start < to && start + (a.duration || 30) * 60_000 > from.getTime();
+    });
+  });
+}
+
+/**
+ * Said to reception before booking a doctor at an hour they have not opened
+ * in their calendar: allowed — they may have agreed it by phone — but never
+ * by surprise.
+ */
+export async function outsideOpenHours(teamMemberId: string, dateTime: Date): Promise<string | null> {
+  const date = getMoldovaDateStr(dateTime);
+  const hour = moldovaHour(dateTime);
+  const availability = await prisma.doctorAvailability.findUnique({
+    where: { teamMemberId_date: { teamMemberId, date } },
+  });
+  if (availability?.hours.includes(hour)) return null;
+  const doctor = await prisma.teamMember.findUnique({ where: { id: teamMemberId }, select: { name: true } });
+  const day = dateTime.toLocaleDateString("ro-RO", { day: "numeric", month: "long", timeZone: "Europe/Chisinau" });
+  return `Dr. ${doctor?.name ?? ""} nu are ora ${String(hour).padStart(2, "0")}:00 bifată în calendar pe ${day}.`;
 }

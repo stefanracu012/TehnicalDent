@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { verifyConfirmToken } from "@/lib/appointments";
 import { notifyConfirmed, notifyCancelled } from "@/lib/notifications";
 import { reclaimSlotOnReactivate, releaseSlotByAppointment, SlotTakenError } from "@/lib/slots";
+import { cancelReason, logStatusChange } from "@/lib/appointment-log";
 
 interface RouteParams {
   params: Promise<{ id: string }>;
@@ -89,13 +90,14 @@ export async function POST(request: Request, { params }: RouteParams) {
       include: { patient: true, service: true },
     });
 
+    await logStatusChange(id, updated.status, "pacientul", "link");
     if (action === "confirm") {
       notifyConfirmed(updated).catch((e) => console.error(e));
     } else {
       // The patient cancelled from the link: the hour goes back to the
       // calendar, the same as a cancellation from the panel.
       await releaseSlotByAppointment(id);
-      notifyCancelled(updated, "Anulat de pacient").catch((e) => console.error(e));
+      notifyCancelled(updated, cancelReason("pacientul", "link")).catch((e) => console.error(e));
     }
 
     return NextResponse.json({ ok: true, status: updated.status });

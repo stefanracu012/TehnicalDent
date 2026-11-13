@@ -584,6 +584,21 @@ model Appointment {
   @@index([teamMemberId])
 }
 
+// Every status change of an appointment: what it became, who did it and from
+// where. Reception kept finding appointments "cancelled by themselves", and
+// nothing recorded who had pressed the button — one was cancelled and
+// confirmed again three times in an afternoon with no way to tell by whom.
+model AppointmentLog {
+  id            String   @id @default(auto()) @map("_id") @db.ObjectId
+  appointmentId String   @db.ObjectId
+  status        String   // the status it was set to
+  by            String   // a colleague's name, or "pacientul"
+  via           String   // "panou" | "kanban" | "telegram" | "link"
+  createdAt     DateTime @default(now())
+
+  @@index([appointmentId, createdAt])
+}
+
 enum NotificationType {
   created            // sent on creation (admin + client)
   reminder_24h

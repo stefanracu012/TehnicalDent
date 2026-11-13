@@ -2,14 +2,13 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { sanitizeObject, validateNoInjection } from "@/lib/security";
 import {
-  findOverlappingAppointment,
-  overlapMessage,
+  checkOverlap,
   generateConfirmToken,
   parseDateTime,
 } from "@/lib/appointments";
 import { notifyCreated } from "@/lib/notifications";
 import { markLeadBookedByStaff } from "@/lib/leads";
-import { claimSlot, SlotTakenError } from "@/lib/slots";
+import { claimSlot, outsideOpenHours, SlotTakenError } from "@/lib/slots";
 import type { AppointmentStatus } from "@prisma/client";
 
 export async function GET(request: Request) {
@@ -106,15 +105,28 @@ export async function POST(request: Request) {
         ? Math.round(body.duration)
         : service.duration || 30;
 
-    const overlap = await findOverlappingAppointment({ dateTime, duration });
-    if (overlap) {
+    const teamMemberId = body.teamMemberId ? String(body.teamMemberId) : null;
+
+    // Same doctor or same patient: refused. Another doctor's patient at the
+    // same time, or an hour the doctor has not opened: allowed once whoever
+    // books has read it and said yes.
+    const overlap = await checkOverlap({ dateTime, duration, patientId, teamMemberId });
+    if (overlap.verdict === "blocked") {
       return NextResponse.json(
-        { error: overlapMessage(overlap, patientId), conflictId: overlap.id },
+        { error: overlap.message, conflictId: overlap.conflictId },
         { status: 409 },
       );
     }
-
-    const teamMemberId = body.teamMemberId ? String(body.teamMemberId) : null;
+    const warnings = [
+      overlap.verdict === "parallel" ? overlap.message : null,
+      teamMemberId ? await outsideOpenHours(teamMemberId, dateTime) : null,
+    ].filter((w): w is string => Boolean(w));
+    if (warnings.length > 0 && body.acknowledged !== true) {
+      return NextResponse.json(
+        { error: warnings.join("\n"), needsConfirm: true },
+        { status: 409 },
+      );
+    }
 
     const created = await prisma.appointment.create({
       data: {
@@ -136,7 +148,7 @@ export async function POST(request: Request) {
     // actually prevents two concurrent bookings landing on the same hour.
     if (teamMemberId) {
       try {
-        await claimSlot(teamMemberId, dateTime, created.id);
+        await claimSlot(teamMemberId, dateTime, created.id, { requireOpenHour: false });
       } catch (err) {
         await prisma.appointment.delete({ where: { id: created.id } });
         const status = err instanceof SlotTakenError ? 409 : 400;

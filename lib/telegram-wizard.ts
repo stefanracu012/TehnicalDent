@@ -16,7 +16,7 @@ import {
   isValidPhone,
   normalizePhone,
   parseMoldovaDateTime,
-  findOverlappingAppointment,
+  checkOverlap,
   generateConfirmToken,
   formatDateTimeRo,
   patientSearchOr,
@@ -473,19 +473,21 @@ async function handleProgramareNouaStep(
       await sendTelegramMessage("❌ Data este în trecut. Încearcă din nou.", { threadId });
       return;
     }
-    const overlap = await findOverlappingAppointment({
+    // Same patient at the same time: refused. Someone else: the doctors work
+    // in parallel, so it is shown in the question and ✅ means "yes, anyway".
+    const overlap = await checkOverlap({
       dateTime: dt,
       duration: data.serviceDuration || 30,
+      patientId: data.patientId,
     });
-    if (overlap) {
-      await sendTelegramMessage("❌ Se suprapune cu o altă programare. Încearcă o altă oră.", {
-        threadId,
-      });
+    if (overlap.verdict === "blocked") {
+      await sendTelegramMessage(`❌ ${overlap.message} Încearcă o altă oră.`, { threadId });
       return;
     }
+    const parallelNote = overlap.verdict === "parallel" ? `\n\n⚠️ ${overlap.message}` : "";
     const confirmMsg = await sendTelegramMessage(
       `<b>Confirmi programarea?</b>\n👤 ${data.patientName} (<code>${data.patientPhone}</code>)\n` +
-        `🦷 ${data.serviceTitle}\n📅 ${formatDateTimeRo(dt)}`,
+        `🦷 ${data.serviceTitle}\n📅 ${formatDateTimeRo(dt)}${parallelNote}`,
       {
         threadId,
         replyMarkup: {
@@ -652,14 +654,15 @@ async function confirmProgramareNoua(
   }
 
   const dt = new Date(data.dateTimeIso);
-  const overlap = await findOverlappingAppointment({
+  // A parallel patient was already shown in the question; only a clash with
+  // the same patient, appeared meanwhile, stops it here.
+  const overlap = await checkOverlap({
     dateTime: dt,
     duration: data.serviceDuration || 30,
+    patientId: data.patientId,
   });
-  if (overlap) {
-    await sendTelegramMessage("❌ Se suprapune cu o altă programare între timp.", {
-      threadId: data.threadId,
-    });
+  if (overlap.verdict === "blocked") {
+    await sendTelegramMessage(`❌ ${overlap.message}`, { threadId: data.threadId });
     return "Suprapunere.";
   }
 

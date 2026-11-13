@@ -49,7 +49,7 @@ export async function GET(request: Request) {
 
     const slots: Record<string, number[]> = {};
     for (const doctor of doctors) {
-      const hours = await freeHours(doctor.id, date);
+      const hours = await freeHours(doctor.id, date, excludeAppointmentId ?? undefined);
       if (ownHour && ownHour.teamMemberId === doctor.id && !hours.includes(ownHour.hour)) {
         hours.push(ownHour.hour);
         hours.sort((a, b) => a - b);

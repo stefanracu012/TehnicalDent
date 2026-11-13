@@ -18,7 +18,7 @@ import {
   normalizePhone,
   parseDateTime,
   parseMoldovaDateTime,
-  findOverlappingAppointment,
+  checkOverlap,
   generateConfirmToken,
   formatDateTimeRo,
   patientSearchOr,
@@ -27,6 +27,7 @@ import { notifyCreated } from "@/lib/notifications";
 import { markLeadBookedByStaff } from "@/lib/leads";
 import { TELEGRAM_TOPICS, answerCallbackQuery, sendTelegramMessage, pinTelegramMessage } from "@/lib/telegram";
 import { refreshDayDigest, type DigestKey } from "@/lib/telegram-digest";
+import { cancelReason, logStatusChange, telegramActor } from "@/lib/appointment-log";
 import {
   MENU_PACIENTI,
   MENU_PROGRAMARI,
@@ -94,6 +95,16 @@ async function tgEditMessage(
   }).catch(() => {});
 }
 
+/** Replaces only a message's buttons, leaving its text. */
+async function tgEditMarkup(chatId: number | string, messageId: number, replyMarkup: object) {
+  if (!TG_TOKEN) return;
+  await fetch(`https://api.telegram.org/bot${TG_TOKEN}/editMessageReplyMarkup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, message_id: messageId, reply_markup: replyMarkup }),
+  }).catch(() => {});
+}
+
 const STATUS_EMOJI: Record<string, string> = {
   pending: "🟡",
   confirmed: "🟢",
@@ -101,6 +112,21 @@ const STATUS_EMOJI: Record<string, string> = {
   cancelled: "❌",
   noshow: "👤",
 };
+
+/** The status buttons, as the Azi/Mâine cards show them: every status but the current one. */
+function statusKeyboard(appointmentId: string, current: string) {
+  const labels: Record<string, string> = {
+    pending: "🟡 Așteptare",
+    confirmed: "🟢 Confirmă",
+    completed: "✅ Finalizat",
+    cancelled: "❌ Anulează",
+    noshow: "👤 Neprezent",
+  };
+  const buttons = Object.keys(labels)
+    .filter((s) => s !== current)
+    .map((s) => ({ text: labels[s], callback_data: `status:${appointmentId}:${s}` }));
+  return { inline_keyboard: [buttons.slice(0, 3), buttons.slice(3)].filter((row) => row.length > 0) };
+}
 
 const STATUS_LABELS: Record<string, string> = {
   pending: "Așteptare",
@@ -277,10 +303,11 @@ async function cmdProgramareNoua(rest: string): Promise<string> {
   if (!dt) return "❌ Dată/oră invalidă (folosește YYYY-MM-DD HH:MM).";
   if (dt.getTime() < Date.now() - 60_000) return "❌ Data este în trecut.";
 
-  const overlap = await findOverlappingAppointment({ dateTime: dt, duration });
-  if (overlap) {
-    return `❌ Suprapunere cu o programare existentă (id <code>${overlap.id}</code>).`;
-  }
+  // Same patient at the same time: refused. Someone else: booked — the
+  // doctors work in parallel — with a warning in the reply.
+  const overlap = await checkOverlap({ dateTime: dt, duration, patientId: patient.id });
+  if (overlap.verdict === "blocked") return `❌ ${overlap.message}`;
+  const parallelNote = overlap.verdict === "parallel" ? `\n\n⚠️ ${overlap.message}` : "";
 
   const created = await prisma.appointment.create({
     data: {
@@ -306,7 +333,8 @@ async function cmdProgramareNoua(rest: string): Promise<string> {
     `✅ <b>Programare creată</b>\n` +
     `👤 ${patient.name} (<code>${patient.phone}</code>)\n` +
     `🦷 ${service.title}\n` +
-    `📅 ${formatDateTimeRo(dt)} (${duration} min)`
+    `📅 ${formatDateTimeRo(dt)} (${duration} min)` +
+    parallelNote
   );
 }
 
@@ -370,7 +398,7 @@ interface TelegramMessage {
 }
 interface TelegramCallbackQuery {
   id: string;
-  from: { id: number; first_name?: string };
+  from: { id: number; first_name?: string; last_name?: string; username?: string };
   message?: {
     message_id: number;
     chat: { id: number };
@@ -458,7 +486,41 @@ export async function POST(request: Request, { params }: RouteParams) {
       return NextResponse.json({ ok: true });
     }
 
-    const match = data.match(/^status:(.+):(.+)$/);
+    // ---- "❌ Anulează" asks before it cancels ----
+    // One press used to cancel, and every cancellation also tells the patient
+    // on WhatsApp. The buttons sit close together on a phone, and
+    // appointments were turning up cancelled with nobody admitting to it.
+    // The first press asks; "Da, anulează" cancels; "Nu" puts the buttons back.
+    if (data.startsWith("cancelno:")) {
+      const apptId = data.slice("cancelno:".length);
+      const appt = await prisma.appointment.findUnique({ where: { id: apptId }, select: { status: true } });
+      if (cq.message && appt) {
+        await tgEditMarkup(cq.message.chat.id, cq.message.message_id, statusKeyboard(apptId, appt.status));
+      }
+      await tgAnswerCallback(cq.id, "Nu s-a anulat nimic.");
+      return NextResponse.json({ ok: true });
+    }
+    const asked = data.match(/^status:(.+):cancelled$/);
+    if (asked) {
+      if (!cq.message) {
+        await tgAnswerCallback(cq.id, "Anulați din panou.");
+        return NextResponse.json({ ok: true });
+      }
+      await tgEditMarkup(cq.message.chat.id, cq.message.message_id, {
+        inline_keyboard: [
+          [
+            { text: "❌ Da, anulează", callback_data: `cancelok:${asked[1]}` },
+            { text: "↩️ Nu", callback_data: `cancelno:${asked[1]}` },
+          ],
+        ],
+      });
+      await tgAnswerCallback(cq.id, "Sigur anulați? Pacientul primește mesaj pe WhatsApp.");
+      return NextResponse.json({ ok: true });
+    }
+
+    const match: string[] | null = data.startsWith("cancelok:")
+      ? ["", data.slice("cancelok:".length), "cancelled"]
+      : data.match(/^status:(.+):(.+)$/);
 
     if (match) {
       const [, apptId, newStatus] = match;
@@ -472,10 +534,18 @@ export async function POST(request: Request, { params }: RouteParams) {
       try {
         const typedStatus = newStatus as AppointmentStatus;
 
-        // Confirming again after a cancellation takes the hour back — or says
-        // who has it now, and changes nothing.
         const before = await prisma.appointment.findUnique({ where: { id: apptId } });
         if (!before) throw new Error("Appointment not found");
+
+        // A second press — or a stale card — must not cancel again and send
+        // the patient another "anulată" message.
+        if (before.status === newStatus) {
+          await tgAnswerCallback(cq.id, `Deja: ${STATUS_LABELS[newStatus]}.`);
+          return NextResponse.json({ ok: true });
+        }
+
+        // Confirming again after a cancellation takes the hour back — or says
+        // who has it now, and changes nothing.
         const { reclaimSlotOnReactivate, SlotTakenError } = await import("@/lib/slots");
         try {
           await reclaimSlotOnReactivate(before, newStatus);
@@ -508,11 +578,14 @@ export async function POST(request: Request, { params }: RouteParams) {
         });
         if (!apptFull) throw new Error("Appointment not found");
 
+        const by = telegramActor(cq.from);
+        await logStatusChange(apptId, newStatus, by, "telegram");
+
         // Fire notification
         const { notifyConfirmed, notifyCancelled, notifyCompleted, notifyNoshow, notifyPending } =
           await import("@/lib/notifications");
         if (newStatus === "confirmed") await notifyConfirmed(apptFull);
-        else if (newStatus === "cancelled") await notifyCancelled(apptFull);
+        else if (newStatus === "cancelled") await notifyCancelled(apptFull, cancelReason(by, "telegram"));
         else if (newStatus === "completed") await notifyCompleted(apptFull);
         else if (newStatus === "noshow") await notifyNoshow(apptFull);
         else if (newStatus === "pending") await notifyPending(apptFull);

@@ -12,7 +12,7 @@ import {
   type Patient,
   type Service,
 } from "@prisma/client";
-import { buildConfirmUrl, formatDateTimeRo, toWhatsAppPhone } from "@/lib/appointments";
+import { buildConfirmUrl, findOverlaps, formatDateTimeRo, toWhatsAppPhone } from "@/lib/appointments";
 import { TELEGRAM_TOPICS, sendTelegramMessage, sendTelegramToTopic, isTelegramConfigured } from "@/lib/telegram";
 import { refreshDigestIfRelevant } from "@/lib/telegram-digest";
 import { SEASONAL_OFFER_TEMPLATE, seasonalOfferText } from "@/lib/whatsapp-templates";
@@ -359,11 +359,25 @@ function buildEmailHtml(
 }
 
 export async function notifyCreated(a: AppointmentFull) {
+  // The doctors work in parallel, so two patients at the same time is allowed
+  // — but the clinic is told, whoever booked it, the assistant included.
+  const parallel = await findOverlaps({
+    dateTime: a.dateTime,
+    duration: a.duration,
+    excludeId: a.id,
+  }).catch(() => []);
+  const parallelLine = parallel.length
+    ? `\n⚠️ În același interval mai are programare: ${parallel
+        .map((o) => `${o.patient.name} (${o.teamMember ? `dr. ${o.teamMember.name}` : "fără medic"})`)
+        .join(", ")}`
+    : "";
+
   // Admin: Telegram (topic: Programări noi)
   await sendTelegramToTopic(
     `<b>Programare nouă</b>\n${clientLine(a)}\n📞 ${a.patient.phone}` +
       (a.patient.email ? `\n📧 ${a.patient.email}` : "") +
-      (a.notes ? `\n📝 ${a.notes}` : ""),
+      (a.notes ? `\n📝 ${a.notes}` : "") +
+      parallelLine,
     TELEGRAM_TOPICS.programariNoi,
   );
 
