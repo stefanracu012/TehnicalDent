@@ -1071,27 +1071,25 @@ function AppointmentForm({
               </p>
             ) : (
               <div className="flex flex-wrap gap-1.5">
+                {/* Times in minutes since midnight: 11:15 is 675. */}
                 {(teamMemberId
                   ? freeSlots[teamMemberId]
-                  : Array.from({ length: 16 }, (_, i) => i + 8)
-                ).map((h) => {
-                  const active = dateTime.slice(11, 16) === `${String(h).padStart(2, "0")}:00`;
+                  : Array.from({ length: 16 }, (_, i) => (i + 8) * 60)
+                ).map((t) => {
+                  const text = `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
+                  const active = dateTime.slice(11, 16) === text;
                   return (
                     <button
-                      key={h}
+                      key={t}
                       type="button"
-                      onClick={() =>
-                        setDateTime(
-                          `${dateTime.slice(0, 11)}${String(h).padStart(2, "0")}:00`,
-                        )
-                      }
+                      onClick={() => setDateTime(`${dateTime.slice(0, 11)}${text}`)}
                       className={`px-3 py-1.5 text-sm border transition-colors ${
                         active
                           ? "bg-foreground text-background border-foreground"
                           : "bg-background border-border hover:border-foreground/50"
                       }`}
                     >
-                      {String(h).padStart(2, "0")}:00
+                      {text}
                     </button>
                   );
                 })}

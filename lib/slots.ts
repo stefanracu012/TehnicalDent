@@ -27,22 +27,58 @@ function minuteOf(date: Date): number {
   return date.getUTCMinutes();
 }
 
+/** A Date's time of day in Moldova, as minutes since midnight (11:15 → 675). */
+export function moldovaMinutes(date: Date): number {
+  return moldovaHour(date) * 60 + minuteOf(date);
+}
+
+/** 675 → "11:15". */
+export function clock(minutes: number): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(Math.floor(minutes / 60))}:${pad(minutes % 60)}`;
+}
+
+/**
+ * Every start time a doctor opened on a day, as minutes since midnight: the
+ * whole hours ticked in the calendar and the custom ones (11:15) added beside
+ * them. Sorted, no repeats.
+ */
+export function openTimes(
+  availability: { hours: number[]; times?: number[] | null } | null | undefined,
+): number[] {
+  if (!availability) return [];
+  const all = [...availability.hours.map((h) => h * 60), ...(availability.times ?? [])];
+  return [...new Set(all)].sort((a, b) => a - b);
+}
+
+/**
+ * Whether a start time is one the doctor opened — exactly, or inside a whole
+ * hour they ticked (11:15 when 11:00 is open, as reception has always booked).
+ */
+export function isOpenAt(open: number[], minutes: number): boolean {
+  return open.includes(minutes) || open.includes(Math.floor(minutes / 60) * 60);
+}
+
 /** "{teamMemberId}|{YYYY-MM-DD}T{HH}" — one doctor, one hour of one day. */
 export function slotKeyFor(teamMemberId: string, date: string, hour: number): string {
   return `${teamMemberId}|${date}T${String(hour).padStart(2, "0")}`;
+}
+
+/** The reservation key for a start time in minutes: "…T11" on the hour, "…T11:15" off it. */
+export function timeKeyFor(teamMemberId: string, date: string, minutes: number): string {
+  const key = slotKeyFor(teamMemberId, date, Math.floor(minutes / 60));
+  return minutes % 60 === 0 ? key : `${key}:${String(minutes % 60).padStart(2, "0")}`;
 }
 
 /**
  * The reservation key of an appointment: the hour's key on the hour, the
  * exact minute otherwise ("…T11:15"). Reception can book any minute, and an
  * 11:30 next to an 11:00 must not collide on the hour's key. What keeps the
- * assistant off a part-booked hour is freeHours, which reads the
+ * assistant off a part-booked hour is freeTimes, which reads the
  * appointments themselves.
  */
 export function buildSlotKey(teamMemberId: string, dateTime: Date): string {
-  const key = slotKeyFor(teamMemberId, getMoldovaDateStr(dateTime), moldovaHour(dateTime));
-  const minute = minuteOf(dateTime);
-  return minute === 0 ? key : `${key}:${String(minute).padStart(2, "0")}`;
+  return timeKeyFor(teamMemberId, getMoldovaDateStr(dateTime), moldovaMinutes(dateTime));
 }
 
 export class SlotTakenError extends Error {
@@ -76,7 +112,8 @@ export async function claimSlot(
     const availability = await prisma.doctorAvailability.findUnique({
       where: { teamMemberId_date: { teamMemberId, date: getMoldovaDateStr(dateTime) } },
     });
-    if (!availability?.hours.includes(moldovaHour(dateTime))) {
+    // The assistant books only a start time the doctor opened, exactly.
+    if (!openTimes(availability).includes(moldovaMinutes(dateTime))) {
       throw new DoctorUnavailableError();
     }
   }
@@ -169,15 +206,18 @@ export async function bookableDoctors() {
 }
 
 /**
- * Hours a doctor still has free on a given Moldova date.
+ * Start times a doctor still has free on a given Moldova date, as minutes
+ * since midnight (11:15 → 675): whole hours and custom times alike.
  *
- * An hour is taken when its reservation exists, or when any of the doctor's
- * appointments runs into it at all: reception books 11:15 or 11:45, and that
- * hour — and 12:00, when it runs past — must not be offered by the assistant.
+ * A time is taken when its reservation exists, or when any of the doctor's
+ * appointments runs into it at all. Each time is looked at up to the next
+ * time the doctor opened, an hour at most: with 11:00 and 11:30 both open, a
+ * patient at 11:30 leaves 11:00 free; with only 11:00 open, a patient at 11:15
+ * or 11:45 takes it — and 12:00 too, when they run past.
  * `excludeAppointmentId` leaves one appointment out, for when it is being
  * edited and its own time must stay selectable.
  */
-export async function freeHours(
+export async function freeTimes(
   teamMemberId: string,
   date: string,
   excludeAppointmentId?: string,
@@ -185,15 +225,16 @@ export async function freeHours(
   const availability = await prisma.doctorAvailability.findUnique({
     where: { teamMemberId_date: { teamMemberId, date } },
   });
-  if (!availability) return [];
+  const open = openTimes(availability);
+  if (open.length === 0) return [];
 
-  // Asked for by exact key, one per open hour. This used to be a "starts with"
+  // Asked for by exact key, one per open time. This used to be a "starts with"
   // on "{doctor}|{date}T" — but on MongoDB Prisma turns that into an unescaped
   // regular expression, where "|" means "or". It matched every reservation the
   // doctor had on any day, so an hour booked once on any date showed as taken
   // on every date: a doctor who opened 15:00 today could not be booked at
   // 15:00 because of a patient at 15:00 three weeks earlier.
-  const keys = availability.hours.map((h) => slotKeyFor(teamMemberId, date, h));
+  const keys = open.map((t) => timeKeyFor(teamMemberId, date, t));
   const taken = await prisma.appointmentSlot.findMany({
     where: { slotKey: { in: keys } },
     select: { slotKey: true, appointmentId: true },
@@ -216,11 +257,12 @@ export async function freeHours(
       })
     : [];
 
-  return availability.hours.filter((h) => {
-    if (takenKeys.has(slotKeyFor(teamMemberId, date, h))) return false;
-    const from = parseMoldovaDateTime(`${date}T${String(h).padStart(2, "0")}:00`);
+  return open.filter((t, i) => {
+    if (takenKeys.has(timeKeyFor(teamMemberId, date, t))) return false;
+    const from = parseMoldovaDateTime(`${date}T${clock(t)}`);
     if (!from) return true;
-    const to = from.getTime() + 3_600_000;
+    const span = Math.min(60, (open[i + 1] ?? t + 60) - t);
+    const to = from.getTime() + span * 60_000;
     return !busy.some((a) => {
       const start = a.dateTime.getTime();
       return start < to && start + (a.duration || 30) * 60_000 > from.getTime();
@@ -229,18 +271,19 @@ export async function freeHours(
 }
 
 /**
- * Said to reception before booking a doctor at an hour they have not opened
+ * Said to reception before booking a doctor at a time they have not opened
  * in their calendar: allowed — they may have agreed it by phone — but never
- * by surprise.
+ * by surprise. Inside a whole hour they ticked (11:15 when 11:00 is open)
+ * counts as open, as it always has.
  */
 export async function outsideOpenHours(teamMemberId: string, dateTime: Date): Promise<string | null> {
   const date = getMoldovaDateStr(dateTime);
-  const hour = moldovaHour(dateTime);
+  const minutes = moldovaMinutes(dateTime);
   const availability = await prisma.doctorAvailability.findUnique({
     where: { teamMemberId_date: { teamMemberId, date } },
   });
-  if (availability?.hours.includes(hour)) return null;
+  if (isOpenAt(openTimes(availability), minutes)) return null;
   const doctor = await prisma.teamMember.findUnique({ where: { id: teamMemberId }, select: { name: true } });
   const day = dateTime.toLocaleDateString("ro-RO", { day: "numeric", month: "long", timeZone: "Europe/Chisinau" });
-  return `Dr. ${doctor?.name ?? ""} nu are ora ${String(hour).padStart(2, "0")}:00 bifată în calendar pe ${day}.`;
+  return `Dr. ${doctor?.name ?? ""} nu are ora ${clock(minutes)} bifată în calendar pe ${day}.`;
 }

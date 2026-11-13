@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
-import { bookableDoctors, freeHours } from "@/lib/slots";
+import { getMoldovaDateStr } from "@/lib/appointments";
+import { bookableDoctors, freeTimes, moldovaMinutes } from "@/lib/slots";
 
 /**
  * Doctors plus their free hours for one day, in a single request so the
@@ -27,34 +28,28 @@ export async function GET(request: Request) {
     const doctors = await bookableDoctors();
 
     // When editing, the appointment's own hour must stay selectable.
-    let ownHour: { teamMemberId: string; hour: number } | null = null;
+    let ownTime: { teamMemberId: string; minutes: number } | null = null;
     if (excludeAppointmentId) {
       const own = await prisma.appointment.findUnique({
         where: { id: excludeAppointmentId },
         select: { teamMemberId: true, dateTime: true },
       });
-      if (own?.teamMemberId) {
-        ownHour = {
-          teamMemberId: own.teamMemberId,
-          hour: Number(
-            new Intl.DateTimeFormat("en-GB", {
-              hour: "2-digit",
-              hour12: false,
-              timeZone: "Europe/Chisinau",
-            }).format(own.dateTime),
-          ),
-        };
+      // Only when it is on the day being looked at.
+      if (own?.teamMemberId && getMoldovaDateStr(own.dateTime) === date) {
+        ownTime = { teamMemberId: own.teamMemberId, minutes: moldovaMinutes(own.dateTime) };
       }
     }
 
+    // Start times in minutes since midnight (11:15 → 675): the whole hours
+    // the doctor ticked and the custom times they added.
     const slots: Record<string, number[]> = {};
     for (const doctor of doctors) {
-      const hours = await freeHours(doctor.id, date, excludeAppointmentId ?? undefined);
-      if (ownHour && ownHour.teamMemberId === doctor.id && !hours.includes(ownHour.hour)) {
-        hours.push(ownHour.hour);
-        hours.sort((a, b) => a - b);
+      const times = await freeTimes(doctor.id, date, excludeAppointmentId ?? undefined);
+      if (ownTime && ownTime.teamMemberId === doctor.id && !times.includes(ownTime.minutes)) {
+        times.push(ownTime.minutes);
+        times.sort((a, b) => a - b);
       }
-      slots[doctor.id] = hours;
+      slots[doctor.id] = times;
     }
 
     return NextResponse.json({ doctors, slots });

@@ -94,7 +94,10 @@ model DoctorAvailability {
   id           String   @id @default(auto()) @map("_id") @db.ObjectId
   teamMemberId String   @db.ObjectId
   date         String // "YYYY-MM-DD" in Europe/Chisinau
-  hours        Int[] // 8..23
+  hours        Int[] // 8..23 — whole hours
+  // Start times off the hour, as minutes since midnight: 11:15 is 675. Whole
+  // hours stay in `hours`, so calendars saved before this need no rewrite.
+  times        Int[]    @default([])
   updatedAt    DateTime @updatedAt
 
   teamMember TeamMember @relation(fields: [teamMemberId], references: [id], onDelete: Cascade)

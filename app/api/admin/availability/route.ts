@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getSession } from "@/lib/auth-server";
 import { getMoldovaDayRangeUTC } from "@/lib/appointments";
+import { clock, isOpenAt, moldovaMinutes, openTimes } from "@/lib/slots";
 
 export const WORK_HOUR_START = 8;
 export const WORK_HOUR_END = 23;
@@ -67,6 +68,24 @@ export async function PUT(request: Request) {
       ),
     ].sort((a, b) => a - b);
 
+    // Start times off the hour — 11:15 is 675 — kept apart from the whole
+    // hours, which older calendars already hold. Whole hours sent here are
+    // ignored: they belong in `hours`.
+    const rawTimes = Array.isArray(body.times) ? body.times : [];
+    const times: number[] = [
+      ...new Set(
+        rawTimes
+          .map((t) => Number(t))
+          .filter(
+            (t) =>
+              Number.isInteger(t) &&
+              t % 60 !== 0 &&
+              t >= WORK_HOUR_START * 60 &&
+              t < (WORK_HOUR_END + 1) * 60,
+          ),
+      ),
+    ].sort((a, b) => a - b);
+
     if (!teamMemberId || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
       return NextResponse.json(
         { error: "Doctor și dată (YYYY-MM-DD) sunt obligatorii." },
@@ -91,20 +110,16 @@ export async function PUT(request: Request) {
       },
       select: { dateTime: true },
     });
-    const bookedHours = booked.map((a) =>
-      Number(
-        new Intl.DateTimeFormat("en-GB", {
-          hour: "2-digit",
-          hour12: false,
-          timeZone: "Europe/Chisinau",
-        }).format(a.dateTime),
-      ),
-    );
-    const missing = bookedHours.filter((h) => !hours.includes(h));
+    // A patient at 11:15 is covered by 11:00 being ticked, or by 11:15 itself.
+    const open = openTimes({ hours, times });
+    const missing = booked
+      .map((a) => moldovaMinutes(a.dateTime))
+      .filter((m) => !isOpenAt(open, m))
+      .sort((a, b) => a - b);
     if (missing.length > 0) {
       return NextResponse.json(
         {
-          error: `Orele ${missing.sort((a, b) => a - b).join(", ")}:00 au deja programări. Anulați-le întâi.`,
+          error: `Orele ${missing.map(clock).join(", ")} au deja programări. Anulați-le întâi.`,
         },
         { status: 409 },
       );
@@ -112,8 +127,8 @@ export async function PUT(request: Request) {
 
     const row = await prisma.doctorAvailability.upsert({
       where: { teamMemberId_date: { teamMemberId, date } },
-      create: { teamMemberId, date, hours },
-      update: { hours },
+      create: { teamMemberId, date, hours, times },
+      update: { hours, times },
     });
 
     return NextResponse.json(row);

@@ -13,7 +13,7 @@
 // =============================================
 
 import prisma from "@/lib/prisma";
-import { bookableDoctors, freeHours, claimSlot } from "@/lib/slots";
+import { bookableDoctors, freeTimes, claimSlot, clock } from "@/lib/slots";
 import { normalizePhone, isValidPhone, parseMoldovaDateTime } from "@/lib/appointments";
 import { sendTelegramToTopic, TELEGRAM_TOPICS } from "@/lib/telegram";
 import {
@@ -399,8 +399,8 @@ const TOOLS = [
               "Ce a spus pacientul, în cuvintele lui: \"am 2 carii\", \"mă doare o măsea jos\", \"vreau curățire\". Ajunge în fișă, la medic. Nu i-l repeți pacientului.",
           },
           ora: {
-            type: "integer",
-            description: "Ora exact cum a venit din ore_libere, ca număr întreg.",
+            type: "string",
+            description: "Ora exact cum a venit din ore_libere, cu minute: \"11:00\", \"11:15\".",
           },
         },
       },
@@ -782,9 +782,26 @@ interface Slot {
   medicId: string;
   medic: string;
   data: string;
-  ora: number;
+  /** "11:15" — what goes back into programeaza. Doctors open custom times too, not only whole hours. */
+  ora: string;
   zi: string;
   oraText: string;
+}
+
+/**
+ * The time a booking call names, as minutes since midnight: "11:15", "11",
+ * 11, or "10:00" mangled into 1000 / 1115. Null when it is no time of day.
+ */
+function minutesFromArg(value: unknown): number | null {
+  const text = String(value ?? "").trim();
+  let m = text.match(/^(\d{1,2})(?::|\.|h)?(\d{2})?$/);
+  // 1000, 1115: the colon dropped.
+  if (/^\d{3,4}$/.test(text)) m = text.match(/^(\d{1,2})(\d{2})$/);
+  if (!m) return null;
+  const hour = Number(m[1]);
+  const minute = m[2] === undefined ? 0 : Number(m[2]);
+  if (hour > 23 || minute > 59) return null;
+  return hour * 60 + minute;
 }
 
 /**
@@ -804,14 +821,14 @@ async function findSlotsFrom(from: string, days: number) {
   for (let offset = first; offset <= last && out.length < 40; offset++) {
     const date = moldovaDate(offset);
     for (const doctor of doctors) {
-      for (const hour of await freeHours(doctor.id, date)) {
+      for (const t of await freeTimes(doctor.id, date)) {
         out.push({
           medicId: doctor.id,
           medic: doctor.name,
           data: date,
-          ora: hour,
+          ora: clock(t),
           zi: dayLabel(date, offset),
-          oraText: `${String(hour).padStart(2, "0")}:00`,
+          oraText: clock(t),
         });
       }
     }
@@ -842,14 +859,14 @@ async function findSlots(days: number): Promise<Slot[]> {
     for (let offset = 1; offset <= limit && out.length < 40; offset++) {
       const date = moldovaDate(offset);
       for (const doctor of doctors) {
-        for (const hour of await freeHours(doctor.id, date)) {
+        for (const t of await freeTimes(doctor.id, date)) {
           out.push({
             medicId: doctor.id,
             medic: doctor.name,
             data: date,
-            ora: hour,
+            ora: clock(t),
             zi: dayLabel(date, offset),
-            oraText: `${String(hour).padStart(2, "0")}:00`,
+            oraText: clock(t),
           });
         }
       }
@@ -998,16 +1015,13 @@ async function book(
   const service = match.service;
 
   const day = String(args.data ?? "");
-  let hour = Number(args.ora);
+  // "11:15", "11", 11, and "10:00" arriving as 1000 often enough to be worth
+  // handling rather than bouncing back — the patient is waiting while the two
+  // of them argue about a format.
+  const minutes = minutesFromArg(args.ora);
+  const clockText = minutes === null ? "" : clock(minutes);
 
-  // "10:00" arrives as 1000 often enough to be worth handling rather than
-  // bouncing back — the patient is waiting while the two of them argue about
-  // a format.
-  if (Number.isInteger(hour) && hour >= 100 && hour <= 2359 && hour % 100 === 0) {
-    hour = Math.floor(hour / 100);
-  }
-
-  if (!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(day) || !Number.isInteger(hour) || hour < 0 || hour > 23) {
+  if (!/^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(day) || minutes === null) {
     return { ok: false, motiv: "Ziua sau ora nu sunt valide. Ia-le din ore_libere." };
   }
 
@@ -1017,12 +1031,12 @@ async function book(
   // then. A repair that has to match the real calendar cannot invent a
   // booking; it can only recover the one that was meant.
   let resolvedDay = day;
-  if (parseMoldovaDateTime(`${day}T${String(hour).padStart(2, "0")}:00`)!.getTime() < Date.now()) {
+  if (parseMoldovaDateTime(`${day}T${clockText}`)!.getTime() < Date.now()) {
     const thisYear = new Date().getUTCFullYear();
     resolvedDay = "";
     for (const year of [thisYear, thisYear + 1]) {
       const candidate = `${year}-${day.slice(5)}`;
-      const at = parseMoldovaDateTime(`${candidate}T${String(hour).padStart(2, "0")}:00`);
+      const at = parseMoldovaDateTime(`${candidate}T${clockText}`);
       if (!at || at.getTime() < Date.now()) continue;
       // An hour this patient already holds counts as a match too. Otherwise a
       // repeated call right after a successful booking finds the hour taken —
@@ -1043,7 +1057,7 @@ async function book(
 
       const doctors = await bookableDoctors();
       for (const doctor of doctors) {
-        if ((await freeHours(doctor.id, candidate)).includes(hour)) {
+        if ((await freeTimes(doctor.id, candidate)).includes(minutes)) {
           resolvedDay = candidate;
           break;
         }
@@ -1055,9 +1069,7 @@ async function book(
     }
   }
 
-  const when = parseMoldovaDateTime(
-    `${resolvedDay}T${String(hour).padStart(2, "0")}:00`,
-  );
+  const when = parseMoldovaDateTime(`${resolvedDay}T${clockText}`);
   if (!when) {
     return { ok: false, motiv: "Ziua sau ora nu sunt valide. Ia-le din ore_libere." };
   }
@@ -1100,14 +1112,14 @@ async function book(
   const claimed = String(args.medicId ?? "");
   let medicId = /^[0-9a-fA-F]{24}$/.test(claimed) ? claimed : "";
 
-  if (medicId && !(await freeHours(medicId, resolvedDay)).includes(hour)) {
+  if (medicId && !(await freeTimes(medicId, resolvedDay)).includes(minutes)) {
     medicId = "";
   }
 
   if (!medicId) {
     const doctors = await bookableDoctors();
     for (const doctor of doctors) {
-      if ((await freeHours(doctor.id, resolvedDay)).includes(hour)) {
+      if ((await freeTimes(doctor.id, resolvedDay)).includes(minutes)) {
         medicId = doctor.id;
         break;
       }
@@ -1218,7 +1230,7 @@ async function reportFailedBooking(
         line("Telefon", args.telefon),
         line("Serviciu", args.serviciuSlug),
         line("Ziua", args.data),
-        line("Ora", args.ora === undefined ? "" : `${args.ora}:00`),
+        line("Ora", args.ora === undefined ? "" : (minutesFromArg(args.ora) === null ? String(args.ora) : clock(minutesFromArg(args.ora)!))),
         "",
         "Sunați pacientul — el rămâne cu „revine cineva de la recepție”.",
       ].join("\n"),
@@ -1426,12 +1438,12 @@ export async function wrongDayClaims(reply: string): Promise<string[]> {
   const hoursOn = async (date: string) => {
     if (!freeOn.has(date)) {
       const all = new Set<number>();
-      for (const d of doctors) for (const h of await freeHours(d.id, date)) all.add(h);
+      for (const d of doctors) for (const h of await freeTimes(d.id, date)) all.add(h);
       freeOn.set(date, [...all].sort((a, b) => a - b));
     }
     return freeOn.get(date)!;
   };
-  const hoursText = (hours: number[]) => hours.map((h) => `${pad2(h)}:00`).join(", ");
+  const hoursText = (times: number[]) => times.map(clock).join(", ");
 
   const problems: string[] = [];
   for (const sentence of reply.split(/[.!?;\n]+/)) {
@@ -1475,10 +1487,12 @@ export async function inventedTimes(text: string): Promise<string[]> {
   for (const { date, hour, minute } of pairs) {
     if (!freeOn.has(date)) {
       const hours = new Set<number>();
-      for (const d of doctors) for (const h of await freeHours(d.id, date)) hours.add(h);
+      for (const d of doctors) for (const t of await freeTimes(d.id, date)) hours.add(t);
       freeOn.set(date, hours);
     }
-    if (minute === 0 && freeOn.get(date)!.has(hour)) continue;
+    // Free times are minutes since midnight: a doctor who opened 11:15 may
+    // be offered at 11:15 — and no longer only on the hour.
+    if (freeOn.get(date)!.has(hour * 60 + minute)) continue;
 
     // A confirmation or "when is my appointment" names a taken hour — rightly.
     const at = parseMoldovaDateTime(`${date}T${pad2(hour)}:${pad2(minute)}`);
