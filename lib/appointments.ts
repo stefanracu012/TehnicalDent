@@ -127,7 +127,9 @@ export async function findOverlaps({ dateTime, duration, excludeId }: OverlapChe
 
 export type OverlapCheck =
   | { verdict: "free" }
-  | { verdict: "blocked"; message: string; conflictId: string }
+  // `kind` says who the clash is with, for callers that must not repeat the
+  // message — it names the other patient — to someone outside the clinic.
+  | { verdict: "blocked"; kind: "patient" | "doctor"; message: string; conflictId: string }
   | { verdict: "parallel"; message: string; conflictIds: string[] };
 
 const moldovaClock = (d: Date) =>
@@ -163,6 +165,7 @@ export async function checkOverlap(params: {
   if (samePatient) {
     return {
       verdict: "blocked",
+      kind: "patient",
       conflictId: samePatient.id,
       message: `${samePatient.patient.name} are deja programare la ${moldovaClock(samePatient.dateTime)} (${state(samePatient.status)}). Nu e nevoie de una nouă.`,
     };
@@ -174,6 +177,7 @@ export async function checkOverlap(params: {
   if (sameDoctor) {
     return {
       verdict: "blocked",
+      kind: "doctor",
       conflictId: sameDoctor.id,
       message: `Dr. ${sameDoctor.teamMember?.name ?? ""} are deja pacient la ${moldovaClock(sameDoctor.dateTime)}: ${sameDoctor.patient.name} (${state(sameDoctor.status)}).`,
     };

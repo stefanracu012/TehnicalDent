@@ -271,6 +271,78 @@ export async function freeTimes(
 }
 
 /**
+ * The same free times as freeTimes, for several doctors and many days at once:
+ * three queries in all rather than three per doctor per day. The booking form
+ * on the site shows a month of days, which one-by-one was a dozen seconds.
+ *
+ * Returns doctorId → date → minutes since midnight; days a doctor has nothing
+ * free on are left out. `durationMin` is the length of the appointment being
+ * looked for: with it, a time is free only if the doctor has nothing running
+ * into the whole of it — a 60-minute treatment does not fit at 11:00 when a
+ * patient is at 11:30.
+ */
+export async function freeTimesRange(
+  doctorIds: string[],
+  fromDate: string,
+  toDate: string,
+  { durationMin }: { durationMin?: number } = {},
+): Promise<Map<string, Map<string, number[]>>> {
+  const out = new Map<string, Map<string, number[]>>();
+  if (doctorIds.length === 0) return out;
+
+  const rows = await prisma.doctorAvailability.findMany({
+    where: { teamMemberId: { in: doctorIds }, date: { gte: fromDate, lte: toDate } },
+  });
+  if (rows.length === 0) return out;
+
+  const keys = rows.flatMap((r) => openTimes(r).map((t) => timeKeyFor(r.teamMemberId, r.date, t)));
+  const taken = new Set(
+    (await prisma.appointmentSlot.findMany({ where: { slotKey: { in: keys } }, select: { slotKey: true } })).map(
+      (s) => s.slotKey,
+    ),
+  );
+
+  const first = parseMoldovaDateTime(`${fromDate}T00:00`);
+  const last = parseMoldovaDateTime(`${toDate}T00:00`);
+  const busy =
+    first && last
+      ? await prisma.appointment.findMany({
+          where: {
+            teamMemberId: { in: doctorIds },
+            status: { in: ["pending", "confirmed"] },
+            dateTime: { gte: new Date(first.getTime() - 12 * 3_600_000), lt: new Date(last.getTime() + 24 * 3_600_000) },
+          },
+          select: { teamMemberId: true, dateTime: true, duration: true },
+        })
+      : [];
+  const busyOf = new Map<string, { start: number; end: number }[]>();
+  for (const a of busy) {
+    const list = busyOf.get(a.teamMemberId ?? "") ?? [];
+    list.push({ start: a.dateTime.getTime(), end: a.dateTime.getTime() + (a.duration || 30) * 60_000 });
+    busyOf.set(a.teamMemberId ?? "", list);
+  }
+
+  for (const row of rows) {
+    const open = openTimes(row);
+    const mine = busyOf.get(row.teamMemberId) ?? [];
+    const free = open.filter((t, i) => {
+      if (taken.has(timeKeyFor(row.teamMemberId, row.date, t))) return false;
+      const from = parseMoldovaDateTime(`${row.date}T${clock(t)}`);
+      if (!from) return true;
+      const span = durationMin ?? Math.min(60, (open[i + 1] ?? t + 60) - t);
+      const start = from.getTime();
+      const end = start + span * 60_000;
+      return !mine.some((a) => a.start < end && a.end > start);
+    });
+    if (free.length === 0) continue;
+    const byDate = out.get(row.teamMemberId) ?? new Map<string, number[]>();
+    byDate.set(row.date, free);
+    out.set(row.teamMemberId, byDate);
+  }
+  return out;
+}
+
+/**
  * Said to reception before booking a doctor at a time they have not opened
  * in their calendar: allowed — they may have agreed it by phone — but never
  * by surprise. Inside a whole hour they ticked (11:15 when 11:00 is open)

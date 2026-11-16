@@ -1,5 +1,5 @@
 import { Metadata } from "next";
-import ContactForm from "@/components/ContactForm";
+import ContactTabs from "@/components/ContactTabs";
 import { Link } from "@/i18n/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getAlternates } from "@/lib/seo";
@@ -188,7 +188,7 @@ export default async function ContactPage({
               <p className="text-muted-foreground mb-10 max-w-lg">
                 {t("formularDesc")}
               </p>
-              <ContactForm defaultService={serviciu} />
+              <ContactTabs defaultService={serviciu} />
             </div>
 
             {/* Info side */}

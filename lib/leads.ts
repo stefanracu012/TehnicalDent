@@ -299,8 +299,8 @@ export async function markLeadBooked(args: {
   name: string;
   patientId: string;
   summary: string;
-  /** Who made the booking. */
-  by?: "chat" | "recepție";
+  /** Who made the booking. "site" is the patient, on the website's booking form. */
+  by?: "chat" | "recepție" | "site";
 }): Promise<void> {
   try {
     const by = args.by ?? "chat";
@@ -335,8 +335,8 @@ export async function markLeadBooked(args: {
       await prisma.leadNote.create({
         data: {
           leadId: lead.id,
-          content: `📅 Programat${by === "chat" ? " prin chat" : " de recepție"}: ${args.summary}`,
-          authorName: by === "chat" ? ASSISTANT : "Recepție",
+          content: `📅 Programat${by === "chat" ? " prin chat" : by === "site" ? " online, de pe site" : " de recepție"}: ${args.summary}`,
+          authorName: by === "chat" ? ASSISTANT : by === "site" ? "Site" : "Recepție",
         },
       });
     }

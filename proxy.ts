@@ -168,9 +168,12 @@ export default async function middleware(request: NextRequest) {
     }
   }
 
-  // CSRF check on public POST endpoints (/api/contact, /api/auth/login)
+  // CSRF check on public POST endpoints (/api/contact, /api/auth/login,
+  // /api/public/booking)
   if (
-    (pathname === "/api/contact" || pathname === "/api/auth/login") &&
+    (pathname === "/api/contact" ||
+      pathname === "/api/auth/login" ||
+      pathname === "/api/public/booking") &&
     method === "POST"
   ) {
     if (!validateCsrf(request)) {
