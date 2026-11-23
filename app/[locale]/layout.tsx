@@ -15,6 +15,8 @@ import { routing } from "@/i18n/routing";
 import { notFound } from "next/navigation";
 import { getAlternates, getOgLocale } from "@/lib/seo";
 import { DentistSchema } from "@/components/JsonLd";
+import { getServices } from "@/lib/data";
+import { localizeService } from "@/lib/localize";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -109,6 +111,13 @@ export default async function LocaleLayout({
 
   const messages = await getMessages({ locale });
 
+  // The services that exist, for the menu and the footer — in the visitor's
+  // language. Rebuilt with the rest of the site whenever services are saved.
+  const menuServices = (await getServices())
+    .filter((s) => s.isActive)
+    .map((s) => localizeService(s, locale))
+    .map((s) => ({ slug: s.slug, title: s.title as string, category: s.category as string }));
+
   return (
     <html
       lang={locale}
@@ -118,9 +127,9 @@ export default async function LocaleLayout({
         <DentistSchema locale={locale} />
         <NextIntlClientProvider locale={locale} messages={messages}>
           <TopBar />
-          <Header />
+          <Header services={menuServices} />
           <main className="flex-1">{children}</main>
-          <Footer />
+          <Footer services={menuServices} />
           <WhatsAppButton />
         </NextIntlClientProvider>
       </body>

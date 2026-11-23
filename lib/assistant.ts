@@ -186,7 +186,7 @@ ZILELE ȘI ORELE:
 - În "programeaza" trimiți "data" și "ora" — valorile brute din aceeași înregistrare. Pacientului îi spui "zi" și "oraText". Nu le amesteca.
 - Nu spui niciodată o zi a săptămânii care nu apare în "zi". Dacă pacientul zice "luni" și nicio înregistrare nu e luni, îi spui asta și îi dai zilele pe care chiar le ai.
 - Nu propui ore din trecut și nu inventezi zile între cele libere.
-- Nu spui NICIODATĂ că într-o zi "nu avem program", "nu lucrăm", "e închis" sau "în weekend nu lucrăm". Clinica lucrează și sâmbăta (programul e mai jos). Dacă într-o zi anume sunt ore libere afli doar cu ore_libere, cu "dela" = ziua aceea și zile = 1. Când pacientul întreabă de o zi anume ("sâmbătă", "pe 24"), chemi asta și răspunzi cu ce îți dă: "Sâmbătă, 24 octombrie, am liber la 11:00." sau, dacă nu e nimic: "Sâmbătă nu mai am ore libere; cele mai apropiate sunt…".
+- Programul oficial al clinicii (cel din Google): luni–vineri 09:00–18:00; sâmbătă și duminică închis. Dar clinica lucrează uneori și sâmbăta. Nu spui NICIODATĂ că o zi anume "nu avem program", "nu lucrăm" sau "e închis" fără să fi chemat ore_libere pentru ea. Dacă într-o zi anume sunt ore libere afli doar cu ore_libere, cu "dela" = ziua aceea și zile = 1. Când pacientul întreabă de o zi anume ("sâmbătă", "pe 24"), chemi asta și răspunzi cu ce îți dă: "Sâmbătă, 24 octombrie, am liber la 11:00." Dacă sâmbătă nu e nicio oră: "Sâmbăta de obicei nu lucrăm; cele mai apropiate ore libere sunt…". Dacă întreabă doar în general de program, îi spui programul oficial și că uneori se lucrează și sâmbăta, dar orele libere le vezi tu doar din ore_libere. Duminica e închis întotdeauna.
 - Dacă spune că în timpul săptămânii nu poate, îi cauți sâmbăta (ore_libere cu "dela" = sâmbăta următoare) și propui ce găsești. Dacă nici atunci nu e nimic, îi spui că o colegă de la recepție îl contactează ca să găsiți o oră și marchezi "urgent". Nu închei cu "ne puteți scrie oricând" cât timp el vrea să vină.
 - Când pacientul vrea o anumită perioadă ("săptămâna viitoare", "după 20", "la sfârșitul lunii"), chemi ore_libere cu "dela" = prima zi a perioadei. Dacă îți spune că în perioada aceea nu e nimic liber, îi spui exact asta și îi arăți o singură dată toate orele din "celeMaiApropiate" (până la 8), grupate pe zile, cu ziua lor reală: "Săptămâna viitoare nu am ore libere. Cele mai apropiate sunt mâine, joi, 15 octombrie, la 08:00, 09:00, 10:00, 11:00 sau 12:00, și vineri, 16 octombrie, la 14:00, 15:00 sau 16:00." Nu muți NICIODATĂ o oră de pe o zi pe alta ca să se potrivească cu ce a cerut.
 - O propunere refuzată nu se repetă. Dacă pacientul spune nu orelor tale și ține la o perioadă în care nu e nimic liber, nu-i mai înșiri ore: îi spui că o colegă de la recepție îl contactează ca să găsiți o oră în perioada dorită, îi ceri numele și numărul dacă nu le ai și chemi marcheaza_lead cu "urgent", cu perioada dorită în motiv. Exemplu: "Înțeleg. O colegă de la recepție vă scrie ca să găsim o oră săptămâna viitoare. Pe ce nume vă notez și la ce număr vă putem suna?"
@@ -1465,8 +1465,13 @@ export async function wrongDayClaims(reply: string): Promise<string[]> {
     const dates = [...new Set(dateMarks(lower).map((m) => m.date))].filter((d) => d > today);
     for (const date of dates) {
       const hours = await hoursOn(date);
-      const sunday = new Date(`${date}T12:00:00Z`).getUTCDay() === 0;
-      if (closed && !sunday) {
+      const weekday = new Date(`${date}T12:00:00Z`).getUTCDay();
+      // The official hours (as on Google) are Monday–Friday; Saturday is closed
+      // but the clinic sometimes works it. Saying a Saturday is closed is
+      // therefore right — unless a doctor has opened hours that day, which the
+      // calendar knows and the model does not. Sunday is always closed.
+      const mayBeClosed = weekday === 0 || (weekday === 6 && hours.length === 0);
+      if (closed && !mayBeClosed) {
         problems.push(
           `ai scris că ${dayLabel(date, 0)} clinica nu lucrează — clinica lucrează în ziua aceea` +
             (hours.length ? ` și are ore libere: ${hoursText(hours)}` : ", doar că nu mai sunt ore libere"),
@@ -1939,11 +1944,12 @@ export async function assistantReply(
       })()}.`,
     },
     {
-      // The hours the site shows, from the same text the footer reads. Without
-      // them the model filled the gap itself and told patients "în weekend nu
-      // avem program" — the clinic works Saturdays.
+      // The hours the site shows, from the same text the footer reads (the same
+      // as on Google). Without them the model filled the gap itself. Saturday is
+      // officially closed but sometimes worked, so a day is only ever called
+      // closed after ore_libere has been asked for it.
       role: "system",
-      content: `Programul clinicii, ca pe site: ${siteMessages.Footer.programLuniVineri}; ${siteMessages.Footer.programSambata}; duminică închis. Asta e programul clinicii — dacă într-o zi mai sunt ore libere afli doar cu ore_libere.`,
+      content: `Programul oficial al clinicii, ca pe site și pe Google: ${siteMessages.Footer.programLuniVineri}; ${siteMessages.Footer.programSambata}; duminică închis. Sâmbăta uneori se lucrează totuși. Dacă într-o zi mai sunt ore libere afli doar cu ore_libere — ce îți dă acolo e valabil, chiar dacă ziua e în afara programului oficial.`,
     },
     {
       role: "system",
@@ -2127,7 +2133,7 @@ export async function assistantReply(
             role: "system",
             content:
               `Răspunsul tău e greșit: ${dayClaims.join("; ")}. Nu spune niciodată că o zi "nu avem program" sau "nu lucrăm" ` +
-              "(clinica lucrează luni–sâmbătă). Ce e liber într-o zi afli doar cu ore_libere, cu \"dela\" = ziua aceea și zile = 1. " +
+              "(clinica lucrează luni–vineri, iar uneori și sâmbăta). Ce e liber într-o zi afli doar cu ore_libere, cu \"dela\" = ziua aceea și zile = 1. " +
               "Scrie din nou răspunsul, doar cu ce îți întoarce. Pacientul nu a văzut mesajul greșit.",
           });
           continue;

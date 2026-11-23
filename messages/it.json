@@ -49,8 +49,8 @@
     "sunaNeLabel": "Chiamaci: +373 603 55 350"
   },
   "Contact": {
-    "metaTitle": "Contatto",
-    "metaDescription": "Contatta la clinica odontoiatrica TehnicalDent per appuntamenti, domande o informazioni aggiuntive. Siamo qui per aiutarti.",
+    "metaTitle": "Prenota online dal dentista",
+    "metaDescription": "Prenota online da TehnicalDent: scegli il medico e un orario libero. Via Sarmizegetusa 24/1, Chisinau, Botanica. Lun–Ven 09:00–18:00.",
     "subtitle": "Contatto",
     "heroTitle": "Siamo qui",
     "heroTitleAccent": "per te",
@@ -64,9 +64,9 @@
     "formularDesc": "Scegli un orario libero nei calendari dei medici, oppure inviaci un messaggio e ti contatteremo.",
     "programDeLucru": "Orario di lavoro",
     "luniVineri": "Lunedì — Venerdì",
-    "luniVineriOre": "08:00 – 20:00",
+    "luniVineriOre": "09:00 – 18:00",
     "sambata": "Sabato",
-    "sambataOre": "09:00 – 15:00",
+    "sambataOre": "Chiuso (a volte aperti)",
     "duminica": "Domenica",
     "inchis": "Chiuso",
     "scriePeWhatsApp": "Scrivi su WhatsApp",
@@ -150,9 +150,29 @@
     "too_many": "Hai già appuntamenti futuri. Per un altro, chiamaci al 060 355 350.",
     "rate": "Troppi tentativi. Riprova più tardi o chiamaci al 060 355 350."
   },
+  "Faq": {
+    "titlu": "Domande frequenti",
+    "q1": "Come posso prenotare un appuntamento?",
+    "a1": "Direttamente su questa pagina: scegli il servizio, il medico e un orario libero dal suo calendario. Puoi anche chiamarci al +373 603 55 350 o scriverci su WhatsApp o Viber allo stesso numero.",
+    "q2": "Dove si trova la clinica TehnicalDent?",
+    "a2": "A Chisinau, settore Botanica, in via Sarmizegetusa 24/1.",
+    "q3": "Qual è l'orario della clinica?",
+    "a3": "Dal lunedì al venerdì, dalle 09:00 alle 18:00. Il sabato e la domenica la clinica è chiusa, ma a volte lavoriamo anche il sabato: chiamaci o scrivici su WhatsApp per sapere se ci sono orari liberi.",
+    "q4": "Cosa include l'igiene professionale?",
+    "a4": "L'igiene professionale comprende tre fasi: ablazione del tartaro a ultrasuoni, AirFlow e lucidatura professionale.",
+    "q5": "Lo sbiancamento dentale include l'igiene?",
+    "a5": "Sì, lo sbiancamento dentale include anche l'igiene professionale.",
+    "q6": "Avete buoni regalo?",
+    "a6": "Sì, la clinica offre buoni regalo, ad esempio per l'igiene. I dettagli su validità e pagamento li dà la reception al +373 603 55 350."
+  },
+  "Related": {
+    "serviciiLegate": "Servizi collegati a questo argomento",
+    "articoleUtile": "Articoli utili su questo servizio",
+    "citeste": "Leggi l'articolo"
+  },
   "About": {
-    "metaTitle": "Chi siamo",
-    "metaDescription": "Scopri la storia della clinica TehnicalDent, la nostra filosofia e il team di specialisti dedicati alla salute e bellezza del tuo sorriso.",
+    "metaTitle": "La clinica e il team medico",
+    "metaDescription": "Scopri la storia della clinica TehnicalDent a Chisinau, il nostro approccio e il team di dentisti dedicati alla salute e alla bellezza del tuo sorriso.",
     "breadcrumbAbout": "Chi siamo",
     "heroSubtitle": "La nostra storia",
     "heroTitle": "Su TehnicalDent",
@@ -237,8 +257,8 @@
     "despreClinica": "Sulla clinica"
   },
   "Services": {
-    "metaTitle": "Servizi Odontoiatrici",
-    "metaDescription": "Scopri la gamma completa di servizi odontoiatrici offerti da TehnicalDent: implantologia, ortodonzia, odontoiatria estetica, chirurgia orale e molto altro.",
+    "metaTitle": "Servizi odontoiatrici a Chisinau",
+    "metaDescription": "Servizi odontoiatrici a Chisinau, Botanica: igiene, terapia, devitalizzazione, parodontologia, protesi, odontoiatria estetica e pediatrica.",
     "breadcrumbServicii": "Servizi",
     "heroSubtitle": "Cosa offriamo",
     "heroTitle": "I Nostri Servizi",
@@ -249,7 +269,7 @@
     "programeazaConsultatie": "Prenota consulenza",
     "filtrulToate": "Tutti",
     "programeaza": "Prenota",
-    "veziDetalii": "Vedi dettagli \u2192",
+    "veziDetalii": "Vedi dettagli →",
     "deLa": "da",
     "pretPromotional": "Prezzo promozionale"
   },
@@ -275,8 +295,8 @@
     "toateServiciile": "Tutti i servizi"
   },
   "Blog": {
-    "metaTitle": "Consigli e Blog",
-    "metaDescription": "Consigli e raccomandazioni dai nostri specialisti odontoiatrici per la salute e bellezza del tuo sorriso.",
+    "metaTitle": "Consigli dei nostri dentisti",
+    "metaDescription": "Consigli e raccomandazioni dei dentisti TehnicalDent su igiene orale, carie, sbiancamento, impianti e cura del sorriso.",
     "heroTitle": "Consigli dal medico",
     "heroDescription": "Articoli e consigli pratici dal nostro team di specialisti, per aiutarti a prenderti cura della tua salute dentale ogni giorno.",
     "emptyState": "Non ci sono ancora articoli in questa categoria.",
@@ -310,8 +330,8 @@
     "esteticaDentara": "Odontoiatria Estetica",
     "chirurgieOrala": "Chirurgia Orale",
     "pedodontie": "Odontoiatria Pediatrica",
-    "programLuniVineri": "Lun–Ven: 09:00 – 19:00",
-    "programSambata": "Sabato: 09:00 – 14:00",
+    "programLuniVineri": "Lun–Ven: 09:00 – 18:00",
+    "programSambata": "Sabato: chiuso (a volte aperti)",
     "copyright": "TehnicalDent. Tutti i diritti riservati.",
     "politicaConf": "Informativa sulla privacy",
     "termeniConditii": "Termini e condizioni"

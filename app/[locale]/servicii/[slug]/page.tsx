@@ -7,6 +7,9 @@ import { localizeService } from "@/lib/localize";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getAlternates, getKeywords, withLocation } from "@/lib/seo";
 import { ServiceSchema, BreadcrumbSchema } from "@/components/JsonLd";
+import RelatedLinks from "@/components/RelatedLinks";
+import { getPublishedBlogPosts } from "@/lib/blog-data";
+import { postsForService } from "@/lib/related";
 
 // Prerendered at build time. Next does not infer this on its own here because
 // next-intl reads the locale from request context; every admin mutation calls
@@ -69,6 +72,19 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
     .slice(0, 3)
     .map((sv) => localizeService(sv, locale));
 
+  // The articles written about this service — matched on the Romanian originals,
+  // shown in the visitor's language, and only those that exist in it.
+  const tRel = await getTranslations({ locale, namespace: "Related" });
+  const romanianPosts = await getPublishedBlogPosts("ro");
+  const localPosts = locale === "ro" ? romanianPosts : await getPublishedBlogPosts(locale);
+  const linkedPosts = postsForService(
+    service.slug,
+    romanianPosts,
+    allServices.filter((sv) => sv.isActive).map((sv) => sv.slug),
+  )
+    .map((p) => localPosts.find((l) => l.slug === p.slug))
+    .filter((p): p is NonNullable<typeof p> => Boolean(p) && p!.translated !== false);
+
   const heroImage =
     (service.images?.[0] as string) || `/images/services/${service.slug}.jpg`;
   const sectionImages = (service.images as string[] | undefined) ?? [];
@@ -92,6 +108,10 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
         slug={service.slug}
         category={category}
         image={service.images?.[0] as string | undefined}
+        locale={locale}
+        price={price}
+        discountPrice={discountPrice}
+        priceIsRange={Boolean((service as { priceNote?: string | null }).priceNote)}
       />
       <BreadcrumbSchema
         items={[
@@ -436,6 +456,13 @@ export default async function ServiceDetailPage({ params }: ServicePageProps) {
                   )}
                 </div>
               )}
+
+              {/* Articles about this service */}
+              <RelatedLinks
+                className="rounded-2xl border border-border bg-background p-6"
+                heading={tRel("articoleUtile")}
+                items={linkedPosts.map((p) => ({ href: `/recomandari/${p.slug}`, title: p.title }))}
+              />
 
               {/* Related services */}
               {relatedServices.length > 0 && (

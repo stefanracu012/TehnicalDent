@@ -12,6 +12,7 @@ import {
 } from "@/lib/localize";
 import HeroSlideshow from "@/components/HeroSlideshow";
 import AboutPreview from "@/components/AboutPreview";
+import { WebSiteSchema } from "@/components/JsonLd";
 import ReviewsSection from "@/components/ReviewsSection";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
@@ -40,6 +41,7 @@ export default async function HomePage({
 
   return (
     <>
+      <WebSiteSchema />
       {/* Hero Section */}
       <HeroSlideshow
         title={t("heroTitle")}

@@ -30,6 +30,17 @@ export interface BlogPost {
   metaDescription?: string;
   /** 1200x630 rendering for link previews; falls back to the cover. */
   ogImage?: string;
+  /**
+   * Whether the text is really in the language asked for. An article with no
+   * translation is shown in Romanian under /en, /ru and /it — the same text at
+   * four addresses, which search engines read as duplicates, so those pages are
+   * kept out of the index and out of the sitemap.
+   */
+  translated?: boolean;
+  /** Every language the article really exists in, Romanian included. */
+  availableLocales?: string[];
+  /** Last change, as an ISO date — for the article's structured data. */
+  updatedAt?: string;
 }
 
 export const categories = [
@@ -250,6 +261,13 @@ function estimateReadTime(text: string): number {
   return Math.max(1, Math.ceil(words / 200));
 }
 
+/** Romanian is the original; any other language needs a translated title and text. */
+function isTranslated(translations: TranslationsMap | null | undefined, locale?: string): boolean {
+  if (!locale || locale === "ro") return true;
+  const t = translations?.[locale] as Record<string, unknown> | undefined;
+  return typeof t?.title === "string" && t.title.length > 0 && typeof t?.content === "string" && t.content.length > 0;
+}
+
 function dbPostToBlogPost(dbPost: {
   slug: string;
   title: string;
@@ -262,6 +280,7 @@ function dbPostToBlogPost(dbPost: {
   author: string;
   publishedAt: Date | null;
   createdAt: Date;
+  updatedAt?: Date;
   translations?: TranslationsMap | null;
   metaTitle?: string | null;
   metaDescription?: string | null;
@@ -305,6 +324,9 @@ function dbPostToBlogPost(dbPost: {
     },
     tags: post.tags as string[],
     ogImage: dbPost.ogImage ?? undefined,
+    translated: isTranslated(dbPost.translations, locale),
+    updatedAt: dbPost.updatedAt?.toISOString().split("T")[0],
+    availableLocales: ["ro", "en", "ru", "it"].filter((l) => isTranslated(dbPost.translations, l)),
     // Only the Romanian originals — a translated article should not inherit a
     // Romanian search snippet, so these stay undefined for other locales.
     ...(!locale || locale === "ro"
@@ -348,6 +370,34 @@ export async function getPublishedBlogPost(
     console.log("Database not available for blog post, using mock data");
   }
   return blogPosts.find((post) => post.slug === slug);
+}
+
+/**
+ * For the sitemap: every published article with the day it last changed and
+ * the languages it really exists in.
+ */
+export async function getPublishedPostsForSitemap(): Promise<
+  { slug: string; updatedAt: Date; locales: string[]; image?: string }[]
+> {
+  try {
+    const rows = await prisma.blogPost.findMany({
+      where: { isPublished: true },
+      select: { slug: true, updatedAt: true, translations: true, coverImage: true },
+    });
+    if (rows.length > 0) {
+      return rows.map((p) => ({
+        slug: p.slug,
+        updatedAt: p.updatedAt,
+        image: p.coverImage || undefined,
+        locales: ["ro", "en", "ru", "it"].filter((l) =>
+          isTranslated(p.translations as TranslationsMap | null, l),
+        ),
+      }));
+    }
+  } catch {
+    // fall through
+  }
+  return blogPosts.map((p) => ({ slug: p.slug, updatedAt: new Date(p.date), locales: ["ro"] }));
 }
 
 export async function getAllPublishedSlugs(): Promise<string[]> {

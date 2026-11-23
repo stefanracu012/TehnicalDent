@@ -5,6 +5,7 @@ import Button from "@/components/Button";
 import { getTeamMembers, getSetting, getAllSettings } from "@/lib/data";
 import { localizeTeamMember } from "@/lib/localize";
 import { getAlternates } from "@/lib/seo";
+import { TeamSchema, BreadcrumbSchema } from "@/components/JsonLd";
 
 // Prerendered at build time. Next does not infer this on its own here because
 // next-intl reads the locale from request context; every admin mutation calls
@@ -129,6 +130,13 @@ export default async function AboutPage({
 
   return (
     <>
+      <TeamSchema members={teamMembers} locale={locale} />
+      <BreadcrumbSchema
+        items={[
+          { name: "TehnicalDent", url: `https://www.tehnicaldent.com/${locale}` },
+          { name: tNav("despre"), url: `https://www.tehnicaldent.com/${locale}/despre` },
+        ]}
+      />
       {/* -- HERO -- */}
       <section className="relative min-h-[55vh] flex items-end pb-16 pt-[11rem]">
         <div className="absolute inset-0 overflow-hidden">

@@ -47,8 +47,8 @@
     "sunaNeLabel": "Sună-ne: +373 603 55 350"
   },
   "Contact": {
-    "metaTitle": "Contact",
-    "metaDescription": "Contactați clinica stomatologică TehnicalDent pentru programări, întrebări sau informații suplimentare. Suntem aici să vă ajutăm.",
+    "metaTitle": "Programare online la stomatolog",
+    "metaDescription": "Programează-te online la TehnicalDent: alegi medicul și o oră liberă. Str. Sarmizegetusa 24/1, Chișinău, Botanica. Luni–vineri 09:00–18:00.",
     "subtitle": "Contact",
     "heroTitle": "Suntem aici",
     "heroTitleAccent": "pentru tine",
@@ -62,9 +62,9 @@
     "formularDesc": "Alege o oră liberă din calendarul medicilor, sau trimite-ne un mesaj și te contactăm noi.",
     "programDeLucru": "Program de lucru",
     "luniVineri": "Luni — Vineri",
-    "luniVineriOre": "08:00 – 20:00",
+    "luniVineriOre": "09:00 – 18:00",
     "sambata": "Sâmbătă",
-    "sambataOre": "09:00 – 15:00",
+    "sambataOre": "Închis (uneori lucrăm)",
     "duminica": "Duminică",
     "inchis": "Închis",
     "scriePeWhatsApp": "Scrie pe WhatsApp",
@@ -148,9 +148,29 @@
     "too_many": "Ai deja programări viitoare. Pentru încă una, sună-ne la 060 355 350.",
     "rate": "Prea multe încercări. Încearcă mai târziu sau sună-ne la 060 355 350."
   },
+  "Faq": {
+    "titlu": "Întrebări frecvente",
+    "q1": "Cum mă pot programa la clinică?",
+    "a1": "Direct pe această pagină, alegând serviciul, medicul și o oră liberă din calendarul lui. Ne poți suna la +373 603 55 350 sau ne poți scrie pe WhatsApp sau Viber, la același număr.",
+    "q2": "Unde se află clinica TehnicalDent?",
+    "a2": "În Chișinău, sectorul Botanica, pe strada Sarmizegetusa 24/1.",
+    "q3": "Care este programul clinicii?",
+    "a3": "Luni–vineri, între 09:00 și 18:00. Sâmbăta și duminica clinica este închisă, dar uneori lucrăm și sâmbăta — sună-ne sau scrie-ne pe WhatsApp ca să afli dacă sunt ore libere.",
+    "q4": "Ce include igienizarea profesională?",
+    "a4": "Igienizarea profesională include trei etape: detartraj cu ultrasunet, AirFlow și periaj profesional.",
+    "q5": "Albirea dentară include și igienizare?",
+    "a5": "Da, albirea dentară include și igienizarea profesională.",
+    "q6": "Aveți vouchere-cadou?",
+    "a6": "Da, clinica oferă vouchere-cadou, de exemplu pentru igienizare. Detaliile despre valabilitate și plată le primești la recepție, la +373 603 55 350."
+  },
+  "Related": {
+    "serviciiLegate": "Servicii legate de acest subiect",
+    "articoleUtile": "Articole utile despre acest serviciu",
+    "citeste": "Citește articolul"
+  },
   "About": {
-    "metaTitle": "Despre Noi",
-    "metaDescription": "Descoperiți povestea clinicii TehnicalDent, filosofia noastră și echipa de specialiști dedicați sănătății și frumuseții zâmbetului dumneavoastră.",
+    "metaTitle": "Despre clinică și echipa medicală",
+    "metaDescription": "Află povestea clinicii TehnicalDent din Chișinău, filosofia noastră și echipa de medici stomatologi dedicați sănătății și frumuseții zâmbetului tău.",
     "breadcrumbAbout": "Despre Noi",
     "heroSubtitle": "Povestea noastră",
     "heroTitle": "Despre TehnicalDent",
@@ -235,8 +255,8 @@
     "despreClinica": "Despre clinică"
   },
   "Services": {
-    "metaTitle": "Servicii Stomatologice",
-    "metaDescription": "Descoperiți gama completă de servicii stomatologice oferite de TehnicalDent: implantologie, ortodonție, estetică dentară, chirurgie orală și multe altele.",
+    "metaTitle": "Servicii stomatologice în Chișinău",
+    "metaDescription": "Servicii stomatologice în Chișinău, Botanica: igienizare, terapie, tratament de canal, parodontologie, protetică, estetică dentară și stomatologie pentru copii.",
     "breadcrumbServicii": "Servicii",
     "heroSubtitle": "Ce oferim",
     "heroTitle": "Serviciile Noastre",
@@ -247,9 +267,9 @@
     "programeazaConsultatie": "Programează consultație",
     "filtrulToate": "Toate",
     "programeaza": "Programează",
-    "veziDetalii": "Vezi detalii \u2192",
+    "veziDetalii": "Vezi detalii →",
     "deLa": "de la",
-    "pretPromotional": "Pre\u021b promo\u021bional"
+    "pretPromotional": "Preț promoțional"
   },
   "ServiceDetail": {
     "serviciuNegasit": "Serviciu negăsit",
@@ -265,16 +285,16 @@
     "sidebarDesc": "Specialist disponibil pentru evaluare gratuită",
     "programeazaAcum": "Programează acum",
     "categorie": "Categorie",
-    "pret": "Pre\u021b serviciu",
+    "pret": "Preț serviciu",
     "deLa": "de la",
-    "pretRedus": "Pre\u021b redus",
-    "pretVechi": "Pre\u021b standard",
+    "pretRedus": "Preț redus",
+    "pretVechi": "Preț standard",
     "serviciiSimilare": "Servicii similare",
     "toateServiciile": "Toate serviciile"
   },
   "Blog": {
-    "metaTitle": "Recomandări & Blog",
-    "metaDescription": "Sfaturi și recomandări de la medicii noștri stomatologi pentru sănătatea și frumusețea zâmbetului tău.",
+    "metaTitle": "Sfaturi stomatologice de la medici",
+    "metaDescription": "Sfaturi și recomandări de la medicii stomatologi TehnicalDent despre igienă orală, carii, albire, implanturi și îngrijirea zâmbetului.",
     "heroTitle": "Recomandări de la medic",
     "heroDescription": "Articole și sfaturi practice de la echipa noastră de specialiști, pentru ca tu să ai grijă de sănătatea dinților în fiecare zi.",
     "emptyState": "Nu sunt articole în această categorie încă.",
@@ -308,8 +328,8 @@
     "esteticaDentara": "Estetică Dentară",
     "chirurgieOrala": "Chirurgie Orală",
     "pedodontie": "Pedodonție",
-    "programLuniVineri": "Lun–Vin: 09:00 – 19:00",
-    "programSambata": "Sâmbătă: 09:00 – 14:00",
+    "programLuniVineri": "Lun–Vin: 09:00 – 18:00",
+    "programSambata": "Sâmbătă: închis (uneori lucrăm)",
     "copyright": "TehnicalDent. Toate drepturile rezervate.",
     "politicaConf": "Politica de confidențialitate",
     "termeniConditii": "Termeni și condiții"

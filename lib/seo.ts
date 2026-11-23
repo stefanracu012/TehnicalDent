@@ -46,15 +46,23 @@ export const HREFLANG: Record<string, string> = {
   it: "it",
 };
 
-export function getAlternates(path: string, currentLocale: string) {
+/**
+ * @param available - The languages the page really exists in, when not all of
+ *   them (an article with no Russian translation). Only those are listed as
+ *   alternates; a language without its own text is not an alternate of anything.
+ */
+export function getAlternates(path: string, currentLocale: string, available: string[] = LOCALES) {
   const languages: Record<string, string> = {};
   for (const locale of LOCALES) {
+    if (!available.includes(locale)) continue;
     languages[HREFLANG[locale] ?? locale] = `${BASE_URL}/${locale}${path}`;
   }
   languages["x-default"] = `${BASE_URL}/ro${path}`;
 
   return {
-    canonical: `${BASE_URL}/${currentLocale}${path}`,
+    // A page that is only a copy of the Romanian one names the Romanian page
+    // as its canonical, rather than claiming to be a version of its own.
+    canonical: `${BASE_URL}/${available.includes(currentLocale) ? currentLocale : "ro"}${path}`,
     languages,
   };
 }

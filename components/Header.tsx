@@ -13,39 +13,25 @@ const navigationItems = [
   { key: "contact", href: "/contact" },
 ] as const;
 
-const megaMenuCategories = [
-  {
-    categoryKey: "chirurgie",
-    items: [
-      { name: "Implantologie Dentară", slug: "implantologie" },
-      { name: "Chirurgie Orală", slug: "chirurgie-orala" },
-    ],
-  },
-  {
-    categoryKey: "estetica",
-    items: [
-      { name: "Estetică Dentară", slug: "estetica-dentara" },
-      { name: "Protetică Dentară", slug: "protetica-dentara" },
-    ],
-  },
-  {
-    categoryKey: "ortodontie",
-    items: [{ name: "Ortodonție", slug: "ortodontie" }],
-  },
-  {
-    categoryKey: "tratamente",
-    items: [
-      { name: "Endodonție", slug: "endodontie" },
-      { name: "Parodontologie", slug: "parodontologie" },
-    ],
-  },
-  {
-    categoryKey: "copii",
-    items: [{ name: "Pedodonție", slug: "pedodontie" }],
-  },
-];
+export interface MenuService {
+  slug: string;
+  title: string;
+  category: string;
+}
 
-export default function Header() {
+export default function Header({ services = [] }: { services?: MenuService[] }) {
+  // The mega menu lists the services that exist, grouped by their own category.
+  // It used to be written by hand and linked to pages the clinic does not have
+  // (surgery, orthodontics) while leaving out ones it does.
+  const megaMenuCategories = Object.values(
+    services.reduce<Record<string, { label: string; items: { name: string; slug: string }[] }>>(
+      (groups, s) => {
+        (groups[s.category] ??= { label: s.category, items: [] }).items.push({ name: s.title, slug: s.slug });
+        return groups;
+      },
+      {},
+    ),
+  );
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [megaOpen, setMegaOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -291,11 +277,14 @@ export default function Header() {
         }`}
       >
         <div className="mx-auto max-w-7xl px-6 lg:px-8 py-8">
-          <div className="grid grid-cols-5 gap-8">
+          <div
+            className="grid gap-8"
+            style={{ gridTemplateColumns: `repeat(${Math.max(megaMenuCategories.length, 1)}, minmax(0, 1fr))` }}
+          >
             {megaMenuCategories.map((group) => (
-              <div key={group.categoryKey}>
+              <div key={group.label}>
                 <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground mb-4 pb-2 border-b border-border">
-                  {tMega(group.categoryKey)}
+                  {group.label}
                 </p>
                 <ul className="space-y-1">
                   {group.items.map((item) => (

@@ -7,7 +7,12 @@ import { useTranslations } from "next-intl";
 const MAPS_URL =
   "https://www.google.com/maps/place/Tehnical+Dent/@46.9856812,28.8717643,758m/data=!3m2!1e3!4b1!4m6!3m5!1s0x40c979000cb65367:0x895fbc82126b33dc!8m2!3d46.9856776!4d28.8743392!16s%2Fg%2F11xfj0xg_7?entry=ttu";
 
-export default function Footer() {
+export interface FooterService {
+  slug: string;
+  title: string;
+}
+
+export default function Footer({ services = [] }: { services?: FooterService[] }) {
   const t = useTranslations("Footer");
 
   const mainNav = [
@@ -18,13 +23,12 @@ export default function Footer() {
     { name: t("contact"), href: "/contact" as const },
   ];
 
-  const serviceNav = [
-    { name: t("implantologie"), href: "/servicii" as const },
-    { name: t("ortodontie"), href: "/servicii" as const },
-    { name: t("esteticaDentara"), href: "/servicii" as const },
-    { name: t("chirurgieOrala"), href: "/servicii" as const },
-    { name: t("pedodontie"), href: "/servicii" as const },
-  ];
+  // Each service links to its own page — five links to the services list from
+  // every page of the site spread its weight over one address instead of eight.
+  const serviceNav = services.slice(0, 8).map((s) => ({
+    name: s.title,
+    href: `/servicii/${s.slug}` as const,
+  }));
 
   return (
     <footer className="bg-foreground text-white">

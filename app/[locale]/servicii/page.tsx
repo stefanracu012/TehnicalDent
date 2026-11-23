@@ -5,6 +5,7 @@ import { getServices, getSetting } from "@/lib/data";
 import { localizeService } from "@/lib/localize";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import Image from "next/image";
+import { BreadcrumbSchema } from "@/components/JsonLd";
 import { getAlternates, getKeywords } from "@/lib/seo";
 
 // Prerendered at build time. Next does not infer this on its own here because
@@ -43,6 +44,12 @@ export default async function ServicesPage({
 
   return (
     <>
+      <BreadcrumbSchema
+        items={[
+          { name: "TehnicalDent", url: `https://www.tehnicaldent.com/${locale}` },
+          { name: tNav("servicii"), url: `https://www.tehnicaldent.com/${locale}/servicii` },
+        ]}
+      />
       {/* ── HERO ── */}
       <section className="relative min-h-[50vh] flex items-end pb-16 pt-[11rem]">
         <div className="absolute inset-0 overflow-hidden">

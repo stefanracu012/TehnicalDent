@@ -1,5 +1,7 @@
 import { Metadata } from "next";
 import ContactTabs from "@/components/ContactTabs";
+import Faq from "@/components/Faq";
+import { BreadcrumbSchema } from "@/components/JsonLd";
 import { Link } from "@/i18n/navigation";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 import { getAlternates } from "@/lib/seo";
@@ -41,9 +43,16 @@ export default async function ContactPage({
   setRequestLocale(locale);
   const { serviciu } = await searchParams;
   const t = await getTranslations({ locale, namespace: "Contact" });
+  const tNav = await getTranslations({ locale, namespace: "Nav" });
 
   return (
     <>
+      <BreadcrumbSchema
+        items={[
+          { name: "TehnicalDent", url: `https://www.tehnicaldent.com/${locale}` },
+          { name: tNav("contact"), url: `https://www.tehnicaldent.com/${locale}/contact` },
+        ]}
+      />
       {/* ── HERO ── */}
       <section className="relative pt-[11rem] pb-20 lg:pb-28 bg-foreground overflow-hidden">
         {/* Decorative grid */}
@@ -419,6 +428,9 @@ export default async function ContactPage({
           </div>
         </div>
       </section>
+
+      {/* ── FAQ ── */}
+      <Faq locale={locale} />
 
       {/* ── MAP ── */}
       <section className="relative">

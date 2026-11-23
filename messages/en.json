@@ -49,8 +49,8 @@
     "sunaNeLabel": "Call us: +373 603 55 350"
   },
   "Contact": {
-    "metaTitle": "Contact",
-    "metaDescription": "Contact TehnicalDent dental clinic for appointments, questions or additional information. We are here to help you.",
+    "metaTitle": "Book a dentist appointment online",
+    "metaDescription": "Book online at TehnicalDent: choose your doctor and a free time. 24/1 Sarmizegetusa St, Chisinau, Botanica. Monday–Friday 09:00–18:00.",
     "subtitle": "Contact",
     "heroTitle": "We are here",
     "heroTitleAccent": "for you",
@@ -64,9 +64,9 @@
     "formularDesc": "Choose a free time from the doctors' calendars, or send us a message and we will contact you.",
     "programDeLucru": "Working hours",
     "luniVineri": "Monday — Friday",
-    "luniVineriOre": "08:00 – 20:00",
+    "luniVineriOre": "09:00 – 18:00",
     "sambata": "Saturday",
-    "sambataOre": "09:00 – 15:00",
+    "sambataOre": "Closed (sometimes open)",
     "duminica": "Sunday",
     "inchis": "Closed",
     "scriePeWhatsApp": "Write on WhatsApp",
@@ -150,9 +150,29 @@
     "too_many": "You already have upcoming appointments. For another one, call us at 060 355 350.",
     "rate": "Too many attempts. Try again later or call us at 060 355 350."
   },
+  "Faq": {
+    "titlu": "Frequently asked questions",
+    "q1": "How can I book an appointment?",
+    "a1": "Right on this page: choose the service, the doctor and a free time from their calendar. You can also call us at +373 603 55 350, or write on WhatsApp or Viber at the same number.",
+    "q2": "Where is the TehnicalDent clinic?",
+    "a2": "In Chisinau, Botanica district, at 24/1 Sarmizegetusa Street.",
+    "q3": "What are the opening hours?",
+    "a3": "Monday to Friday, 09:00 to 18:00. The clinic is closed on Saturday and Sunday, but we sometimes work on Saturdays — call us or write on WhatsApp to find out whether there are free times.",
+    "q4": "What does professional hygiene include?",
+    "a4": "Professional hygiene has three stages: ultrasonic scaling, AirFlow and professional polishing.",
+    "q5": "Does teeth whitening include hygiene?",
+    "a5": "Yes, teeth whitening includes professional hygiene.",
+    "q6": "Do you have gift vouchers?",
+    "a6": "Yes, the clinic offers gift vouchers, for example for hygiene. Reception gives the details on validity and payment at +373 603 55 350."
+  },
+  "Related": {
+    "serviciiLegate": "Services related to this topic",
+    "articoleUtile": "Useful articles about this service",
+    "citeste": "Read the article"
+  },
   "About": {
-    "metaTitle": "About Us",
-    "metaDescription": "Discover the story of TehnicalDent clinic, our philosophy, and the team of specialists dedicated to your smile's health and beauty.",
+    "metaTitle": "About the clinic and its doctors",
+    "metaDescription": "Learn the story of TehnicalDent in Chisinau, our approach and the team of dentists dedicated to the health and beauty of your smile.",
     "breadcrumbAbout": "About Us",
     "heroSubtitle": "Our story",
     "heroTitle": "About TehnicalDent",
@@ -237,8 +257,8 @@
     "despreClinica": "About the clinic"
   },
   "Services": {
-    "metaTitle": "Dental Services",
-    "metaDescription": "Discover the full range of dental services offered by TehnicalDent: implantology, orthodontics, cosmetic dentistry, oral surgery, and more.",
+    "metaTitle": "Dental services in Chisinau",
+    "metaDescription": "Dental services in Chisinau, Botanica: hygiene, therapy, root canal treatment, periodontology, prosthetics, cosmetic dentistry and pediatric dentistry.",
     "breadcrumbServicii": "Services",
     "heroSubtitle": "What we offer",
     "heroTitle": "Our Services",
@@ -249,7 +269,7 @@
     "programeazaConsultatie": "Schedule consultation",
     "filtrulToate": "All",
     "programeaza": "Book",
-    "veziDetalii": "View details \u2192",
+    "veziDetalii": "View details →",
     "deLa": "from",
     "pretPromotional": "Promotional price"
   },
@@ -275,8 +295,8 @@
     "toateServiciile": "All services"
   },
   "Blog": {
-    "metaTitle": "Tips & Blog",
-    "metaDescription": "Advice and tips from our dental specialists for the health and beauty of your smile.",
+    "metaTitle": "Dental advice from our doctors",
+    "metaDescription": "Advice and recommendations from TehnicalDent dentists on oral hygiene, cavities, whitening, implants and smile care.",
     "heroTitle": "Tips from the doctor",
     "heroDescription": "Articles and practical advice from our team of specialists, so you can take care of your dental health every day.",
     "emptyState": "No articles in this category yet.",
@@ -310,8 +330,8 @@
     "esteticaDentara": "Cosmetic Dentistry",
     "chirurgieOrala": "Oral Surgery",
     "pedodontie": "Pediatric Dentistry",
-    "programLuniVineri": "Mon–Fri: 09:00 – 19:00",
-    "programSambata": "Saturday: 09:00 – 14:00",
+    "programLuniVineri": "Mon–Fri: 09:00 – 18:00",
+    "programSambata": "Saturday: closed (sometimes open)",
     "copyright": "TehnicalDent. All rights reserved.",
     "politicaConf": "Privacy Policy",
     "termeniConditii": "Terms & Conditions"

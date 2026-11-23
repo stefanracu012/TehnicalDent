@@ -11,6 +11,10 @@ import {
 import { getAlternates, getKeywords } from "@/lib/seo";
 import { ArticleSchema, BreadcrumbSchema } from "@/components/JsonLd";
 import RichText from "@/components/RichText";
+import RelatedLinks from "@/components/RelatedLinks";
+import { getServices } from "@/lib/data";
+import { localizeService } from "@/lib/localize";
+import { servicesForPost } from "@/lib/related";
 
 // Prerendered at build time. Next does not infer this on its own here because
 // next-intl reads the locale from request context; every admin mutation calls
@@ -46,7 +50,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: post.metaTitle || post.title,
     description: post.metaDescription || post.excerpt,
     keywords: getKeywords([post.title, ...(post.tags || [])], locale),
-    alternates: getAlternates(`/recomandari/${slug}`, locale),
+    alternates: getAlternates(`/recomandari/${slug}`, locale, post.availableLocales),
+    // No translation yet: the page shows the Romanian text, so it stays out of
+    // the index until there is one (its canonical is the Romanian article).
+    ...(post.translated === false ? { robots: { index: false, follow: true } } : {}),
     openGraph: {
       title: post.title,
       description: post.excerpt,
@@ -94,6 +101,22 @@ export default async function BlogPostPage({ params }: Props) {
 
   const suggestedPosts = [...relatedPosts, ...morePosts];
 
+  // The services this article is about, matched on the Romanian original so a
+  // translation is tied to the same ones.
+  const tRel = await getTranslations({ locale, namespace: "Related" });
+  const romanianPost =
+    locale === "ro"
+      ? post
+      : ((await getPublishedBlogPosts("ro")).find((p) => p.slug === post.slug) ?? post);
+  const activeServices = (await getServices()).filter((sv) => sv.isActive);
+  const linkedServices = servicesForPost(
+    romanianPost,
+    activeServices.map((sv) => sv.slug),
+  )
+    .map((slug) => activeServices.find((sv) => sv.slug === slug))
+    .filter((sv): sv is NonNullable<typeof sv> => Boolean(sv))
+    .map((sv) => localizeService(sv, locale));
+
   return (
     <>
       <ArticleSchema
@@ -102,7 +125,9 @@ export default async function BlogPostPage({ params }: Props) {
         slug={post.slug}
         image={post.image}
         datePublished={post.date}
+        dateModified={post.updatedAt}
         author={post.author.name}
+        locale={locale}
       />
       <BreadcrumbSchema
         items={[
@@ -311,6 +336,16 @@ export default async function BlogPostPage({ params }: Props) {
               ))}
             </div>
           </div>
+
+          {/* The services this article is about */}
+          <RelatedLinks
+            className="mt-12"
+            heading={tRel("serviciiLegate")}
+            items={linkedServices.map((sv) => ({
+              href: `/servicii/${sv.slug}`,
+              title: sv.title as string,
+            }))}
+          />
 
           {/* CTA Box */}
           <div className="mt-12 bg-muted p-8 lg:p-10">
