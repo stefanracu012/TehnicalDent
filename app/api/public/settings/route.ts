@@ -6,5 +6,9 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const settings = await getAllSettings();
-  return NextResponse.json(settings);
+  // Held by the CDN for five minutes: the settings change a few times a year,
+  // and each uncached read was a server function and a database query.
+  return NextResponse.json(settings, {
+    headers: { "Cache-Control": "public, s-maxage=300, stale-while-revalidate=3600" },
+  });
 }

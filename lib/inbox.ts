@@ -27,7 +27,13 @@ const PAGE = PAGE_ID || "me";
 
 /** One call that does not answer must not hold up the whole inbox. */
 const CALL_TIMEOUT_MS = 20_000;
-const FRESH_MS = 20_000;
+// How long the Meta half is trusted before it is read again. Each read is a
+// list of conversations per platform, up to thirty preview calls, a pass over
+// every conversation and a write of the whole snapshot — the single biggest
+// consumer of the site's CPU while the inbox page was open (every 25 seconds,
+// even in a hidden tab). A minute is still prompt for an inbox; "refresh" in
+// the page forces a read at once.
+const FRESH_MS = 60_000;
 const THREAD_FRESH_MS = 10_000;
 
 export type InboxPlatform = "messenger" | "instagram" | "whatsapp";
@@ -202,13 +208,23 @@ async function fetchConversations(
 }
 
 /** The text of the last message, for the conversations Meta gives none for. */
+// A conversation's last message does not change until the conversation does
+// (its updated time moves), so a preview already read is kept instead of being
+// fetched again on every refresh.
+const previewCache = new Map<string, Partial<InboxConversation>>();
+const previewKey = (c: InboxConversation) => `${c.id}|${c.updatedTime ?? ""}`;
+
 async function withPreviews(
   conversations: InboxConversation[],
   max = 30,
 ): Promise<InboxConversation[]> {
   const ours = new Set([PAGE_ID, IG_ID].filter(Boolean));
-  const target = conversations.filter((c) => !c.snippet).slice(0, max);
-  if (target.length === 0) return conversations;
+  const known = (c: InboxConversation) => previewCache.get(previewKey(c));
+  const target = conversations.filter((c) => !c.snippet && !known(c)).slice(0, max);
+  if (target.length === 0) {
+    return conversations.map((c) => (known(c) ? { ...c, ...known(c) } : c));
+  }
+  if (previewCache.size > 500) previewCache.clear();
 
   const results = await Promise.allSettled(
     target.map((c) =>
@@ -225,13 +241,18 @@ async function withPreviews(
     if (res.status !== "fulfilled") return;
     const last = res.value.data?.[0];
     if (!last) return;
-    byId.set(c.id, {
+    const preview = {
       snippet: clean(last.message),
       lastFromPage: ours.has(last.from?.id ?? ""),
-    });
+    };
+    byId.set(c.id, preview);
+    previewCache.set(previewKey(c), preview);
   });
 
-  return conversations.map((c) => (byId.has(c.id) ? { ...c, ...byId.get(c.id) } : c));
+  return conversations.map((c) => {
+    const preview = byId.get(c.id) ?? known(c);
+    return preview ? { ...c, ...preview } : c;
+  });
 }
 
 /** A conversation's messages, oldest first. */
@@ -303,7 +324,14 @@ async function readStoredSnapshot(): Promise<MetaSnapshot | null> {
   }
 }
 
+// What was last written, without its timestamp: a read that found nothing new
+// writes nothing. It used to upsert the whole snapshot on every refresh.
+let lastStored = "";
+
 function storeSnapshot(data: MetaSnapshot) {
+  const content = JSON.stringify({ ...data, fetchedAt: "" });
+  if (content === lastStored) return;
+  lastStored = content;
   const value = JSON.stringify(data);
   prisma.inboxState
     .upsert({

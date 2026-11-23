@@ -28,13 +28,16 @@ export async function GET(request: Request) {
     const serviceId = (searchParams.get("serviceId") ?? "").slice(0, 40);
 
     const key = `${locale}|${serviceId}`;
+    // Also held by the CDN for a few seconds, so repeated visits to /contact
+    // do not each start a function. The booking itself re-checks everything.
+    const headers = { "Cache-Control": "public, s-maxage=20, stale-while-revalidate=60" };
     const hit = cache.get(key);
-    if (hit && Date.now() - hit.at < CACHE_MS) return NextResponse.json(hit.body);
+    if (hit && Date.now() - hit.at < CACHE_MS) return NextResponse.json(hit.body, { headers });
 
     const body = await bookingOptions(locale, serviceId || undefined);
     cache.set(key, { at: Date.now(), body });
     if (cache.size > 100) cache.clear();
-    return NextResponse.json(body);
+    return NextResponse.json(body, { headers });
   } catch (error) {
     console.error("booking options:", error);
     return NextResponse.json({ error: "server" }, { status: 500 });

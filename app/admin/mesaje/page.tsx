@@ -42,7 +42,7 @@ const PLATFORM_FILTERS: { value: "" | InboxPlatform; label: string }[] = [
   { value: "whatsapp", label: "WhatsApp" },
 ];
 
-const POLL_MS = 25_000;
+const POLL_MS = 60_000;
 const HOUR = 3_600_000;
 
 const AVATAR_TONE: Record<InboxPlatform, string> = {
@@ -166,12 +166,22 @@ function Inbox() {
   }, [load]);
 
   useEffect(() => {
-    const timer = setInterval(() => load(true), POLL_MS);
-    const onFocus = () => load(true);
-    window.addEventListener("focus", onFocus);
+    // Only while the tab is on screen. The inbox used to refresh every 25
+    // seconds in a tab nobody was looking at — all night, when left open —
+    // and each refresh reads Meta and the database. Coming back to the tab
+    // refreshes at once, so nothing is missed.
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") load(true);
+    }, POLL_MS);
+    const onShow = () => {
+      if (document.visibilityState === "visible") load(true);
+    };
+    window.addEventListener("focus", onShow);
+    document.addEventListener("visibilitychange", onShow);
     return () => {
       clearInterval(timer);
-      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("focus", onShow);
+      document.removeEventListener("visibilitychange", onShow);
     };
   }, [load]);
 

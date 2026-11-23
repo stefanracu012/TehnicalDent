@@ -23,6 +23,11 @@ async function claimDailyRun(key: string, todayStr: string): Promise<boolean> {
 const LOCK_KEY = "cron-dispatch-lock";
 const LOCK_TTL = 45_000;
 
+// When the last full run began, and the shortest gap between two full runs
+// started by an unnamed (scheduler) call.
+const LAST_RUN_KEY = "cron-last-run";
+const MIN_INTERVAL_MS = 15 * 60_000;
+
 /**
  * Stops two dispatcher runs from overlapping. Without this, a second run
  * starting while the first is mid-scan sees the same not-yet-reminded
@@ -116,18 +121,44 @@ async function handle(request: Request) {
   const inMorningWindow = job === "morning" || (!job && h === 8 && m >= 0 && m <= 10);
   const todayStr = `${nowMoldova.getFullYear()}-${String(nowMoldova.getMonth() + 1).padStart(2, "0")}-${String(nowMoldova.getDate()).padStart(2, "0")}`;
 
+  // A scheduler that calls every few minutes — this route has been hit
+  // hundreds of times a day, the largest user of the site's CPU by far — does
+  // not need a full scan each time: reminders go out inside windows hours wide.
+  // Calls that name a job (Vercel's two daily crons, a manual run) always run.
+  if (!job) {
+    // Nothing is due in the small hours, and a reminder then would only wake
+    // the patient. The first call after 06:00 picks up whatever is due.
+    if (h >= 22 || h < 6) {
+      return NextResponse.json({ ok: true, skipped: "night" });
+    }
+    const last = await prisma.cronState.findUnique({ where: { key: LAST_RUN_KEY } });
+    if (Date.now() - (Number(last?.lastRunDate) || 0) < MIN_INTERVAL_MS) {
+      return NextResponse.json({ ok: true, skipped: "ran recently" });
+    }
+  }
+
   if (!(await acquireDispatchLock())) {
     return NextResponse.json({ ok: true, skipped: "another run in progress" });
   }
 
   try {
-    const [reminders, recalls, retried] = await Promise.all([
-      runReminderScan(),
-      runRecallScan(),
-      retryFailed(),
-    ]);
+    await prisma.cronState.upsert({
+      where: { key: LAST_RUN_KEY },
+      create: { key: LAST_RUN_KEY, lastRunDate: String(Date.now()) },
+      update: { lastRunDate: String(Date.now()) },
+    });
 
-    await refreshStaleDigests();
+    const [reminders, retried] = await Promise.all([runReminderScan(), retryFailed()]);
+
+    // Once a day, on the day's first run: the 6-month recall scan (patients seen
+    // half a year ago — it only ever finds new ones as the days pass) and the
+    // rebuild of the Azi/Mâine digests after the calendar day rolled over. Both
+    // used to run on every call.
+    let recalls: { recalled?: number; skipped?: boolean } = { skipped: true };
+    if (await claimDailyRun("daily-maintenance", todayStr)) {
+      recalls = await runRecallScan();
+      await refreshStaleDigests();
+    }
 
     // Leads whose follow-up day has come. Safe on every run: each date is
     // announced once, so the 08:00 run sends the morning digest and the 20:00

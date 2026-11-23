@@ -13,7 +13,7 @@
 // =============================================
 
 import prisma from "@/lib/prisma";
-import { bookableDoctors, freeTimes, claimSlot, clock } from "@/lib/slots";
+import { bookableDoctors, freeTimes, freeTimesRange, claimSlot, clock } from "@/lib/slots";
 import { normalizePhone, isValidPhone, parseMoldovaDateTime } from "@/lib/appointments";
 import { sendTelegramToTopic, TELEGRAM_TOPICS } from "@/lib/telegram";
 import {
@@ -816,17 +816,20 @@ function minutesFromArg(value: unknown): number | null {
  * opened. When the period has nothing, it says so in as many words, with the
  * nearest real hours beside it.
  */
-async function findSlotsFrom(from: string, days: number) {
+export async function findSlotsFrom(from: string, days: number) {
   const today = moldovaDate(0);
   const first = Math.max(1, Math.round((Date.parse(from) - Date.parse(today)) / 86_400_000));
   const last = Math.min(first + Math.min(Math.max(days, 1), 31) - 1, first + 60);
   const doctors = await bookableDoctors();
+  // The whole window in three queries — day by day and doctor by doctor it was
+  // three queries for each, hundreds for one question about free hours.
+  const free = await freeTimesRange(doctors.map((d) => d.id), moldovaDate(first), moldovaDate(last));
 
   const out: Slot[] = [];
   for (let offset = first; offset <= last && out.length < 40; offset++) {
     const date = moldovaDate(offset);
     for (const doctor of doctors) {
-      for (const t of await freeTimes(doctor.id, date)) {
+      for (const t of free.get(doctor.id)?.get(date) ?? []) {
         out.push({
           medicId: doctor.id,
           medic: doctor.name,
@@ -851,7 +854,7 @@ async function findSlotsFrom(from: string, days: number) {
   };
 }
 
-async function findSlots(days: number): Promise<Slot[]> {
+export async function findSlots(days: number): Promise<Slot[]> {
   let span = Math.min(Math.max(days, 1), MAX_LOOKAHEAD_DAYS);
   const doctors = await bookableDoctors();
 
@@ -861,10 +864,11 @@ async function findSlots(days: number): Promise<Slot[]> {
   // often fill the calendar in bursts, weeks ahead. Rather than telling a
   // patient there is nothing free, look further before giving up.
   const scan = async (limit: number) => {
+    const free = await freeTimesRange(doctors.map((d) => d.id), moldovaDate(1), moldovaDate(limit));
     for (let offset = 1; offset <= limit && out.length < 40; offset++) {
       const date = moldovaDate(offset);
       for (const doctor of doctors) {
-        for (const t of await freeTimes(doctor.id, date)) {
+        for (const t of free.get(doctor.id)?.get(date) ?? []) {
           out.push({
             medicId: doctor.id,
             medic: doctor.name,
