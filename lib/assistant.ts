@@ -1682,6 +1682,24 @@ async function pricedTitles(): Promise<string[]> {
   return titles;
 }
 
+/** A service the clinic prices, named in the patient's words. */
+const NAMES_A_SERVICE =
+  /consulta|igieniz|detartraj|carie|plomb|implant|canal|pulpit|copil|albire|coroan|fa[țt]et|protez|parodont|gingi|extrac|детск|имплант|чистк|кариес|консультац|коронк|пломб|удален/i;
+
+/**
+ * What the patient is asking about, for the no-price check: their last
+ * message — and, only when that is a short follow-up that names nothing
+ * ("și cât e pe dinte?", "și cum se achită?"), the two before it, where the
+ * thing was named. Always taking the last three let one question about a
+ * bridge block a correct answer to "cât costă o consultație?" right after.
+ */
+export function recentTopicText(history: { role: string; content: string }[]): string {
+  const users = [...history].reverse().filter((t) => t.role === "user").map((t) => t.content);
+  const last = users[0] ?? "";
+  const bareFollowUp = last.length < 40 && !NAMES_A_SERVICE.test(last);
+  return bareFollowUp ? users.slice(0, 3).join(" \n ") : last;
+}
+
 /** The topic in the patient's words that has no price row, if any. */
 export async function topicWithoutARow(patientText: string): Promise<string | null> {
   const asked = TOPICS_WITHOUT_A_ROW.filter((t) => t.ask.test(patientText));
@@ -2067,15 +2085,7 @@ export async function assistantReply(
       const dayClaims = text && invented.length === 0 && !claimed ? await wrongDayClaims(text) : [];
       const lastUserText = [...history].reverse().find((t) => t.role === "user")?.content ?? "";
       const clean = !!text && invented.length === 0 && !claimed && dayClaims.length === 0;
-      // The patient's last few messages: "și cum se achită?" follows a question
-      // about a bridge without saying so again.
-      const recentUserText = [...history]
-        .reverse()
-        .filter((t) => t.role === "user")
-        .slice(0, 3)
-        .map((t) => t.content)
-        .join(" \n ");
-      const noRowTopic = clean && GIVES_PRICE.test(text) ? await topicWithoutARow(recentUserText) : null;
+      const noRowTopic = clean && GIVES_PRICE.test(text) ? await topicWithoutARow(recentTopicText(history)) : null;
       const badPrices = clean
         ? [
             ...(await pricesNotInList(text)),
