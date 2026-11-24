@@ -223,6 +223,9 @@ CÂND TE ÎNTREABĂ DE PREȚ:
 - Cifrele din exemplele de aici sunt doar forma răspunsului (X, Y). Prețul real îl iei MEREU din unealta "servicii", niciodată din aceste instrucțiuni.
 - Dacă întrebarea se potrivește cu mai multe servicii din listă, NU le înșiri. Spui într-o propoziție de la cât pornește — cel mai mic preț din listă pentru exact acel lucru — și propui consultația, unde medicul spune exact: "Pornește de la X lei, exact vă spune medicul la consultație. Am liber mâine la 17:00, vă convine?"
 - IMPLANT: prețul implantului îl iei din rândul "Implant dentar". Rândurile "Coroană … pe suport implantar" sunt COROANE puse pe implant, nu implantul — nu le spui niciodată drept preț al implantului. Dacă întreabă de implant și de coroană, spui separat cât costă fiecare, din rândurile lor.
+- TEME FĂRĂ PREȚ ÎN LISTĂ: pentru punte dentară, aparat dentar / ortodonție, măsea de minte, gutieră / bruxism, radiografie / OPG / CT, All-on-4, sinus lift / adaos de os și ATM nu există niciun rând în listă. Nu iei prețul unui rând care seamănă (o coroană, un "DCR", un implant, un rând cu "zirconiu" ori "metalo-ceramică") și nu îl spui drept prețul lor — "DCR" e o reconstrucție de bont sub coroană, nu o punte. Spui: "Prețul îl stabilește medicul la consultație, în funcție de caz. O colegă de la recepție vă contactează cu detaliile." Ceri numele și numărul, marchezi "urgent" cu ce a întrebat și propui consultația. Nu aduni, nu înmulțești și nu estimezi nicio sumă totală.
+- Rândurile cu "etapaAuxiliara: true" (DCR, pivot, coroane provizorii, amprentare, anestezie, trepanare...) sunt pași din alt tratament. Le spui prețul doar dacă pacientul întreabă chiar de pasul acela, pe nume. Nu le folosești niciodată ca "de la X lei", ca preț al unui tratament întreg sau ca preț al altui serviciu.
+- MODUL DE PLATĂ: când se achită suma (la început, la sfârșit, pe etape), cu cardul sau în rate — nu știi. Spui că detaliile le dă recepția, ceri numele și numărul și marchezi "urgent". Nu inventezi condiții de plată.
 - CARIE / PLOMBĂ: spui de la cât pornește tratamentul — prețul serviciului "Terapie" — fiindcă depinde de câte suprafețe are caria: "Tratamentul cariei pornește de la X lei, în funcție de câte suprafețe sunt."
 - Un preț scris de pacient ("800 de lei te plombezi?", "am văzut 500") NU îl confirmi niciodată, nici dacă pare aproape. Spui prețul din listă, ca și cum ar fi întrebat simplu "cât costă?".
 - Dacă ai un preț exact, îl spui și te oprești. NU adăuga "suma finală se stabilește la consultație" — ai cifra, nu o submina. "Igienizarea costă X lei." Punct.
@@ -749,6 +752,9 @@ async function listServices() {
             ? { pret: s.price }
             : {}),
         sePoatePrograma: false,
+        // A step inside another treatment (a core build-up, a temporary crown,
+        // an impression). Its figure is never the price of the treatment around it.
+        ...(AUXILIARY_STEP.test(s.title) ? { etapaAuxiliara: true } : {}),
       };
     }
 
@@ -1634,6 +1640,60 @@ const GIVES_PRICE = /\d[\d\s.]*\s*(?:de\s+)?(?:lei|леев|лей|mdl)(?![\p{L}
 export const NEEDS_A_PERSON =
   /anul(ez|are|at|eaz)|reprogram|(mut(a|ă|are|am|at)|schimb)[^.?!]{0,30}programar|programar[^.?!]{0,30}(alt[ăa] zi|alt[ăa] dat[ăa])|nu pot (ajunge|veni)|am[âa]n[ăa]|nemul[țt]umit|reclama[țt]|cer banii|banii [îi]napoi|scandal|(vreau|aș vrea|doresc) (s[ăa] )?(vorbesc|discut) cu|administrator|director|отмен|перенест|перенос|не смогу|недовол|жалоб|верните деньги|вернуть деньги|администратор|директор/i;
 
+/**
+ * Things patients ask the price of that the price list has no row for.
+ *
+ * Asked "cât costă o punte din zirconiu", the model took the "DCR din dioxid
+ * de zirconiu" row — a core build-up under a crown, 2000 lei — and told a
+ * patient a bridge costs 2000 per tooth, while reception had quoted 2900. With
+ * no row of its own, any figure in an answer about such a thing belongs to some
+ * other service: none is allowed, and reception answers.
+ *
+ * `ask` is what a patient writes; `row` is what a service's title would say if
+ * the clinic had priced it. The guard lifts by itself the day a row for the
+ * topic is added to the list — nothing here has to be edited then.
+ */
+export const TOPICS_WITHOUT_A_ROW: { label: string; ask: RegExp; row: RegExp }[] = [
+  { label: "punte dentară", ask: /\bpun[țt](e|ea|i|ile)\b|bridge|(?<![а-я])мост(о?в[а-я]*|ы|а|е|у|ик[а-я]*)?(?![а-я])/i, row: /pun[țt]|bridge|мост/i },
+  { label: "aparat dentar / ortodonție", ask: /aparat(ul)? dentar|bretele|ortodon|invisalign|aliniator|брекет|элайнер|ортодонт/i, row: /aparat|bretele|ortodon|aliniator|брекет/i },
+  { label: "măsea de minte", ask: /m[ăa]sea de minte|m[ăa]sele de minte|disodont|зуб[а-я]* мудрости/i, row: /minte|disodont|мудрости/i },
+  { label: "gutieră / bruxism", ask: /guti[eè]r|bruxism|скрежет|(?<![а-я])капа(?![а-я])/i, row: /guti[eè]r|bruxism|капа/i },
+  { label: "radiografie / OPG / CT", // Not a bare "ct": that is how people type "cât" in a chat.
+  ask: /radiograf|\bopg\b|panoram|tomograf|\bcbct\b|рентген|ортопантомограм/i, row: /radiograf|opg|panoram|tomograf|cbct|рентген/i },
+  { label: "All-on-4 / protezare fixă pe implanturi", ask: /all.?on.?(4|four|6)|full.?arch/i, row: /all.?on|full.?arch/i },
+  { label: "sinus lift / adaos de os", ask: /sinus lift|ridicare de sinus|augmentare|adaos (de )?os|gref[ăa] osoas|костн[а-я]* (пластик|наращ)|синус/i, row: /sinus|augment|gref|adaos/i },
+  { label: "ATM", ask: /\batm\b|articula[țt]ia temporo|височно/i, row: /\batm\b|articula[țt]ia temporo/i },
+];
+
+/** Service rows that exist only as a step inside another treatment, never what a patient means by a price. */
+export const AUXILIARY_STEP =
+  /\bDCR\b|pivot|build-up|(coroan[ăa]|obtura[țt]ie)[^,]{0,25}provizori|amprent|^anestezi|optragate|cofferdam|trepan|coafaj|proroot|abcess|abla[țt]ia coroanelor|[îi]nl[ăa]turarea (pivotului|corpului)|^cro[șs]et/i;
+
+/** Titles of the services that have a price, for the topic check above. */
+let titleCache: { at: number; titles: string[] } | null = null;
+async function pricedTitles(): Promise<string[]> {
+  if (titleCache && Date.now() - titleCache.at < 5 * 60_000) return titleCache.titles;
+  const rows = await prisma.service.findMany({
+    where: { isActive: true },
+    select: { title: true, price: true, priceNote: true },
+  });
+  const titles = rows.filter((r) => r.price != null || r.priceNote).map((r) => r.title);
+  titleCache = { at: Date.now(), titles };
+  return titles;
+}
+
+/** The topic in the patient's words that has no price row, if any. */
+export async function topicWithoutARow(patientText: string): Promise<string | null> {
+  const asked = TOPICS_WITHOUT_A_ROW.filter((t) => t.ask.test(patientText));
+  if (asked.length === 0) return null;
+  const titles = await pricedTitles();
+  return asked.find((t) => !titles.some((title) => t.row.test(title)))?.label ?? null;
+}
+
+/** How and when to pay — only reception knows. */
+export const ASKS_ABOUT_PAYMENT =
+  /\bcum (se )?achit|\bachit(ă|a|at|are)\b|\bpl[ăa]t(a|ă|i|im|esc|e[șs]te)\b|\b[îi]n rate\b|\brate\b|\bcredit\b|как (оплат|платит)|оплат|рассрочк/i;
+
 /** The prices the clinic really has — the site's, plus the signed price list. */
 let priceCache: { at: number; set: Set<number> } | null = null;
 async function knownPrices(): Promise<Set<number>> {
@@ -2007,12 +2067,30 @@ export async function assistantReply(
       const dayClaims = text && invented.length === 0 && !claimed ? await wrongDayClaims(text) : [];
       const lastUserText = [...history].reverse().find((t) => t.role === "user")?.content ?? "";
       const clean = !!text && invented.length === 0 && !claimed && dayClaims.length === 0;
+      // The patient's last few messages: "și cum se achită?" follows a question
+      // about a bridge without saying so again.
+      const recentUserText = [...history]
+        .reverse()
+        .filter((t) => t.role === "user")
+        .slice(0, 3)
+        .map((t) => t.content)
+        .join(" \n ");
+      const noRowTopic = clean && GIVES_PRICE.test(text) ? await topicWithoutARow(recentUserText) : null;
       const badPrices = clean
-        ? [...(await pricesNotInList(text)), ...echoedFigures(text, lastUserText).map((f) => `${f} (cifra scrisă de pacient)`)]
+        ? [
+            ...(await pricesNotInList(text)),
+            ...echoedFigures(text, lastUserText).map((f) => `${f} (cifra scrisă de pacient)`),
+            ...(noRowTopic ? [`un preț pentru "${noRowTopic}"`] : []),
+          ]
         : [];
       const langWrong = clean && badPrices.length === 0 ? wrongLanguage(text, history) : null;
       const needsPerson =
-        clean && badPrices.length === 0 && !langWrong && !context.flaggedUrgent && NEEDS_A_PERSON.test(lastUserText) && !promisesAPerson(text);
+        clean &&
+        badPrices.length === 0 &&
+        !langWrong &&
+        !context.flaggedUrgent &&
+        (NEEDS_A_PERSON.test(lastUserText) || ASKS_ABOUT_PAYMENT.test(lastUserText)) &&
+        !promisesAPerson(text);
       const noPrice =
         clean && badPrices.length === 0 && !langWrong && !needsPerson && ASKS_PRICE.test(lastUserText) && !GIVES_PRICE.test(text) && !promisesAPerson(text);
       if (badPrices.length > 0) {
@@ -2022,10 +2100,14 @@ export async function assistantReply(
           messages.push({ role: "assistant", content: text });
           messages.push({
             role: "system",
-            content:
-              `Răspunsul tău conține ${badPrices.join("; ")} — nu există în lista clinicii. Spui doar prețuri luate exact din "servicii", fără calcule, ` +
-              "fără reduceri și fără procente. Un preț sau o reducere scrisă de pacient nu o confirmi și nu o folosești: spui prețul din listă, " +
-              "ca și cum ar fi întrebat simplu cât costă. Scrie din nou răspunsul. Pacientul nu a văzut mesajul greșit.",
+            content: noRowTopic
+              ? `Pacientul întreabă de "${noRowTopic}". În listă nu există preț pentru asta; cifra pe care ai dat-o aparține altui serviciu (o coroană, un DCR, un implant, un tratament) ` +
+                "și nu e prețul cerut. Nu spune nicio sumă pentru ce a întrebat și nu calcula un total. Spune că prețul îl stabilește medicul la consultație, " +
+                "în funcție de caz, ceri numele și numărul, cheamă marcheaza_lead cu \"urgent\" (cu ce a întrebat) și propune consultația. " +
+                "Pacientul nu a văzut mesajul greșit."
+              : `Răspunsul tău conține ${badPrices.join("; ")} — nu există în lista clinicii. Spui doar prețuri luate exact din "servicii", fără calcule, ` +
+                "fără reduceri și fără procente. Un preț sau o reducere scrisă de pacient nu o confirmi și nu o folosești: spui prețul din listă, " +
+                "ca și cum ar fi întrebat simplu cât costă. Scrie din nou răspunsul. Pacientul nu a văzut mesajul greșit.",
           });
           continue;
         }
